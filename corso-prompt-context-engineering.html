@@ -1,0 +1,1440 @@
+<!doctype html>
+<html lang="it" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prompt · Metaprompting · Context Engineering — Programma 4 ore</title>
+<style>
+:root{
+  --bg:#f7f7f5; --panel:#ffffff; --panel-2:#f1f1ee; --text:#1c1c1a; --muted:#6b6b63;
+  --line:#e2e2dc; --accent:#c2451f; --accent-soft:#fdefe9; --ok:#1f7a4d; --ok-soft:#e8f5ee;
+  --warn:#8a5a00; --warn-soft:#fdf3e0; --bad:#a52020; --bad-soft:#fbeaea;
+  --code-bg:#1e1e1c; --code-text:#f0efe9; --shadow:0 1px 2px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.05);
+  --radius:12px; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+}
+html[data-theme="dark"]{
+  --bg:#141413; --panel:#1e1e1c; --panel-2:#26261f; --text:#f0efe9; --muted:#a3a39a;
+  --line:#33332c; --accent:#e8825c; --accent-soft:#2e211c; --ok:#5ec48d; --ok-soft:#17281f;
+  --warn:#e0b45f; --warn-soft:#2a2318; --bad:#e88b8b; --bad-soft:#2b1a1a;
+  --code-bg:#0f0f0e; --code-text:#e8e7e1; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;font-size:inherit;cursor:pointer}
+a{color:var(--accent)}
+
+/* ---------- layout ---------- */
+header.top{
+  position:sticky;top:0;z-index:40;background:var(--panel);border-bottom:1px solid var(--line);
+  display:flex;flex-wrap:wrap;align-items:center;gap:14px;padding:10px 18px;
+}
+.brand{font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;gap:9px;font-size:15px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--accent);flex:none}
+.brand small{display:block;font-weight:500;color:var(--muted);font-size:11.5px;letter-spacing:0}
+.spacer{flex:1}
+.pill{
+  border:1px solid var(--line);background:var(--panel-2);color:var(--text);
+  border-radius:999px;padding:6px 12px;font-size:12.5px;font-weight:600;display:inline-flex;align-items:center;gap:7px;
+}
+.pill.ghost{background:transparent}
+.pill:hover{border-color:var(--accent)}
+.clock{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.progress-wrap{width:100%;height:3px;background:var(--panel-2)}
+.progress-bar{height:100%;width:0;background:var(--accent);transition:width .35s ease}
+
+.shell{display:grid;grid-template-columns:274px minmax(0,1fr);gap:0;align-items:start}
+nav.side{
+  position:sticky;top:57px;height:calc(100vh - 57px);overflow-y:auto;
+  border-right:1px solid var(--line);padding:16px 12px 40px;background:var(--bg);
+}
+nav.side h4{font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:6px 8px 8px}
+.navitem{
+  display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;border:0;background:transparent;
+  color:var(--text);padding:8px 10px;border-radius:9px;margin-bottom:2px;line-height:1.35;
+}
+.navitem:hover{background:var(--panel-2)}
+.navitem.active{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.navitem .idx{font-family:var(--mono);font-size:11px;color:var(--muted);width:20px;flex:none;padding-top:2px}
+.navitem.active .idx{color:var(--accent)}
+.navitem .nt{font-size:13.5px}
+.navitem .nm{font-size:11px;color:var(--muted);display:block}
+.navitem .tick{margin-left:auto;color:var(--ok);font-size:12px;flex:none}
+
+main{padding:30px 34px 90px;max-width:920px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+h1{font-size:31px;line-height:1.18;letter-spacing:-.02em;margin:0 0 6px}
+h2{font-size:21px;letter-spacing:-.01em;margin:38px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h3{font-size:16px;margin:24px 0 8px}
+.lede{color:var(--muted);font-size:15px;margin:0 0 4px}
+.prose{font-size:15px}
+.prose p{margin:12px 0}
+.prose ul,.prose ol{margin:12px 0;padding-left:22px}
+.prose li{margin:6px 0}
+.prose strong{font-weight:650}
+code{font-family:var(--mono);font-size:.875em;background:var(--panel-2);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+pre{background:var(--code-bg);color:var(--code-text);padding:14px 16px;border-radius:var(--radius);overflow-x:auto;font-size:12.5px;line-height:1.55;margin:14px 0}
+pre code{background:none;border:0;padding:0;color:inherit;font-size:12.5px}
+
+.callout{border:1px solid var(--line);border-left:3px solid var(--accent);background:var(--panel);border-radius:10px;padding:13px 16px;margin:16px 0;font-size:14px;box-shadow:var(--shadow)}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.callout.ok{border-left-color:var(--ok);background:var(--ok-soft)}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.callout .ct{display:block;font-weight:700;font-size:12.5px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+
+.grid{display:grid;gap:12px;margin:16px 0}
+.grid.c2{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.grid.c3{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
+.card h5{margin:0 0 5px;font-size:13.5px}
+.card p{margin:0;font-size:13px;color:var(--muted)}
+.card .tag{font-family:var(--mono);font-size:10.5px;color:var(--accent);text-transform:uppercase;letter-spacing:.06em}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin:16px 0}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}
+.tablewrap table{margin:0}
+
+/* ---------- widgets ---------- */
+.widget{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin:20px 0;box-shadow:var(--shadow)}
+.widget-h{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}
+.widget-k{font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:1px 6px;flex:none}
+.widget-t{font-weight:650;font-size:15px}
+.widget-s{color:var(--muted);font-size:13.5px;margin:2px 0 14px}
+
+.opt{display:block;width:100%;text-align:left;border:1px solid var(--line);background:var(--panel-2);color:var(--text);border-radius:9px;padding:10px 13px;margin-bottom:7px;font-size:14px;transition:.15s}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:disabled{cursor:default}
+.opt.sel-ok{border-color:var(--ok);background:var(--ok-soft)}
+.opt.sel-bad{border-color:var(--bad);background:var(--bad-soft)}
+.opt.reveal-ok{border-color:var(--ok)}
+.opt .mk{font-family:var(--mono);font-weight:700;margin-right:8px;color:var(--muted)}
+.why{font-size:13px;color:var(--muted);margin-top:6px;padding-left:2px;display:none}
+.opt.shown .why{display:block}
+
+.chk{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--panel-2);margin-bottom:6px;cursor:pointer;font-size:14px}
+.chk input{margin-top:4px;flex:none;accent-color:var(--accent);width:15px;height:15px}
+.chk.on{border-color:var(--accent);background:var(--accent-soft)}
+.chk .lb{font-weight:600}
+.chk .ds{display:block;font-size:12.5px;color:var(--muted);font-weight:400}
+
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.pane{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.pane-h{padding:7px 12px;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.pane.bad .pane-h{background:var(--bad-soft);color:var(--bad)}
+.pane.ok .pane-h{background:var(--ok-soft);color:var(--ok)}
+.pane pre{margin:0;border-radius:0;max-height:340px}
+
+.preview{background:var(--code-bg);color:var(--code-text);border-radius:10px;padding:14px 16px;font-family:var(--mono);font-size:12px;line-height:1.6;white-space:pre-wrap;max-height:400px;overflow-y:auto;min-height:80px}
+.preview .ghosted{opacity:.32}
+.meter{height:7px;border-radius:99px;background:var(--panel-2);overflow:hidden;margin:12px 0 6px;border:1px solid var(--line)}
+.meter > i{display:block;height:100%;background:var(--accent);transition:width .3s}
+.scoreline{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);font-family:var(--mono)}
+
+textarea,input[type="text"],select{
+  width:100%;font-family:inherit;font-size:14px;color:var(--text);background:var(--panel-2);
+  border:1px solid var(--line);border-radius:9px;padding:10px 12px;resize:vertical;
+}
+textarea:focus,input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+label.fl{display:block;font-size:12px;font-weight:650;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:12px 0 5px}
+.btn{border:1px solid var(--line);background:var(--panel-2);color:var(--text);border-radius:8px;padding:8px 14px;font-size:13.5px;font-weight:600}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{filter:brightness(1.07)}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}
+.hint{font-size:12.5px;color:var(--muted)}
+.saved{font-size:12px;color:var(--ok);opacity:0;transition:.3s}
+.saved.on{opacity:1}
+
+.sorter-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--panel-2);margin-bottom:7px}
+.sorter-row .it{flex:1 1 240px;font-size:13.5px}
+.sorter-row .bs{display:flex;gap:5px;flex:none}
+.bbtn{border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:7px;padding:4px 9px;font-size:11.5px;font-weight:650}
+.bbtn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.sorter-row.ok{border-color:var(--ok);background:var(--ok-soft)}
+.sorter-row.bad{border-color:var(--bad);background:var(--bad-soft)}
+.sorter-row .fb{flex:1 1 100%;font-size:12.5px;color:var(--muted);display:none}
+.sorter-row.done .fb{display:block}
+
+.slider-row{display:grid;grid-template-columns:minmax(140px,1.2fr) minmax(120px,2fr) 74px;gap:10px;align-items:center;margin-bottom:9px;font-size:13.5px}
+.slider-row input[type=range]{width:100%;accent-color:var(--accent)}
+.slider-row .val{font-family:var(--mono);font-size:12.5px;text-align:right;color:var(--muted)}
+.stack{height:24px;display:flex;border-radius:7px;overflow:hidden;border:1px solid var(--line);margin:14px 0 8px;background:var(--panel-2)}
+.stack i{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:11.5px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend b{width:9px;height:9px;border-radius:2px;display:inline-block}
+.diag{margin-top:12px;font-size:13.5px}
+.diag div{padding:6px 0;border-top:1px dashed var(--line)}
+
+.footnav{display:flex;justify-content:space-between;gap:10px;margin-top:46px;padding-top:18px;border-top:1px solid var(--line)}
+.timerbox{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+.mod-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0 24px}
+.badge{font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-radius:6px;padding:3px 8px;color:var(--muted)}
+
+@media (max-width:900px){
+  .shell{grid-template-columns:1fr}
+  nav.side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);max-height:290px}
+  main{padding:22px 16px 70px}
+  h1{font-size:25px}
+  .slider-row{grid-template-columns:1fr;gap:4px}
+}
+@media print{
+  nav.side,header.top,.footnav,.btnrow{display:none}
+  main{max-width:none;padding:0}
+  .widget,.card,.callout{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand"><span class="dot"></span><span>Prompt · Metaprompting · Context Engineering<small>Programma formativo — 4 ore, teoria + laboratorio</small></span></div>
+  <div class="spacer"></div>
+  <div class="timerbox">
+    <button class="pill ghost" id="timerBtn">▶ Avvia timer</button>
+    <span class="pill clock" id="clock">00:00:00 / 4:00:00</span>
+  </div>
+  <button class="pill ghost" id="exportBtn" title="Scarica risposte e note in Markdown">⬇ Esporta</button>
+  <button class="pill ghost" id="themeBtn" title="Tema chiaro/scuro">◐</button>
+</header>
+<div class="progress-wrap"><div class="progress-bar" id="pbar"></div></div>
+
+<div class="shell">
+  <nav class="side">
+    <h4>Programma</h4>
+    <div id="nav"></div>
+    <h4 style="margin-top:18px">Avanzamento</h4>
+    <div style="padding:0 10px;font-size:12.5px;color:var(--muted)" id="statsBox"></div>
+    <div style="padding:10px">
+      <button class="btn" id="resetBtn" style="width:100%;font-size:12px">Azzera avanzamento</button>
+    </div>
+  </nav>
+  <main id="main"></main>
+</div>
+
+<script>
+/* ============================================================
+   STATO + PERSISTENZA
+   ============================================================ */
+const NS = 'pce4h.';
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(NS+k); return v===null? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(NS+k, JSON.stringify(v)); }catch(e){} },
+  del(k){ try{ localStorage.removeItem(NS+k); }catch(e){} },
+  clearAll(){ try{ Object.keys(localStorage).filter(k=>k.indexOf(NS)===0).forEach(k=>localStorage.removeItem(k)); }catch(e){} }
+};
+let current = store.get('current', 0);
+let done = store.get('done', {});      // moduleId -> true
+let answers = store.get('answers', {}); // exerciseId -> string
+let quizState = store.get('quiz', {});  // quizId -> chosen index
+
+function saveAll(){ store.set('done', done); store.set('answers', answers); store.set('quiz', quizState); }
+
+/* ============================================================
+   CONTENUTI
+   ============================================================ */
+const MODULES = [];
+
+/* ---------- 0. Apertura ---------- */
+MODULES.push({
+  id:'m0', n:'00', title:'Apertura e patto d’aula', min:5,
+  blocks:[
+    {t:'p',html:`<p>Quattro ore per passare da <em>&laquo;scrivo un prompt e spero&raquo;</em> a <em>&laquo;progetto il contesto e misuro il risultato&raquo;</em>. Il filo conduttore &egrave; uno: <strong>un modello linguistico non sa nulla del tuo mondo se non ci&ograve; che gli metti davanti in questa singola chiamata</strong>. Tutto il resto &mdash; prompt, metaprompting, context engineering &mdash; sono tecniche per decidere <em>cosa</em> mettergli davanti.</p>`},
+    {t:'cards',cards:[
+      {tag:'Ora 1',h:'Il prompt',p:'Anatomia, tokenizzazione, ruoli, parametri. Perché un prompt non è un comando ma un condizionamento.'},
+      {tag:'Ora 2',h:'Best practices',p:'12 tecniche che spostano davvero l’ago, con laboratorio di riscrittura e scoring.'},
+      {tag:'Ora 3',h:'Metaprompting',p:'Usare il modello per scrivere, criticare e testare i prompt. Il ciclo eval-driven.'},
+      {tag:'Ora 4',h:'Context engineering',p:'Risorse statiche vs contesto dinamico, RAG, skill, compattazione, budget di token.'}
+    ]},
+    {t:'table',head:['Blocco','Durata','Modalità'],rows:[
+      ['00 · Apertura e patto d’aula','5′','Plenaria'],
+      ['01 · Che cos’è un prompt','35′','Teoria + 1 esercizio'],
+      ['02 · Prompt best practices','55′','Teoria + 3 esercizi'],
+      ['— Pausa','10′','—'],
+      ['03 · Metaprompting','40′','Teoria + 2 esercizi'],
+      ['04 · Context engineering','60′','Teoria + 3 esercizi'],
+      ['05 · Capstone: progetta un agente','30′','Lavoro individuale/coppie'],
+      ['06 · Chiusura','5′','Plenaria']
+    ]},
+    {t:'callout',kind:'ok',title:'Come si usa questo materiale',html:`Naviga con la barra laterale o con i pulsanti in fondo a ogni modulo. Ogni esercizio si salva automaticamente nel browser (nessun dato lascia il tuo computer): puoi chiudere e riprendere. Con <strong>&#8681; Esporta</strong> scarichi tutte le tue risposte in un file Markdown. Il timer in alto serve al docente per tenere il ritmo.`},
+    {t:'p',html:`<h3>Obiettivi di apprendimento</h3><p>Alla fine delle 4 ore ogni partecipante deve essere in grado di:</p>
+      <ol>
+        <li>Descrivere che cosa entra concretamente in una chiamata a un LLM e in quale ordine.</li>
+        <li>Riscrivere un prompt vago in un prompt operativo applicando una checklist di 12 punti.</li>
+        <li>Costruire un meta-prompt che generi o critichi altri prompt, e un mini set di test per valutarli.</li>
+        <li>Distinguere risorse statiche e contesto dinamico, e allocare un budget di token motivandolo.</li>
+        <li>Progettare il contesto di un assistente reale del proprio ufficio, con criteri di valutazione.</li>
+      </ol>`},
+    {t:'exercise',id:'ex0',label:'Warm-up (3 minuti)',
+      prompt:'Scrivi il caso d’uso reale su cui vuoi lavorare oggi: un compito ripetitivo del tuo lavoro che vorresti delegare a un assistente. Una o due frasi. Lo riprenderemo nel capstone finale.',
+      placeholder:'Es. «Ogni settimana riassumo 20 segnalazioni da un gestionale e le classifico per priorità; vorrei che un assistente producesse la bozza del report.»'}
+  ]
+});
+
+/* ---------- 1. Che cos'è un prompt ---------- */
+MODULES.push({
+  id:'m1', n:'01', title:'Che cos’è un prompt', min:35,
+  blocks:[
+    {t:'p',html:`<p><strong>Definizione operativa.</strong> Un prompt &egrave; <em>l’intera sequenza di token che il modello riceve prima di produrre il primo token di risposta</em>. Non &egrave; solo &laquo;la domanda che scrivo in chat&raquo;: &egrave; tutto ci&ograve; che finisce nella finestra di contesto, in ordine, in quel preciso momento.</p>
+      <p>Questa definizione &egrave; scomoda ma utile, perch&eacute; chiarisce subito tre cose:</p>
+      <ul>
+        <li>Il modello &egrave; <strong>stateless</strong>: fra due chiamate non ricorda niente. La &laquo;memoria&raquo; di una conversazione &egrave; una finzione ricostruita rimandando ogni volta lo storico.</li>
+        <li>Quello che tu <em>non scrivi</em> semplicemente non esiste. Nessun contesto implicito, nessun &laquo;si capisce dal ruolo&raquo;.</li>
+        <li>Se il modello sbaglia, la prima ipotesi non &egrave; &laquo;&egrave; stupido&raquo; ma <strong>&laquo;non aveva l’informazione, o l’aveva in una forma sbagliata&raquo;</strong>.</li>
+      </ul>`},
+    {t:'callout',kind:'',title:'La frase da portare a casa',html:`Il modello non risponde alla tua <em>intenzione</em>. Risponde alla tua <em>stringa</em>.`},
+
+    {t:'p',html:`<h3>Anatomia di una chiamata reale</h3><p>Quando un’applicazione parla con un LLM, la richiesta &egrave; strutturata. Semplificando molto:</p>`},
+    {t:'code',lang:'json',code:`{
+  "model": "claude-...",
+  "system": "Sei l'assistente interno dell'ufficio contratti di ACME. ...",
+  "tools":  [ { "name": "cerca_contratto", "description": "...", "input_schema": {...} } ],
+  "messages": [
+    { "role": "user",      "content": "Il contratto 4471 e' ancora attivo?" },
+    { "role": "assistant", "content": [ { "type": "tool_use", "name": "cerca_contratto", "input": {"id": 4471} } ] },
+    { "role": "user",      "content": [ { "type": "tool_result", "content": "{ stato: 'scaduto', fine: '2025-03-31' }" } ] }
+  ],
+  "temperature": 0.2,
+  "max_tokens": 1024
+}`},
+    {t:'p',html:`<p>Tutti questi pezzi sono <strong>prompt</strong>. Il campo <code>system</code> definisce ruolo e regole stabili. I <code>messages</code> alternano turni utente e assistente. Le <code>tools</code> sono descrizioni testuali di funzioni: il modello non &laquo;vede&raquo; il codice, legge il tuo testo e da quello decide se e come chiamarlo. I <code>tool_result</code> reimmettono dati freschi nel contesto. Persino un <em>prefill</em> &mdash; iniziare tu la risposta dell’assistente &mdash; &egrave; parte del prompt.</p>`},
+    {t:'cards',cards:[
+      {tag:'system',h:'Chi sei, cosa vale sempre',p:'Ruolo, dominio, regole non negoziabili, formato, tono. Stabile tra le richieste.'},
+      {tag:'user',h:'La richiesta del turno',p:'Il compito specifico, più i dati allegati per questo turno.'},
+      {tag:'assistant',h:'Turni precedenti e prefill',p:'Lo storico, e l’eventuale inizio forzato della risposta.'},
+      {tag:'tools',h:'Capacità disponibili',p:'Nome, descrizione, schema. Costano token a ogni chiamata.'},
+      {tag:'tool_result',h:'Dati dal mondo',p:'Righe di database, ricerche, output di codice. Il canale della freschezza.'},
+      {tag:'parametri',h:'Come campionare',p:'temperature, max_tokens, stop sequences. Non sono prompt ma cambiano l’esito.'}
+    ]},
+
+    {t:'p',html:`<h3>Token, non parole</h3>
+      <p>Il modello non legge caratteri n&eacute; parole: legge <strong>token</strong>, frammenti ricorrenti di testo. In inglese un token vale in media ~4 caratteri; in italiano di meno (~3), perch&eacute; la nostra morfologia &egrave; pi&ugrave; ricca e le parole si spezzano pi&ugrave; spesso. Regola spannometrica utile in aula: <strong>1.000 token &asymp; 700 parole inglesi &asymp; 550 parole italiane</strong>.</p>
+      <p>Perch&eacute; ti interessa? Per tre ragioni molto pratiche: i token si <strong>pagano</strong>, occupano una finestra di contesto <strong>finita</strong>, e ogni token in pi&ugrave; &egrave; anche un’occasione in pi&ugrave; di distrarre il modello. Il tuo mestiere non &egrave; scrivere prompt lunghi: &egrave; scrivere prompt <em>densi di segnale</em>.</p>`},
+    {t:'tokenizer'},
+
+    {t:'p',html:`<h3>Che cosa fa davvero il modello</h3>
+      <p>Un LLM stima la distribuzione di probabilit&agrave; del token successivo dato tutto ci&ograve; che precede, e poi ne campiona uno; ripete, e cos&igrave; costruisce la risposta. Ne derivano conseguenze controintuitive ma sfruttabili:</p>
+      <ul>
+        <li><strong>Il prompt non ordina, condiziona.</strong> Scrivere &laquo;sei un revisore legale meticoloso&raquo; sposta la distribuzione verso il linguaggio dei revisori legali. Non installa competenze: rende pi&ugrave; probabile un certo registro e un certo tipo di attenzione.</li>
+        <li><strong>Il ragionamento occupa token.</strong> Se chiedi la risposta secca, il modello ha pochi passi di calcolo. Se lo lasci ragionare prima, la qualit&agrave; sui compiti multi-passo sale in modo netto: il testo intermedio &egrave; letteralmente lo spazio dove il ragionamento avviene.</li>
+        <li><strong>L’inizio condiziona il seguito.</strong> Una volta imboccata una strada (formato, tono, struttura), il modello tende a restarci. Da qui l’efficacia degli esempi e del prefill.</li>
+        <li><strong>La posizione conta.</strong> Istruzioni all’inizio e alla fine di un contesto lungo pesano pi&ugrave; di quelle sepolte al centro.</li>
+      </ul>`},
+    {t:'callout',kind:'warn',title:'Attenzione: determinismo',html:`Con <code>temperature</code> maggiore di 0 la stessa richiesta d&agrave; risposte diverse. Anche a 0 non hai garanzia bit-per-bit. Corollario metodologico: <strong>non giudicare mai un prompt da una singola esecuzione</strong>. Se cambi un prompt e l’output migliora una volta, non hai imparato nulla. Serve un insieme di casi &mdash; ci arriviamo al modulo 03.`},
+
+    {t:'quiz',id:'q1a',q:'Un assistente risponde &laquo;non ho informazioni sul contratto 4471&raquo;, ma il contratto esiste nel gestionale aziendale. Qual è la prima ipotesi corretta?',
+      opts:[
+        {tx:'Il modello è troppo piccolo per il compito',ok:false,why:'Possibile ma è l’ultima ipotesi da fare. Prima si verifica che l’informazione fosse effettivamente nel contesto.'},
+        {tx:'Il dato non era nel contesto della chiamata',ok:true,why:'Esatto. Il modello è stateless e non ha accesso ai tuoi sistemi: se nessun tool_result o documento ha portato quel dato dentro la finestra, per il modello non esiste. Prima si guarda il prompt effettivo, poi si dubita del modello.'},
+        {tx:'Va alzata la temperature per renderlo più creativo',ok:false,why:'La temperature governa la variabilità del campionamento, non l’accesso ai dati. Alzarla qui produrrebbe soltanto invenzioni più fluide.'},
+        {tx:'Bisogna insistere ripetendo la domanda',ok:false,why:'Ripetere non aggiunge informazione. Se il dato manca, manca anche al secondo tentativo: cambia solo la probabilità che il modello lo inventi.'}
+      ]},
+    {t:'quiz',id:'q1b',q:'Perché chiedere al modello di &laquo;ragionare passo per passo&raquo; migliora i compiti complessi?',
+      opts:[
+        {tx:'Perché il modello si concentra meglio quando gliene si fa richiesta',ok:false,why:'Metafora suggestiva ma fuorviante: non esiste uno &laquo;sforzo&raquo; attivabile a comando. Il meccanismo è più concreto.'},
+        {tx:'Perché i token generati sono lo spazio in cui il calcolo si distribuisce',ok:true,why:'Corretto. Generando passaggi intermedi il modello spalma il calcolo su più passi e può condizionarsi sui propri risultati parziali. Senza quel testo, deve arrivare alla conclusione in un colpo solo.'},
+        {tx:'Perché attiva un modulo di ragionamento simbolico interno',ok:false,why:'Non esiste un modulo simbolico separato. Resta predizione del token successivo: cambia solo quanto spazio ha per svolgersi.'},
+        {tx:'Perché riduce il numero di token consumati',ok:false,why:'È il contrario: consuma più token in output. È un compromesso costo/qualità consapevole.'}
+      ]},
+
+    {t:'exercise',id:'ex1',label:'Esercizio 1.1 — Da vago a operativo (8 minuti)',
+      prompt:'Prendi questo prompt reale e riscrivilo. Prompt di partenza: «Riassumi questa email e dimmi cosa fare.» Elenca prima le informazioni che mancano al modello per fare bene il lavoro, poi scrivi la tua versione.',
+      placeholder:'Informazioni mancanti:\n1. Chi leggerà il riassunto e con quale scopo\n2. ...\n\nPrompt riscritto:\n...',
+      solution:`<p><strong>Cosa manca al modello</strong> (le domande che un collega umano ti farebbe prima di iniziare):</p>
+        <ul><li>Chi legge il riassunto, con che livello di dettaglio e quanto tempo ha.</li>
+        <li>Che decisione deve supportare: rispondere? inoltrare? aprire una pratica?</li>
+        <li>Che cosa conta come &laquo;cosa fare&raquo;: azioni per me, per il mittente, scadenze?</li>
+        <li>Lunghezza e formato attesi.</li>
+        <li>Come comportarsi se l’email &egrave; ambigua o incompleta.</li></ul>
+        <p><strong>Una riscrittura possibile:</strong></p>
+        <pre><code>Sei l'assistente di un responsabile del servizio clienti che smaltisce
+la posta la mattina in 15 minuti.
+
+Analizza l'email delimitata da &lt;email&gt; e produci:
+
+1. CONTESTO — 1 frase: chi scrive e perche'.
+2. RICHIESTA — cosa vuole esattamente, in massimo 2 frasi.
+3. SCADENZE — date o termini citati; se assenti scrivi "nessuna".
+4. AZIONI — massimo 3 voci, ognuna nella forma
+   "[verbo all'infinito] ... — responsabile: [io | mittente | altro ufficio]".
+5. RISCHIO — alto/medio/basso, con mezza riga di motivazione.
+
+Regole:
+- Usa solo informazioni presenti nell'email. Non inferire dati mancanti.
+- Se un punto non e' determinabile, scrivi "non determinabile dall'email".
+- Massimo 150 parole in totale. Nessun preambolo.
+
+&lt;email&gt;
+{{TESTO_EMAIL}}
+&lt;/email&gt;</code></pre>
+        <p>Nota che la versione riscritta &egrave; molto pi&ugrave; lunga dell’originale, ma <strong>pu&ograve; essere riusata mille volte</strong>: il costo di scrittura si ammortizza, e soprattutto l’output diventa <em>prevedibile</em> &mdash; quindi verificabile.</p>`}
+  ]
+});
+
+/* ---------- 2. Best practices ---------- */
+MODULES.push({
+  id:'m2', n:'02', title:'Prompt best practices', min:55,
+  blocks:[
+    {t:'p',html:`<p>Le tecniche che seguono sono ordinate per <strong>rapporto tra beneficio e sforzo</strong>. Le prime cinque risolvono la grande maggioranza dei problemi reali; le ultime servono quando stai spremendo l’ultimo 10% di qualit&agrave;. Applicarle tutte a un prompt banale &egrave; uno spreco: il criterio &egrave; sempre &laquo;quale fallimento sto cercando di prevenire?&raquo;.</p>`},
+
+    {t:'p',html:`<h3>1 &middot; Sii esplicito su compito, destinatario e scopo</h3>
+      <p>Il difetto pi&ugrave; comune non &egrave; la lunghezza: &egrave; la <strong>reticenza</strong>. Chiediti che cosa sa un tuo collega esperto che il modello non pu&ograve; sapere: chi legger&agrave;, a che scopo, che cosa &egrave; ovvio nel tuo settore, che cosa &egrave; vietato. Tutto quel materiale &egrave; contesto mancante. Un buon test: se dessi solo questo testo a un neoassunto competente ma nuovo, riuscirebbe a fare il lavoro? Se no, il prompt &egrave; incompleto.</p>
+
+      <h3>2 &middot; Struttura il prompt con delimitatori</h3>
+      <p>Separa <em>istruzioni</em>, <em>dati</em>, <em>esempi</em> e <em>formato</em>. I tag in stile XML funzionano particolarmente bene &mdash; <code>&lt;documento&gt;</code>, <code>&lt;esempi&gt;</code>, <code>&lt;regole&gt;</code> &mdash; perch&eacute; delimitano senza ambiguit&agrave; e ti permettono poi di <em>riferirti</em> alle sezioni (&laquo;usa solo i fatti in <code>&lt;documento&gt;</code>&raquo;). Il beneficio collaterale &egrave; per te: un prompt strutturato &egrave; un prompt manutenibile.</p>
+
+      <h3>3 &middot; Metti i dati lunghi prima, l’istruzione dopo</h3>
+      <p>Con contesti lunghi (un contratto, venti pagine di verbali) l’ordine conta: <strong>prima il materiale, poi la domanda</strong>. Questo evita che l’istruzione resti sepolta a met&agrave; e sfrutta la maggiore salienza della parte finale del contesto. Nei casi difficili &egrave; utile ripetere il vincolo pi&ugrave; importante anche in chiusura.</p>
+
+      <h3>4 &middot; Specifica il formato di output mostrandolo</h3>
+      <p>&laquo;Rispondi in modo strutturato&raquo; non &egrave; una specifica. Uno schema esplicito &mdash; o meglio un esempio compilato &mdash; s&igrave;. Se l’output deve essere consumato da un programma, definisci il formato con precisione e dichiara il comportamento nei casi limite (campo assente, valore ignoto). Se ti serve JSON pulito, chiedi esplicitamente nessun testo prima e dopo.</p>
+
+      <h3>5 &middot; Dai esempi (few-shot) che coprano i casi limite</h3>
+      <p>Gli esempi sono il modo pi&ugrave; efficiente di comunicare un giudizio difficile da verbalizzare (&laquo;questo tono s&igrave;, questo no&raquo;). Tre regole: da 2 a 5 esempi bastano quasi sempre; devono essere <strong>diversi</strong> tra loro e includere i casi scomodi (input vuoto, ambiguo, fuori perimetro); devono essere <strong>coerenti</strong> col formato richiesto, perch&eacute; il modello imita gli esempi pi&ugrave; delle istruzioni. Un esempio sbagliato fa pi&ugrave; danni di dieci righe di regole.</p>`},
+    {t:'callout',kind:'bad',title:'Il conflitto silenzioso',html:`Se le tue istruzioni dicono &laquo;massimo 50 parole&raquo; e i tuoi esempi ne hanno 200, vincono gli esempi. Ogni volta che modifichi le istruzioni, rileggi gli esempi.`},
+    {t:'p',html:`<h3>6 &middot; Lascia spazio al ragionamento, poi separa la risposta</h3>
+      <p>Per compiti multi-passo (calcoli, confronti, classificazioni sfumate) chiedi al modello di ragionare <em>prima</em>, in una sezione dedicata, e di dare la risposta finale in una sezione separata e facilmente estraibile. Cos&igrave; ottieni la qualit&agrave; del ragionamento senza sporcare l’output. Attenzione al rovescio: se il formato non lascia spazio di ragionamento (&laquo;rispondi solo con SI o NO&raquo;), stai chiedendo un giudizio istantaneo &mdash; accettabile per compiti facili, rischioso per quelli difficili.</p>
+
+      <h3>7 &middot; Di’ cosa fare, non cosa non fare</h3>
+      <p>&laquo;Non essere prolisso&raquo; &egrave; un vincolo negativo: definisce un vastissimo spazio di cose sbagliate senza indicare la direzione. &laquo;Massimo 3 frasi, indicativo presente, nessun preambolo&raquo; &egrave; un vincolo positivo e verificabile. Le liste di divieti hanno anche un effetto collaterale: attirano attenzione sul tema che vorresti evitare.</p>
+
+      <h3>8 &middot; Governa i casi limite in modo esplicito</h3>
+      <p>&Egrave; qui che si distingue un prompt da laboratorio da uno di produzione. Che deve fare il modello se l’informazione non c’&egrave;? Se la domanda &egrave; fuori perimetro? Se i dati si contraddicono? Definisci un’uscita esplicita &mdash; <code>NON_DETERMINABILE</code>, &laquo;chiedi chiarimenti&raquo;, &laquo;escala all’operatore&raquo; &mdash; altrimenti il modello, che &egrave; addestrato a essere utile, riempir&agrave; il vuoto con qualcosa di plausibile.</p>
+
+      <h3>9 &middot; Assegna un ruolo quando serve un registro</h3>
+      <p>Il role prompting funziona quando cambia davvero il modo di guardare il problema (&laquo;revisore che cerca clausole svantaggiose per il cliente&raquo;) e serve a poco quando &egrave; decorativo (&laquo;sei un assistente utilissimo&raquo;). Usalo per orientare <em>criterio</em> e <em>tono</em>, non come formula magica.</p>
+
+      <h3>10 &middot; Usa il prefill per forzare il formato</h3>
+      <p>Nelle API puoi iniziare tu il turno dell’assistente. Se il messaggio dell’assistente comincia con <code>{</code>, la risposta continuer&agrave; in JSON e non con &laquo;Certo, ecco&hellip;&raquo;. &Egrave; il modo pi&ugrave; economico per eliminare preamboli e stabilizzare il formato.</p>
+
+      <h3>11 &middot; Un compito per chiamata (concatena, non accumulare)</h3>
+      <p>Un prompt che estrae + classifica + traduce + riassume fallisce in modo confuso: non capisci quale sottocompito &egrave; andato male. Spezzare in passaggi concatenati costa qualche chiamata in pi&ugrave; ma ti d&agrave; punti di controllo diagnosticabili e riusabili.</p>
+
+      <h3>12 &middot; Itera su casi reali, non immaginari</h3>
+      <p>La miglior best practice &egrave; metodologica: raccogli 10&ndash;20 input veri, con difficolt&agrave; assortita, e giudica ogni modifica su quelli. Senza questo, &laquo;migliorare il prompt&raquo; &egrave; solo cambiare il prompt. &Egrave; il ponte verso il modulo successivo.</p>`},
+
+    {t:'compare',title:'Prima / dopo su un caso reale',
+      bad:{h:'Prompt originale',code:`Analizza queste segnalazioni e dimmi quali sono urgenti.`},
+      good:{h:'Prompt riscritto',code:`Sei un analista del supporto tecnico di un gestionale sanitario.
+Classifichi le segnalazioni per il triage del mattino: la tua
+classificazione decide chi viene chiamato entro un'ora.
+
+<criteri>
+CRITICA  = servizio non utilizzabile, o dato clinico a rischio,
+           o piu' di 10 utenti bloccati.
+ALTA     = funzione chiave degradata con workaround noto.
+MEDIA    = disagio operativo senza blocco.
+BASSA    = estetica, richiesta di miglioria, dubbio d'uso.
+</criteri>
+
+<segnalazioni>
+{{ELENCO}}
+</segnalazioni>
+
+Per ogni segnalazione ragiona brevemente in <analisi>, poi emetti
+una riga in <output> nel formato:
+ID | LIVELLO | motivazione (max 12 parole) | dato_mancante_per_decidere
+
+Regole:
+- Applica solo i <criteri>: non usare il tono del segnalante come indizio.
+- Se mancano informazioni per scegliere fra due livelli, scegli il
+  piu' grave dei due e indicalo in dato_mancante_per_decidere.
+- Nessun testo fuori da <analisi> e <output>.`}},
+    {t:'callout',kind:'ok',title:'Che cosa è cambiato, in ordine di impatto',html:`Ruolo <em>e</em> conseguenza della decisione (1) &middot; criteri espliciti al posto di &laquo;urgenti&raquo; (1, 8) &middot; struttura con tag (2) &middot; formato mostrato (4) &middot; spazio di ragionamento separato dall’output (6) &middot; regola positiva contro un bias noto, il tono del segnalante (7) &middot; comportamento definito in caso di incertezza (8).`},
+
+    {t:'promptlab'},
+
+    {t:'quiz',id:'q2a',q:'Nel tuo prompt le istruzioni chiedono &laquo;massimo 3 righe, tono neutro&raquo;, ma i tre esempi few-shot sono paragrafi discorsivi da 10 righe. Cosa succede?',
+      opts:[
+        {tx:'Il modello media fra istruzioni ed esempi, producendo ~6 righe',ok:false,why:'A volte accade, ma non è il fenomeno principale né quello su cui puoi contare.'},
+        {tx:'Il modello tende a seguire gli esempi e ignorare il vincolo',ok:true,why:'Corretto. La dimostrazione è un segnale molto più forte della descrizione: il modello imita il pattern che vede. È il difetto più sottovalutato nei prompt reali — e la prima cosa da controllare quando un vincolo di formato viene ignorato.'},
+        {tx:'Le istruzioni prevalgono perché sono più vicine all’inizio',ok:false,why:'La posizione conta, ma non ribalta la forza della dimostrazione. Un esempio incoerente resta un bug.'},
+        {tx:'Dipende solo dalla temperature',ok:false,why:'La temperature governa la variabilità, non quale segnale prevale.'}
+      ]},
+    {t:'quiz',id:'q2b',q:'Vuoi che un’applicazione riceva JSON pulito, senza &laquo;Certo, ecco il risultato:&raquo; davanti. Qual è la leva più affidabile ed economica?',
+      opts:[
+        {tx:'Scrivere IN MAIUSCOLO &laquo;SOLO JSON&raquo; e ripeterlo tre volte',ok:false,why:'Aiuta un po’ ma resta fragile, e appesantisce il prompt. La ripetizione enfatica è un ripiego, non un meccanismo.'},
+        {tx:'Fare il prefill del turno assistente con la graffa aperta',ok:true,why:'Esatto. Se l’assistente ha già emesso <code>{</code>, la continuazione più probabile è JSON: il preambolo diventa quasi impossibile. Costa zero token aggiuntivi ed è la tecnica più diretta — dove l’API la supporta.'},
+        {tx:'Abbassare max_tokens per troncare il preambolo',ok:false,why:'Tronca la fine, non l’inizio: otterresti JSON incompleto. Peggiora il problema.'},
+        {tx:'Aumentare la temperature per uscire dal formato conversazionale',ok:false,why:'Aumenta la variabilità, quindi rende il formato meno prevedibile, non più.'}
+      ]},
+
+    {t:'exercise',id:'ex2',label:'Esercizio 2.1 — Progetta i tuoi esempi few-shot (10 minuti)',
+      prompt:'Per il tuo caso d’uso del warm-up, scrivi 3 esempi input→output. Vincolo: il primo su un caso tipico, il secondo su un caso limite (dato mancante, ambiguo, fuori perimetro), il terzo su un caso che oggi il modello sbaglierebbe. Rispetta lo stesso formato in tutti e tre.',
+      placeholder:'ESEMPIO 1 (tipico)\nInput: ...\nOutput: ...\n\nESEMPIO 2 (caso limite: manca la data)\nInput: ...\nOutput: ...\n\nESEMPIO 3 (caso oggi sbagliato)\nInput: ...\nOutput: ...',
+      solution:`<p>Criteri di autovalutazione &mdash; rileggi i tuoi tre esempi e verifica:</p>
+        <ul>
+          <li><strong>Coerenza rigida di formato.</strong> Stessi campi, stesso ordine, stessa punteggiatura, stessa lunghezza indicativa. Ogni difformit&agrave; verr&agrave; imitata.</li>
+          <li><strong>Diversit&agrave; reale.</strong> Se i tre esempi si assomigliano, stai insegnando un solo caso tre volte.</li>
+          <li><strong>Il caso limite mostra l’uscita esplicita.</strong> L’esempio 2 deve <em>dimostrare</em> come si dice &laquo;non lo so&raquo;: <code>NON_DETERMINABILE</code>, campo vuoto, richiesta di chiarimento.</li>
+          <li><strong>Nessun ragionamento implicito.</strong> Se l’output dell’esempio 3 richiede un passaggio non ovvio, o lo espliciti in una sezione di ragionamento, o l’esempio insegna a indovinare.</li>
+          <li><strong>Sono output che accetteresti in produzione.</strong> Gli esempi sono la tua definizione di qualit&agrave;: se non li firmeresti, riscrivili.</li>
+        </ul>`},
+
+    {t:'checklist',id:'ck2',title:'Checklist operativa — revisione di un prompt',
+      items:[
+        'Compito, destinatario e scopo sono espliciti',
+        'Istruzioni, dati ed esempi sono separati da delimitatori',
+        'I dati lunghi precedono la domanda; il vincolo chiave è ripetuto in chiusura',
+        'Il formato di output è mostrato, non solo descritto',
+        'Ci sono 2–5 esempi diversi tra loro, coerenti col formato',
+        'C’è spazio di ragionamento separato dalla risposta finale (se il compito lo richiede)',
+        'I vincoli sono positivi e verificabili, non divieti generici',
+        'I casi limite hanno un comportamento definito (uscita esplicita per «non lo so»)',
+        'Il prompt fa una cosa sola; il resto è concatenato',
+        'Esiste un set di 10–20 casi reali su cui valutare le modifiche'
+      ]}
+  ]
+});
+
+/* ---------- Pausa ---------- */
+MODULES.push({
+  id:'brk', n:'—', title:'Pausa', min:10,
+  blocks:[
+    {t:'p',html:`<h1 style="font-size:26px;margin-top:10px">Pausa — 10 minuti</h1>
+      <p class="lede">Si riprende con il metaprompting: usare il modello per costruire e valutare i prompt.</p>`},
+    {t:'callout',kind:'',title:'Domanda su cui rimuginare durante la pausa',html:`Nell’esercizio 2.1 hai scritto tre esempi a mano. Se il compito ne richiedesse trenta, come li produrresti? E come faresti a sapere che i nuovi prompt sono davvero migliori dei vecchi?`}
+  ]
+});
+
+/* ---------- 3. Metaprompting ---------- */
+MODULES.push({
+  id:'m3', n:'03', title:'Metaprompting', min:40,
+  blocks:[
+    {t:'p',html:`<p><strong>Metaprompting</strong> &egrave; usare un modello linguistico come strumento per lavorare <em>sui prompt</em> anzich&eacute; <em>sul compito</em>: generarli, criticarli, riscriverli, comprimerli, generare i casi di test per valutarli e in alcuni casi valutarli. Il modello passa da esecutore a collaboratore nel design del prompt.</p>
+      <p>&Egrave; molto efficace per una ragione asimmetrica: <em>riconoscere</em> che cosa manca a un prompt &egrave; pi&ugrave; facile che <em>scriverlo</em> perfetto al primo colpo. Il modello, che ha visto un numero enorme di istruzioni ben scritte, &egrave; un buon critico anche quando non sarebbe un buon autore.</p>`},
+
+    {t:'p',html:`<h3>I cinque pattern che userai davvero</h3>`},
+    {t:'cards',cards:[
+      {tag:'Pattern 1',h:'Generator',p:'Dalla descrizione del compito a un prompt strutturato completo, con formato, casi limite e vincoli.'},
+      {tag:'Pattern 2',h:'Critic',p:'Il modello valuta un prompt esistente contro una rubrica esplicita e propone modifiche puntuali.'},
+      {tag:'Pattern 3',h:'Failure-driven',p:'Gli dai il prompt e 5 output sbagliati: deve diagnosticare la causa e correggere solo ciò che serve.'},
+      {tag:'Pattern 4',h:'Test-set generator',p:'Genera 15–20 input di prova, inclusi casi limite, per valutare le versioni del prompt.'},
+      {tag:'Pattern 5',h:'Judge',p:'Un prompt che valuta output secondo criteri dichiarati. Va calibrato su giudizi umani.'}
+    ]},
+
+    {t:'p',html:`<h3>Pattern 1 &middot; Il prompt generator</h3>
+      <p>Lo scheletro di un buon meta-prompt generatore &egrave; sempre lo stesso: dichiara che l’output &egrave; <em>un prompt</em> (non la soluzione del compito), fornisci il contesto del compito, imponi una struttura obbligatoria e chiedi di esplicitare le assunzioni fatte.</p>`},
+    {t:'code',lang:'text',code:`Sei un esperto di prompt engineering. Il tuo output non e' la soluzione
+del compito descritto: e' IL PROMPT che risolvera' quel compito.
+
+<compito>
+{{DESCRIZIONE_DEL_COMPITO}}
+</compito>
+<destinatario_output>{{CHI_LEGGE_E_PERCHE}}</destinatario_output>
+<vincoli>{{FORMATO, LUNGHEZZA, TONO, DIVIETI}}</vincoli>
+<esempi_reali>{{1-2 INPUT VERI}}</esempi_reali>
+
+Il prompt che produci deve contenere, in questo ordine:
+1. Ruolo e conseguenza della decisione.
+2. Definizioni operative di ogni termine valutativo usato
+   (niente "urgente", "importante", "conciso" senza criterio).
+3. Sezione dati delimitata con tag e segnaposto {{...}}.
+4. Formato di output mostrato con un esempio compilato.
+5. Regole per i casi limite: dato mancante, input ambiguo,
+   richiesta fuori perimetro, informazioni contraddittorie.
+6. Un vincolo di lunghezza verificabile.
+
+Dopo il prompt, aggiungi due sezioni:
+<assunzioni>Cosa hai dovuto assumere e che risposta ti servirebbe.</assunzioni>
+<rischi>I 3 modi piu' probabili in cui questo prompt fallira'.</rischi>`},
+
+    {t:'p',html:`<h3>Pattern 2 &middot; Il critic con rubrica</h3>
+      <p>&laquo;Migliora questo prompt&raquo; produce riscritture pi&ugrave; lunghe e non necessariamente migliori. La differenza la fa la <strong>rubrica</strong>: criteri numerati, un punteggio per criterio, e l’obbligo di citare il pezzo di testo problematico. Il vincolo &laquo;non allungare&raquo; &egrave; importante perch&eacute; la tendenza naturale del modello &egrave; aggiungere.</p>`},
+    {t:'code',lang:'text',code:`Valuta il prompt in <candidato> come farebbe un revisore severo.
+
+Per ognuno di questi criteri assegna 0-2 (0 assente, 1 parziale, 2 solido)
+e CITA la porzione di testo che motiva il voto:
+C1 compito e destinatario espliciti
+C2 termini valutativi definiti operativamente
+C3 formato di output non ambiguo
+C4 casi limite governati
+C5 vincoli positivi e verificabili
+C6 assenza di istruzioni in conflitto tra loro o con gli esempi
+C7 densita': ogni frase serve
+
+Poi produci:
+<diagnosi>I 3 difetti piu' costosi, in ordine di impatto.</diagnosi>
+<riscrittura>Il prompt corretto. Vincolo: non piu' lungo dell'originale
+piu' 20%. Modifica solo cio' che i difetti richiedono.</riscrittura>
+<diff>Elenco puntato di cosa hai cambiato e perche'.</diff>
+
+<candidato>{{PROMPT_DA_VALUTARE}}</candidato>`},
+
+    {t:'p',html:`<h3>Pattern 3 &middot; Il refinement guidato dai fallimenti</h3>
+      <p>&Egrave; il pattern con il miglior rendimento reale, perch&eacute; parte da dati e non da opinioni. Raccogli 5&ndash;10 casi in cui il prompt ha sbagliato, e per ciascuno annota <em>che cosa avresti voluto</em>. Poi chiedi al modello di diagnosticare prima di correggere.</p>`},
+    {t:'code',lang:'text',code:`Questo prompt e' in produzione e sbaglia su alcuni casi.
+
+<prompt_attuale>{{PROMPT}}</prompt_attuale>
+<fallimenti>
+CASO 1 — input: ... | output ottenuto: ... | output desiderato: ...
+CASO 2 — ...
+</fallimenti>
+
+Procedi in tre passi separati:
+1. <diagnosi> Per ogni caso, quale specifica carenza del prompt lo spiega?
+   Distingui: informazione mancante | istruzione ambigua | esempio
+   fuorviante | formato non vincolato | caso limite non previsto |
+   compito oltre la portata di un singolo prompt.
+2. <pattern> Le diagnosi hanno una causa comune? Quale?
+3. <correzione> Modifica minima che risolve la causa comune senza
+   rompere i casi che oggi funzionano. Non riscrivere da zero.
+
+Se la causa e' che il prompt fa troppe cose, proponi la scomposizione
+in piu' chiamate invece di un prompt piu' lungo.`},
+
+    {t:'callout',kind:'warn',title:'Il limite strutturale del metaprompting',html:`Il modello non ha accesso ai tuoi dati reali, ai tuoi utenti, alle conseguenze dei suoi errori. Producendo prompt <em>plausibili</em> pu&ograve; fabbricare criteri che suonano professionali ma non corrispondono al tuo dominio &mdash; soglie inventate, categorie che nel tuo processo non esistono. <strong>Il metaprompting accelera la scrittura, non sostituisce la validazione.</strong> Senza un set di test, ti d&agrave; solo prompt pi&ugrave; belli.`},
+
+    {t:'p',html:`<h3>Il ciclo eval-driven: dove finisce l’artigianato</h3>
+      <p>Questo &egrave; il passaggio che separa chi &laquo;sa scrivere prompt&raquo; da chi li mette in produzione. Nessuna delle tecniche viste finora ha valore se non sai <em>misurare</em> se un cambiamento migliora le cose.</p>
+      <ol>
+        <li><strong>Raccogli 15&ndash;20 casi reali</strong>, con difficolt&agrave; assortita e almeno un terzo di casi limite. Non inventarli tutti: i casi veri contengono la sporcizia che i casi inventati non hanno.</li>
+        <li><strong>Definisci il criterio di correttezza</strong> caso per caso. Pu&ograve; essere esatto (etichetta giusta, JSON valido, campo presente) o un giudizio con rubrica. Se non riesci a dire quando un output &egrave; giusto, non hai ancora capito il compito &mdash; e questo &egrave; il risultato pi&ugrave; utile del passaggio.</li>
+        <li><strong>Misura la baseline</strong> del prompt attuale su tutti i casi.</li>
+        <li><strong>Cambia una cosa alla volta</strong> e rimisura. Cambiarne cinque insieme ti dice solo che &laquo;qualcosa&raquo; ha funzionato.</li>
+        <li><strong>Analizza i fallimenti residui</strong> e alimenta il Pattern 3. Aggiungi al set ogni nuovo caso rotto trovato in produzione: il test set cresce con la tua comprensione del problema.</li>
+      </ol>
+      <p>Il costo di partenza &egrave; qualche ora. Il ritorno &egrave; che da quel momento ogni discussione sui prompt si chiude con un numero invece che con un’opinione.</p>`},
+    {t:'callout',kind:'ok',title:'Metrica minima praticabile',html:`Non serve un’infrastruttura. Un foglio di calcolo con <em>input · output atteso · output v1 · ok? · output v2 · ok?</em> su venti righe &egrave; gi&agrave; un eval, ed &egrave; infinitamente meglio di nessun eval. Aggiungi una colonna &laquo;nota sul fallimento&raquo;: sar&agrave; la materia prima del prossimo miglioramento.`},
+
+    {t:'quiz',id:'q3a',q:'Chiedi al modello di riscrivere un prompt. La versione nuova è più dettagliata, meglio strutturata, e sul caso che stavi guardando funziona. La adotti?',
+      opts:[
+        {tx:'Sì: è più strutturata e ha funzionato',ok:false,why:'Un solo caso non è evidenza, e la struttura non è qualità. Le riscritture generate tendono ad aggiungere vincoli plausibili ma arbitrari, che possono rompere casi che prima funzionavano — e non te ne accorgi guardando un esempio.'},
+        {tx:'No: prima la confronto con la versione attuale su un set di casi',ok:true,why:'Esatto. Il metaprompting genera ipotesi, non conclusioni. Il confronto A/B su 15–20 casi è ciò che trasforma un’ipotesi in una decisione — e spesso rivela regressioni sui casi facili.'},
+        {tx:'Sì, ma solo se il modello è più grande di quello che esegue il compito',ok:false,why:'La dimensione del generatore non garantisce l’aderenza al tuo dominio, che è il vero rischio.'},
+        {tx:'No: le riscritture automatiche sono sistematicamente peggiori',ok:false,why:'Troppo severo. Sono spesso migliori — semplicemente non lo sai finché non misuri.'}
+      ]},
+    {t:'quiz',id:'q3b',q:'Nel Pattern 3 (failure-driven) perché si impone al modello di fare la diagnosi in una sezione separata prima della correzione?',
+      opts:[
+        {tx:'Per rendere l’output più leggibile per il revisore umano',ok:false,why:'È un beneficio collaterale, non la ragione principale.'},
+        {tx:'Per obbligarlo a identificare la causa comune invece di rattoppare i sintomi',ok:true,why:'Corretto, e ha due effetti. Primo: senza diagnosi il modello aggiunge una regola per ogni caso rotto, e il prompt diventa un elenco di eccezioni fragile. Secondo: la diagnosi è leggibile e contestabile da te — se la causa individuata è sbagliata, lo vedi prima di adottare la correzione.'},
+        {tx:'Perché la diagnosi consuma token e migliora la qualità in sé',ok:false,why:'Lo spazio di ragionamento aiuta, ma qui il punto è il contenuto specifico che gli chiedi di produrre.'},
+        {tx:'Perché permette di scartare i casi limite',ok:false,why:'I casi limite sono precisamente quelli da non scartare.'}
+      ]},
+
+    {t:'metalab'},
+
+    {t:'exercise',id:'ex3',label:'Esercizio 3.2 — Il tuo mini test set (8 minuti)',
+      prompt:'Per il tuo caso d’uso, elenca 6 casi di test: 3 tipici e 3 limite. Per ciascuno scrivi l’input in forma abbreviata e il criterio con cui deciderai se l’output è accettabile. Il criterio deve essere verificabile da una persona diversa da te.',
+      placeholder:'T1 input: ... | criterio: ...\nT2 ...\nT3 ...\nL1 (dato mancante) input: ... | criterio: deve rispondere NON_DETERMINABILE e non inventare la data\nL2 (fuori perimetro) ...\nL3 (dati contraddittori) ...',
+      solution:`<p>Segnali che il tuo test set &egrave; buono:</p>
+        <ul>
+          <li><strong>I criteri sono decidibili da un terzo.</strong> &laquo;Il riassunto &egrave; buono&raquo; non lo &egrave;. &laquo;Cita entrambe le scadenze presenti nel testo e nessuna assente&raquo; s&igrave;.</li>
+          <li><strong>I casi limite hanno criteri di astensione</strong>, non solo di risposta: la cosa da verificare &egrave; che il modello <em>non</em> inventi.</li>
+          <li><strong>Almeno un caso &egrave; oggi fallito</strong> dal tuo prompt attuale. Un set che passa al 100% dal primo giorno &egrave; un set troppo facile: non pu&ograve; distinguere due versioni.</li>
+          <li><strong>Sono casi veri</strong>, o almeno derivati da casi veri con i nomi cambiati. La sporcizia dei dati reali &mdash; abbreviazioni, campi vuoti, testo incollato male &mdash; &egrave; met&agrave; della difficolt&agrave;.</li>
+        </ul>
+        <p>Tieni questo elenco: nel capstone diventer&agrave; la sezione di valutazione del tuo progetto.</p>`}
+  ]
+});
+
+/* ---------- 4. Context engineering ---------- */
+MODULES.push({
+  id:'m4', n:'04', title:'Context engineering', min:60,
+  blocks:[
+    {t:'p',html:`<p><strong>Context engineering</strong> &egrave; la disciplina che decide <em>quali informazioni entrano nella finestra di contesto, in quale momento, in quale forma e con quale priorit&agrave;</em>. Il prompt engineering ne &egrave; un sottoinsieme: si occupa di come formulare le istruzioni: il context engineering si occupa di <strong>tutto il resto che accompagna quelle istruzioni</strong> &mdash; e nei sistemi agentici &egrave; l&igrave; che si vince o si perde.</p>
+      <p>Il cambio di prospettiva &egrave; questo: quando passi da una singola risposta a un sistema che gira in loop, chiama strumenti, accumula risultati e prosegue per decine di turni, il prompt non &egrave; pi&ugrave; una cosa che <em>scrivi</em>. &Egrave; una cosa che il tuo sistema <strong>assembla dinamicamente a ogni turno</strong>. Progettare quell’assemblaggio &egrave; il lavoro.</p>`},
+    {t:'callout',kind:'',title:'La definizione da tenere a mente',html:`Il contesto &egrave; un <strong>budget</strong>, non un magazzino. L’obiettivo non &egrave; mettere dentro tutto il possibile: &egrave; trovare <em>il pi&ugrave; piccolo insieme di token ad alto segnale</em> che massimizza la probabilit&agrave; del comportamento desiderato.`},
+
+    {t:'p',html:`<h3>Perché &laquo;metti tutto dentro&raquo; non funziona</h3>
+      <p>Con finestre da centinaia di migliaia di token la tentazione &egrave; ovvia: carichiamo tutto e non pensiamoci pi&ugrave;. Non funziona, per quattro ragioni distinte che vale la pena separare.</p>
+      <ul>
+        <li><strong>Degrado con la lunghezza.</strong> L’accuratezza non &egrave; costante lungo la finestra: le informazioni al centro di contesti molto lunghi vengono recuperate peggio di quelle in testa e in coda. Il fenomeno &egrave; noto come <em>lost in the middle</em>, e la sua versione agentica come <em>context rot</em>: pi&ugrave; il contesto cresce, pi&ugrave; il comportamento si sfilaccia.</li>
+        <li><strong>Distrazione.</strong> Materiale irrilevante ma superficialmente simile a quello utile &egrave; peggio dell’assenza di materiale: sposta l’attenzione su fatti sbagliati e produce risposte confidenti e false.</li>
+        <li><strong>Conflitto.</strong> Pi&ugrave; documenti carichi, pi&ugrave; alta la probabilit&agrave; che due si contraddicano (una policy vecchia e una nuova). Senza una gerarchia dichiarata, il modello sceglie arbitrariamente.</li>
+        <li><strong>Costo e latenza.</strong> Il contesto si paga a ogni turno. In un agente che fa 40 passi, 30k token di zavorra iniziale sono 1,2 milioni di token di zavorra totale.</li>
+      </ul>`},
+
+    {t:'p',html:`<h3>Le due famiglie: risorse statiche e contesto dinamico</h3>
+      <p>La distinzione pi&ugrave; utile in pratica &egrave; per <strong>ciclo di vita</strong>: quello che &egrave; identico a ogni chiamata, e quello che dipende dal turno.</p>`},
+    {t:'split2',
+      a:{h:'Risorse statiche',items:[
+        ['System prompt','Ruolo, dominio, regole non negoziabili, tono, formato di default. Il documento costituzionale dell’agente.'],
+        ['File di istruzioni di progetto','AGENTS.md, CLAUDE.md, README interni: convenzioni, comandi, architettura, cosa non toccare. Caricati a ogni sessione.'],
+        ['Definizioni degli strumenti','Nome, descrizione, schema di input di ogni tool. Sono prompt a tutti gli effetti e occupano contesto sempre, anche quando non vengono usati.'],
+        ['Esempi few-shot canonici','Il repertorio di riferimento del comportamento corretto.'],
+        ['Policy, glossari, schemi','Regole aziendali, definizioni di dominio, schema del database, style guide.']
+      ]},
+      b:{h:'Contesto dinamico',items:[
+        ['Messaggio dell’utente','Il compito del turno e i suoi allegati.'],
+        ['Risultati di retrieval (RAG)','Frammenti recuperati da una base documentale in funzione della domanda.'],
+        ['Output degli strumenti','Righe di database, risposte di API, risultati di ricerca, output di codice eseguito. Il canale della freschezza.'],
+        ['Skill caricate su richiesta','Procedure e istruzioni specialistiche il cui corpo entra in contesto solo quando serve.'],
+        ['Memoria persistente','Note, decisioni, preferenze salvate su file e rilette selettivamente.'],
+        ['Storico e sue compattazioni','I turni precedenti, progressivamente riassunti quando la finestra si riempie.'],
+        ['Output di sub-agenti','Il risultato condensato di un’indagine svolta in un contesto separato.']
+      ]}},
+    {t:'callout',kind:'warn',title:'Le tool definition sono il costo nascosto',html:`Trenta strumenti con descrizioni generose sono facilmente 15&ndash;20k token <em>in ogni singola chiamata</em>, pi&ugrave; una scelta pi&ugrave; difficile per il modello: strumenti dai perimetri sovrapposti producono selezioni sbagliate. Regola pratica: <strong>pochi strumenti, ben separati, con descrizioni che dicono anche quando NON usarli</strong>. Se due tool possono essere confusi da un neoassunto, saranno confusi dal modello.`},
+
+    {t:'p',html:`<h3>Contesto dinamico 1 &middot; RAG (retrieval-augmented generation)</h3>
+      <p>Idea: invece di mettere l’intera base documentale nel prompt, la indicizzi; a ogni domanda recuperi i pochi frammenti pertinenti e <em>quelli</em> entrano in contesto. Serve quando il corpus &egrave; troppo grande per la finestra, cambia spesso, o richiede citazioni verificabili.</p>
+      <p>Nella pratica il retrieval fallisce quasi sempre per ragioni che non riguardano il modello:</p>
+      <ul>
+        <li><strong>Chunking sbagliato.</strong> Frammenti troppo piccoli perdono il contesto necessario a capirli; troppo grandi diluiscono il segnale. Spezzare a met&agrave; di una tabella o di una clausola produce frammenti letteralmente non interpretabili.</li>
+        <li><strong>Metadati assenti.</strong> Un frammento senza titolo del documento, data e versione &egrave; inutilizzabile per decidere se &egrave; ancora valido: il modello non pu&ograve; sapere che sta citando la policy del 2019.</li>
+        <li><strong>top_k troppo alto.</strong> Recuperare 40 frammenti &laquo;per sicurezza&raquo; riempie il contesto di rumore. Meglio 5 buoni: se il primo non &egrave; pertinente, il problema &egrave; l’indice, non la quantit&agrave;.</li>
+        <li><strong>Assenza di istruzione di ancoraggio.</strong> Senza un vincolo esplicito &mdash; <em>&laquo;rispondi solo con i fatti presenti in <code>&lt;fonti&gt;</code>, cita l’identificativo, se non c’&egrave; scrivi NON_TROVATO&raquo;</em> &mdash; il modello integra allegramente con la sua conoscenza pregressa, e tu non riesci pi&ugrave; a distinguere le due cose.</li>
+      </ul>`},
+    {t:'callout',kind:'ok',title:'Retrieval just-in-time',html:`Nei sistemi agentici l’alternativa al pre-caricamento &egrave; dare al modello <strong>gli strumenti per cercare da s&eacute;</strong> (grep, query, lettura file) e lasciarlo recuperare progressivamente ci&ograve; che gli serve, mantenendo in contesto solo identificativi e percorsi. &Egrave; come lavora una persona: non memorizza l’archivio, sa dov’&egrave; e ci va quando serve. Costa qualche turno in pi&ugrave;, ma tiene il contesto pulito e sempre aggiornato.`},
+
+    {t:'p',html:`<h3>Contesto dinamico 2 &middot; Skill e progressive disclosure</h3>
+      <p>Una <strong>skill</strong> &egrave; una competenza pacchettizzata: una cartella con istruzioni, procedure, esempi ed eventuali script per un compito specifico (&laquo;come si compila il modulo di rendicontazione&raquo;, &laquo;come si scrive un report secondo il nostro standard&raquo;).</p>
+      <p>Il meccanismo interessante &egrave; la <strong>progressive disclosure</strong>, ed &egrave; la tecnica di context engineering pi&ugrave; elegante che c’&egrave;: in contesto stanno sempre solo <em>nome e descrizione</em> di ogni skill &mdash; poche decine di token, quanto basta al modello per sapere che quella competenza esiste e quando serve. Il <em>corpo</em> viene caricato solo quando il modello decide di usarla. Cos&igrave; puoi avere cinquanta procedure disponibili pagando in contesto quasi soltanto quella che serve adesso.</p>
+      <p>&Egrave; lo stesso principio dietro un buon manuale: l’indice sta sempre in testa, i capitoli si aprono su richiesta. Nota il corollario progettuale: <strong>la descrizione della skill &egrave; il pezzo pi&ugrave; importante</strong>, perch&eacute; &egrave; l’unica cosa su cui il modello decide. Una descrizione vaga rende la skill invisibile.</p>`},
+
+    {t:'p',html:`<h3>Contesto dinamico 3 &middot; Compattazione, memoria, sub-agenti</h3>
+      <p>Tre tecniche per lavorare oltre i limiti della finestra:</p>
+      <ul>
+        <li><strong>Compaction.</strong> Quando la conversazione si avvicina al limite, si riassume lo storico e si riparte da quel riassunto pi&ugrave; gli ultimi turni integrali. La qualit&agrave; dipende interamente da <em>cosa scegli di conservare</em>: decisioni prese, vincoli emersi, stato corrente e passi ancora aperti vanno tenuti; le esplorazioni fallite e gli output di tool gi&agrave; consumati si buttano. Una compattazione fatta male &egrave; il modo pi&ugrave; comune di perdere un agente a met&agrave; lavoro.</li>
+        <li><strong>Memoria esterna su file.</strong> L’agente scrive fuori dal contesto ci&ograve; che deve sopravvivere &mdash; note, decisioni, avanzamento &mdash; e rilegge solo la parte pertinente. La finestra torna a essere spazio di lavoro invece che archivio.</li>
+        <li><strong>Sub-agenti con contesto isolato.</strong> Un compito esplorativo (&laquo;trova dove &egrave; gestita questa regola nel codice&raquo;) brucia molti token in tentativi. Delegandolo a un contesto separato, nel contesto principale rientra solo la <em>conclusione</em>. &Egrave; parallelismo, ma soprattutto &egrave; contenimento del rumore.</li>
+      </ul>`},
+
+    {t:'tablewrap',head:['Decisione','Domanda da porsi','Errore tipico'],rows:[
+      ['Statico o dinamico?','Serve <em>a ogni</em> chiamata o solo in alcune?','Mettere nel system prompt procedure usate nel 5% dei casi'],
+      ['Pre-caricare o recuperare?','Il corpus sta in finestra? cambia spesso?','Incollare 40 file &laquo;per sicurezza&raquo;'],
+      ['Quanti frammenti?','Il primo risultato è pertinente?','Alzare top_k invece di sistemare l’indice'],
+      ['Quanti strumenti?','Un neoassunto li distinguerebbe?','Trenta tool con perimetri sovrapposti'],
+      ['Cosa conservare compattando?','Ricostruirei il lavoro da questo riassunto?','Riassumere la cronaca invece delle decisioni'],
+      ['Delegare a un sub-agente?','L’esplorazione produce molto rumore?','Esplorare tutto nel contesto principale']
+    ]},
+
+    {t:'sorter'},
+    {t:'budget'},
+
+    {t:'quiz',id:'q4a',q:'Un agente per il supporto ha 40 procedure interne, ognuna 1.500 token. Solo una serve per conversazione, ma non sai quale in anticipo. Progetto migliore?',
+      opts:[
+        {tx:'Tutte e 40 nel system prompt: così sono sempre disponibili',ok:false,why:'60k token in ogni singola chiamata, di cui il 97% rumore. Paghi costo e latenza a ogni turno e peggiori il segnale: è il caso di scuola del context rot.'},
+        {tx:'Nome e descrizione delle 40, corpo caricato su richiesta',ok:true,why:'Esatto: progressive disclosure. L’indice costa ~1–2k token e basta al modello per sapere che la procedura esiste e quando serve; il corpo entra solo quando la scelta è fatta. Il punto critico diventa la qualità delle descrizioni.'},
+        {tx:'Chiedere all’utente quale procedura serve e caricare solo quella',ok:false,why:'Sposta il lavoro cognitivo sull’utente, che spesso non conosce le procedure interne. È proprio ciò che dovrebbe fare l’assistente.'},
+        {tx:'Un unico documento con tutte e 40 riassunte a un terzo',ok:false,why:'Perdi i dettagli operativi — numeri, soglie, passaggi — che sono esattamente il motivo per cui la procedura esiste. Comprimere non è selezionare.'}
+      ]},
+    {t:'quiz',id:'q4b',q:'Un sistema RAG restituisce frammenti pertinenti, ma l’assistente talvolta afferma cose non presenti nelle fonti. Prima correzione da provare?',
+      opts:[
+        {tx:'Alzare top_k da 5 a 30 per dargli più materiale',ok:false,why:'Aumenta il rumore e la probabilità di frammenti contraddittori. Il problema non è la quantità di fonti ma l’assenza di un vincolo su come usarle.'},
+        {tx:'Vincolare esplicitamente la risposta alle fonti, con citazione e uscita NON_TROVATO',ok:true,why:'Corretto. Senza istruzione di ancoraggio il modello integra la conoscenza pregressa con le fonti, e l’output diventa indistinguibile: fatti recuperati e fatti ricordati si mescolano. Obbligare la citazione dell’identificativo rende il problema visibile e verificabile; l’uscita esplicita dà un’alternativa legittima all’invenzione.'},
+        {tx:'Abbassare la temperature a 0',ok:false,why:'Rende le affermazioni non fondate più stabili, non più corrette.'},
+        {tx:'Passare a un modello più grande',ok:false,why:'Può aiutare al margine, ma non risolve un difetto di progetto del contesto — e ti costa di più per sempre.'}
+      ]},
+
+    {t:'exercise',id:'ex4',label:'Esercizio 4.3 — Diagnosi di un agente che degrada (7 minuti)',
+      prompt:'Un agente che analizza pratiche funziona bene nei primi 5 turni, poi inizia a ripetersi, a ignorare vincoli dichiarati all’inizio e a rileggere documenti già letti. Elenca tre cause probabili legate al contesto e, per ognuna, l’intervento corrispondente.',
+      placeholder:'Causa 1: ...\nIntervento: ...\n\nCausa 2: ...\nIntervento: ...\n\nCausa 3: ...\nIntervento: ...',
+      solution:`<p>Le cause pi&ugrave; frequenti, in ordine di probabilit&agrave;:</p>
+        <ul>
+          <li><strong>Il contesto si &egrave; gonfiato di output di tool gi&agrave; consumati.</strong> Venti letture integrali di documenti restano nello storico anche se servivano solo per una riga. I vincoli iniziali finiscono &laquo;in mezzo&raquo; e perdono salienza. &rarr; Compattare gli output dei tool subito dopo l’uso, conservando solo ci&ograve; che &egrave; stato estratto; ripetere i vincoli non negoziabili nel messaggio corrente, non solo nel system prompt.</li>
+          <li><strong>Non esiste uno stato esterno.</strong> L’agente non ha modo di sapere che cosa ha gi&agrave; fatto, quindi rilegge e ripete. &rarr; Memoria su file: un elenco di documenti processati e conclusioni raggiunte, riletto a ogni turno. Poche centinaia di token che sostituiscono decine di migliaia di storico.</li>
+          <li><strong>La compattazione butta le decisioni e tiene la cronaca.</strong> Un riassunto tipo &laquo;abbiamo discusso vari documenti&raquo; &egrave; inutile: il vincolo emerso al turno 3 &egrave; sparito. &rarr; Compattazione guidata da schema fisso: <em>obiettivo, vincoli attivi, decisioni prese con motivazione, stato, prossimi passi</em>.</li>
+          <li><strong>Bonus &mdash; l’esplorazione avviene nel contesto principale.</strong> &rarr; Delegare le ricerche a sub-agenti e reimmettere solo la conclusione.</li>
+        </ul>`}
+  ]
+});
+
+/* ---------- 5. Capstone ---------- */
+MODULES.push({
+  id:'m5', n:'05', title:'Capstone — progetta il contesto di un agente', min:30,
+  blocks:[
+    {t:'p',html:`<p>Ultimo esercizio, il pi&ugrave; importante: applica tutto al caso d’uso che hai scritto nel warm-up. Lavora da solo o in coppia. Alla fine avrai una scheda di progetto esportabile &mdash; il documento da cui parte l’implementazione vera.</p>
+      <p><strong>Ordine consigliato:</strong> compila prima la sezione 6 (valutazione). Sembra controintuitivo, ma definire come misurerai il successo <em>prima</em> di progettare la soluzione &egrave; ci&ograve; che impedisce di costruire qualcosa di elegante e inutile. Se non riesci a scrivere i criteri, il compito non &egrave; ancora abbastanza definito &mdash; e quello &egrave; il vero risultato del capstone.</p>`},
+    {t:'capstone'},
+    {t:'checklist',id:'ck5',title:'Verifica finale del progetto',
+      items:[
+        'Il compito è uno e verificabile, non «un assistente che aiuta con tutto»',
+        'Ogni termine valutativo del system prompt ha una definizione operativa',
+        'So dire, per ogni risorsa statica, perché serve a OGNI chiamata',
+        'Ciò che serve raramente è caricato su richiesta, non pre-caricato',
+        'Gli strumenti sono pochi e distinguibili; le descrizioni dicono anche quando non usarli',
+        'Esiste un comportamento definito per «non lo so» e per «fuori perimetro»',
+        'Ho stimato il budget di token e ho lasciato riserva per l’output',
+        'Ho 6+ casi di test con criteri verificabili da terzi, di cui almeno uno oggi fallito',
+        'So che cosa conservare quando il contesto va compattato',
+        'So qual è il fallimento più costoso e come lo intercetto prima dell’utente'
+      ]}
+  ]
+});
+
+/* ---------- 6. Chiusura ---------- */
+MODULES.push({
+  id:'m6', n:'06', title:'Chiusura e materiali', min:5,
+  blocks:[
+    {t:'p',html:`<h3>Le sei cose da ricordare</h3>
+      <ol>
+        <li><strong>Il modello risponde alla tua stringa, non alla tua intenzione.</strong> Quando sbaglia, la prima ipotesi &egrave; sempre un difetto del contesto.</li>
+        <li><strong>Gli esempi battono le descrizioni.</strong> Se istruzioni ed esempi sono in conflitto, vincono gli esempi &mdash; quindi cura gli esempi come cureresti il codice.</li>
+        <li><strong>Governa i casi limite.</strong> Un’uscita esplicita per &laquo;non lo so&raquo; &egrave; ci&ograve; che separa un prompt da demo da un prompt da produzione.</li>
+        <li><strong>Il metaprompting genera ipotesi, non verit&agrave;.</strong> Accelera la scrittura, non sostituisce la misura.</li>
+        <li><strong>Senza eval non stai migliorando, stai cambiando.</strong> Venti righe di foglio di calcolo bastano a cambiare il modo in cui lavori.</li>
+        <li><strong>Il contesto &egrave; un budget.</strong> Il minimo insieme di token ad alto segnale, recuperato quando serve, non tutto quello che potrebbe servire.</li>
+      </ol>`},
+    {t:'callout',kind:'ok',title:'Da fare entro una settimana',html:`Una sola cosa, altrimenti non la farai: prendi il prompt che usi pi&ugrave; spesso, costruisci il suo test set da 10 casi reali, misura la baseline. Tutto il resto del corso diventa applicabile solo dopo quel passaggio.`},
+    {t:'p',html:`<h3>Glossario minimo</h3>`},
+    {t:'tablewrap',head:['Termine','Definizione operativa'],rows:[
+      ['Token','Unità di testo su cui opera il modello. ~3 caratteri in italiano. È l’unità di costo e di capacità.'],
+      ['Finestra di contesto','Numero massimo di token per chiamata, input più output. Un budget, non un magazzino.'],
+      ['System prompt','Le istruzioni stabili: ruolo, regole, formato. Identiche a ogni chiamata.'],
+      ['Few-shot','Fornire esempi input→output nel prompt per comunicare formato e criterio.'],
+      ['Prefill','Iniziare tu il turno dell’assistente per vincolare il formato della continuazione.'],
+      ['Metaprompting','Usare un LLM per generare, criticare o testare prompt.'],
+      ['Context engineering','Decidere cosa entra in contesto, quando, in che forma e con quale priorità.'],
+      ['RAG','Recuperare frammenti pertinenti da un corpus e inserirli in contesto a ogni domanda.'],
+      ['Skill','Competenza pacchettizzata caricata su richiesta; in contesto resta solo la descrizione.'],
+      ['Progressive disclosure','Tenere in contesto l’indice delle capacità e caricare il contenuto solo quando serve.'],
+      ['Compaction','Riassumere lo storico per proseguire oltre il limite di finestra, conservando decisioni e stato.'],
+      ['Context rot','Degrado del comportamento al crescere del contesto: vincoli ignorati, ripetizioni, incoerenze.'],
+      ['Eval','Insieme di casi di test con criteri di correttezza, usato per confrontare versioni di un prompt.'],
+      ['LLM-as-judge','Usare un modello per valutare output secondo una rubrica. Da calibrare su giudizi umani.']
+    ]},
+    {t:'exercise',id:'ex6',label:'Feedback e impegno',
+      prompt:'Due righe: la cosa più utile di oggi, e la prima cosa che applicherai entro venerdì.',
+      placeholder:'Più utile: ...\nApplico entro venerdì: ...'},
+    {t:'callout',kind:'',title:'Prima di chiudere',html:`Usa <strong>&#8681; Esporta</strong> in alto a destra: scarichi in Markdown tutte le risposte, le checklist e la scheda di progetto. Il file &egrave; il tuo materiale di lavoro per la prossima settimana.`}
+  ]
+});
+
+/* ============================================================
+   RENDERER
+   ============================================================ */
+const mounts = [];
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderBlock(b, mid, i){
+  const id = mid+'_'+i;
+  switch(b.t){
+    case 'p': return '<div class="prose">'+b.html+'</div>';
+    case 'code': return '<pre><code>'+esc(b.code)+'</code></pre>';
+    case 'callout':
+      return '<div class="callout '+(b.kind||'')+'"><span class="ct">'+b.title+'</span><div>'+b.html+'</div></div>';
+    case 'cards':
+      return '<div class="grid c3">'+b.cards.map(c=>
+        '<div class="card"><div class="tag">'+c.tag+'</div><h5>'+c.h+'</h5><p>'+c.p+'</p></div>').join('')+'</div>';
+    case 'table':
+      return '<div class="tablewrap"><table><thead><tr>'+b.head.map(h=>'<th>'+h+'</th>').join('')+
+        '</tr></thead><tbody>'+b.rows.map(r=>'<tr>'+r.map(c=>'<td>'+c+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
+    case 'tablewrap':
+      return '<div class="tablewrap"><table><thead><tr>'+b.head.map(h=>'<th>'+h+'</th>').join('')+
+        '</tr></thead><tbody>'+b.rows.map(r=>'<tr>'+r.map(c=>'<td>'+c+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
+    case 'compare':
+      return '<h3>'+b.title+'</h3><div class="split">'+
+        '<div class="pane bad"><div class="pane-h">'+b.bad.h+'</div><pre><code>'+esc(b.bad.code)+'</code></pre></div>'+
+        '<div class="pane ok"><div class="pane-h">'+b.good.h+'</div><pre><code>'+esc(b.good.code)+'</code></pre></div></div>';
+    case 'split2':
+      return '<div class="split">'+[b.a,b.b].map(col=>
+        '<div class="widget" style="margin:0"><div class="widget-t">'+col.h+'</div><div style="margin-top:10px">'+
+        col.items.map(it=>'<div style="padding:8px 0;border-top:1px solid var(--line)"><strong style="font-size:13.5px">'+it[0]+
+        '</strong><div style="font-size:13px;color:var(--muted)">'+it[1]+'</div></div>').join('')+'</div></div>').join('')+'</div>';
+    case 'quiz':
+      mounts.push(()=>mountQuiz(id,b)); return '<div id="'+id+'"></div>';
+    case 'exercise':
+      mounts.push(()=>mountExercise(id,b)); return '<div id="'+id+'"></div>';
+    case 'checklist':
+      mounts.push(()=>mountChecklist(id,b)); return '<div id="'+id+'"></div>';
+    case 'tokenizer':
+      mounts.push(()=>mountTokenizer(id)); return '<div id="'+id+'"></div>';
+    case 'promptlab':
+      mounts.push(()=>mountPromptLab(id)); return '<div id="'+id+'"></div>';
+    case 'metalab':
+      mounts.push(()=>mountMetaLab(id)); return '<div id="'+id+'"></div>';
+    case 'sorter':
+      mounts.push(()=>mountSorter(id)); return '<div id="'+id+'"></div>';
+    case 'budget':
+      mounts.push(()=>mountBudget(id)); return '<div id="'+id+'"></div>';
+    case 'capstone':
+      mounts.push(()=>mountCapstone(id)); return '<div id="'+id+'"></div>';
+    default: return '';
+  }
+}
+
+function widgetShell(kind,title,sub,body){
+  return '<div class="widget"><div class="widget-h"><span class="widget-k">'+kind+'</span><span class="widget-t">'+title+'</span></div>'+
+    (sub?'<div class="widget-s">'+sub+'</div>':'')+body+'</div>';
+}
+
+/* ---------- quiz ---------- */
+function mountQuiz(id, b){
+  const el = document.getElementById(id);
+  const marks = ['A','B','C','D','E'];
+  const body = '<div id="'+id+'_opts">'+b.opts.map((o,k)=>
+    '<button class="opt" data-k="'+k+'"><span class="mk">'+marks[k]+'</span>'+o.tx+
+    '<div class="why">'+o.why+'</div></button>').join('')+'</div>'+
+    '<div class="hint" id="'+id+'_fb" style="margin-top:8px"></div>';
+  el.innerHTML = widgetShell('Quiz', b.q, '', body);
+  const opts = el.querySelectorAll('.opt');
+  const fb = document.getElementById(id+'_fb');
+  function apply(k){
+    opts.forEach((btn,j)=>{
+      btn.disabled = true; btn.classList.add('shown');
+      if(j===k) btn.classList.add(b.opts[j].ok?'sel-ok':'sel-bad');
+      else if(b.opts[j].ok) btn.classList.add('reveal-ok');
+    });
+    fb.textContent = b.opts[k].ok ? '✓ Risposta corretta.' : '✗ Non corretta — la risposta giusta è evidenziata in verde.';
+    fb.style.color = b.opts[k].ok ? 'var(--ok)' : 'var(--bad)';
+  }
+  opts.forEach(btn=>btn.addEventListener('click',()=>{
+    const k = +btn.dataset.k; quizState[b.id]=k; saveAll(); apply(k); refreshStats();
+  }));
+  if(quizState[b.id]!==undefined) apply(quizState[b.id]);
+}
+
+/* ---------- exercise ---------- */
+function mountExercise(id, b){
+  const el = document.getElementById(id);
+  const body = '<textarea id="'+id+'_ta" rows="9" placeholder="'+esc(b.placeholder||'')+'"></textarea>'+
+    '<div class="btnrow"><span class="saved" id="'+id+'_sv">salvato</span><span class="spacer" style="flex:1"></span>'+
+    (b.solution?'<button class="btn" id="'+id+'_sol">Mostra soluzione di riferimento</button>':'')+'</div>'+
+    (b.solution?'<div id="'+id+'_solbox" class="callout ok" style="display:none"><span class="ct">Soluzione di riferimento</span><div class="prose" style="font-size:14px">'+b.solution+'</div></div>':'');
+  el.innerHTML = widgetShell('Esercizio', b.label, b.prompt, body);
+  const ta = document.getElementById(id+'_ta');
+  const sv = document.getElementById(id+'_sv');
+  ta.value = answers[b.id] || '';
+  let t;
+  ta.addEventListener('input',()=>{
+    answers[b.id]=ta.value; clearTimeout(t);
+    t=setTimeout(()=>{ saveAll(); sv.classList.add('on'); setTimeout(()=>sv.classList.remove('on'),1200); refreshStats(); },400);
+  });
+  if(b.solution){
+    const btn=document.getElementById(id+'_sol'), box=document.getElementById(id+'_solbox');
+    btn.addEventListener('click',()=>{
+      const open = box.style.display!=='none';
+      box.style.display = open?'none':'block';
+      btn.textContent = open?'Mostra soluzione di riferimento':'Nascondi soluzione';
+    });
+  }
+}
+
+/* ---------- checklist ---------- */
+function mountChecklist(id, b){
+  const el = document.getElementById(id);
+  const saved = store.get('ck.'+b.id, []);
+  const body = b.items.map((it,k)=>
+    '<label class="chk'+(saved[k]?' on':'')+'" data-k="'+k+'"><input type="checkbox" '+(saved[k]?'checked':'')+
+    '><span class="lb" style="font-weight:500">'+it+'</span></label>').join('')+
+    '<div class="scoreline" style="margin-top:8px"><span id="'+id+'_c"></span><span></span></div>';
+  el.innerHTML = widgetShell('Checklist', b.title, 'Le spunte si salvano nel browser e finiscono nell’export.', body);
+  const rows = el.querySelectorAll('.chk');
+  const cnt = document.getElementById(id+'_c');
+  function upd(){
+    let n=0; rows.forEach((r,k)=>{ const c=r.querySelector('input').checked; saved[k]=c; if(c)n++; r.classList.toggle('on',c); });
+    cnt.textContent = n+'/'+b.items.length+' completati';
+    store.set('ck.'+b.id, saved); refreshStats();
+  }
+  rows.forEach(r=>r.querySelector('input').addEventListener('change',upd));
+  upd();
+}
+
+/* ---------- tokenizer stimatore ---------- */
+function mountTokenizer(id){
+  const el = document.getElementById(id);
+  const body = '<textarea id="'+id+'_ta" rows="4" placeholder="Incolla qui un testo per stimare i token…"></textarea>'+
+    '<div class="grid c3" style="margin-top:12px">'+
+    ['ch','wd','tk','ctx'].map(k=>'<div class="card"><div class="tag" id="'+id+'_'+k+'l"></div><h5 id="'+id+'_'+k+'" style="font-family:var(--mono);font-size:19px">0</h5></div>').join('')+
+    '</div><div class="hint" id="'+id+'_h" style="margin-top:8px"></div>';
+  el.innerHTML = widgetShell('Lab 1.1','Stimatore di token','Stima approssimata (~3 caratteri per token in italiano). Serve a farsi l’occhio sugli ordini di grandezza, non a contare con precisione.',body);
+  const ta=document.getElementById(id+'_ta');
+  const lbl={ch:'Caratteri',wd:'Parole',tk:'Token stimati',ctx:'% di 200k'};
+  Object.keys(lbl).forEach(k=>document.getElementById(id+'_'+k+'l').textContent=lbl[k]);
+  function upd(){
+    const s=ta.value, ch=s.length, wd=s.trim()?s.trim().split(/\s+/).length:0;
+    const tk=Math.round(ch/3.1);
+    document.getElementById(id+'_ch').textContent=ch.toLocaleString('it-IT');
+    document.getElementById(id+'_wd').textContent=wd.toLocaleString('it-IT');
+    document.getElementById(id+'_tk').textContent=tk.toLocaleString('it-IT');
+    document.getElementById(id+'_ctx').textContent=(tk/200000*100).toFixed(2)+'%';
+    const h=document.getElementById(id+'_h');
+    if(!ch) h.textContent='Prova con il tuo system prompt attuale, o con un documento che carichi di solito.';
+    else if(tk<300) h.textContent='Ordine di grandezza: un prompt breve. In un agente da 40 turni, ripetuto, resta trascurabile.';
+    else if(tk<3000) h.textContent='Ordine di grandezza: un system prompt ricco o un documento breve. Sostenibile come risorsa statica.';
+    else if(tk<20000) h.textContent='Ordine di grandezza: attenzione. Se questo materiale è statico, lo paghi a ogni turno: chiediti quale parte serve davvero sempre.';
+    else h.textContent='Ordine di grandezza: da non pre-caricare. Questo è materiale da indicizzare e recuperare su richiesta, non da tenere in contesto.';
+  }
+  ta.addEventListener('input',upd); upd();
+}
+
+/* ---------- prompt lab ---------- */
+const PL_COMPONENTS = [
+  {k:'role', w:10, lb:'Ruolo e conseguenza della decisione', ds:'Chi è l’assistente e cosa comporta il suo output.',
+   txt:"Sei un analista del supporto tecnico. La tua classificazione decide\nchi viene contattato entro un'ora."},
+  {k:'goal', w:12, lb:'Compito e destinatario espliciti', ds:'Che cosa produrre, per chi, con che scopo.',
+   txt:"Classifichi le segnalazioni per il triage del mattino. L'output e'\nletto dal capoturno che ha 15 minuti per smistare la coda."},
+  {k:'defs', w:14, lb:'Definizioni operative dei termini valutativi', ds:'Nessun «urgente» senza criterio.',
+   txt:"<criteri>\nCRITICA = servizio inutilizzabile o piu' di 10 utenti bloccati\nALTA    = funzione chiave degradata con workaround noto\nMEDIA   = disagio operativo senza blocco\nBASSA   = estetica, richiesta di miglioria, dubbio d'uso\n</criteri>"},
+  {k:'data', w:8, lb:'Sezione dati delimitata', ds:'Tag espliciti e segnaposto, dati prima della domanda.',
+   txt:"<segnalazioni>\n{{ELENCO}}\n</segnalazioni>"},
+  {k:'cot', w:10, lb:'Spazio di ragionamento separato', ds:'Ragiona prima, rispondi dopo, in sezioni distinte.',
+   txt:"Ragiona su ogni segnalazione in <analisi>, poi emetti solo le righe\nfinali in <output>."},
+  {k:'fmt', w:13, lb:'Formato di output mostrato', ds:'Uno schema compilato, non una descrizione.',
+   txt:"Formato di ogni riga di <output>:\nID | LIVELLO | motivazione (max 12 parole) | dato_mancante\nEsempio:\n4471 | ALTA | export bloccato, workaround manuale noto | -"},
+  {k:'edge', w:15, lb:'Casi limite governati', ds:'Comportamento definito per dato mancante, ambiguità, fuori perimetro.',
+   txt:"- Se mancano informazioni per scegliere fra due livelli, indica il piu'\n  grave e scrivi cosa ti servirebbe in dato_mancante.\n- Se la segnalazione non riguarda il gestionale, LIVELLO = FUORI_PERIMETRO.\n- Non inferire dati assenti: scrivi NON_DETERMINABILE."},
+  {k:'pos', w:8, lb:'Vincoli positivi e verificabili', ds:'Dire cosa fare, con numeri, non cosa evitare.',
+   txt:"- Massimo 12 parole di motivazione per riga.\n- Nessun testo fuori da <analisi> e <output>.\n- Applica solo i <criteri>: il tono del segnalante non e' un indizio."},
+  {k:'few', w:10, lb:'Esempi few-shot coerenti', ds:'2–5 esempi diversi, incluso un caso limite.',
+   txt:"<esempi>\ninput: \"non riesco a stampare il referto, nessuno in reparto riesce\"\noutput: 1201 | CRITICA | stampa referti ferma in tutto il reparto | -\n\ninput: \"il pulsante e' un po' piccolo\"\noutput: 1202 | BASSA | richiesta estetica, nessun impatto operativo | -\n\ninput: \"non va\"\noutput: 1203 | NON_DETERMINABILE | descrizione insufficiente | funzione e portata\n</esempi>"}
+];
+function mountPromptLab(id){
+  const el=document.getElementById(id);
+  const saved = store.get('pl', {});
+  const body =
+    '<div class="split"><div>'+
+    PL_COMPONENTS.map(c=>'<label class="chk'+(saved[c.k]?' on':'')+'" data-k="'+c.k+'"><input type="checkbox" '+(saved[c.k]?'checked':'')+
+      '><span><span class="lb">'+c.lb+'</span><span class="ds">'+c.ds+'</span></span></label>').join('')+
+    '<div class="btnrow"><button class="btn" id="'+id+'_all">Seleziona tutto</button><button class="btn" id="'+id+'_none">Azzera</button>'+
+    '<button class="btn" id="'+id+'_copy">Copia prompt</button></div>'+
+    '</div><div><div class="preview" id="'+id+'_pv"></div>'+
+    '<div class="meter"><i id="'+id+'_bar"></i></div><div class="scoreline"><span id="'+id+'_sc"></span><span id="'+id+'_tk"></span></div>'+
+    '<div class="diag" id="'+id+'_dg"></div></div></div>';
+  el.innerHTML = widgetShell('Lab 2.1','Costruttore di prompt',
+    'Attiva i componenti e osserva il prompt assemblarsi a destra. Il punteggio pesa i componenti per impatto reale sul comportamento del modello: i più pesanti sono le definizioni operative e i casi limite, non il ruolo.',body);
+  const boxes=el.querySelectorAll('.chk');
+  function upd(){
+    let score=0; const parts=[];
+    PL_COMPONENTS.forEach(c=>{
+      const on=el.querySelector('.chk[data-k="'+c.k+'"] input').checked;
+      saved[c.k]=on; el.querySelector('.chk[data-k="'+c.k+'"]').classList.toggle('on',on);
+      if(on){ score+=c.w; parts.push(c.txt); }
+      else parts.push('<span class="ghosted">[ '+c.lb+' — mancante ]</span>');
+    });
+    store.set('pl',saved);
+    const pv=document.getElementById(id+'_pv');
+    pv.innerHTML = parts.map(p=>p.indexOf('<span class="ghosted">')===0?p:esc(p)).join('\n\n');
+    const tk=Math.round(parts.filter((p,i)=>saved[PL_COMPONENTS[i].k]).join('\n\n').length/3.1);
+    document.getElementById(id+'_bar').style.width=score+'%';
+    document.getElementById(id+'_sc').textContent='Robustezza '+score+'/100';
+    document.getElementById(id+'_tk').textContent='~'+tk+' token';
+    const miss=PL_COMPONENTS.filter(c=>!saved[c.k]);
+    const dg=document.getElementById(id+'_dg');
+    let msg='';
+    if(!saved.defs) msg+='<div><strong>Manca il più importante.</strong> Senza definizioni operative, «urgente» significa quello che il modello immagina: la classificazione sarà plausibile e non allineata al tuo processo.</div>';
+    if(!saved.edge) msg+='<div><strong>Nessuna uscita per l’incertezza.</strong> Il modello è addestrato a essere utile: se non gli dai un modo legittimo di dire «non lo so», riempirà il vuoto.</div>';
+    if(!saved.fmt) msg+='<div><strong>Formato non mostrato.</strong> Descriverlo non basta: se l’output va a un programma, servirà parsing difensivo su un formato che cambia.</div>';
+    if(saved.fmt&&saved.few&&!saved.cot) msg+='<div><strong>Nota.</strong> Hai formato ed esempi ma nessuno spazio di ragionamento: bene per compiti facili, rischioso per classificazioni sfumate.</div>';
+    if(!miss.length) msg='<div><strong>Prompt completo.</strong> Ora la domanda non è più «cosa aggiungo» ma «cosa posso togliere senza perdere qualità»: misuralo su un test set e prova a comprimerlo.</div>';
+    dg.innerHTML=msg;
+  }
+  boxes.forEach(b=>b.querySelector('input').addEventListener('change',upd));
+  document.getElementById(id+'_all').addEventListener('click',()=>{boxes.forEach(b=>b.querySelector('input').checked=true);upd();});
+  document.getElementById(id+'_none').addEventListener('click',()=>{boxes.forEach(b=>b.querySelector('input').checked=false);upd();});
+  document.getElementById(id+'_copy').addEventListener('click',(e)=>{
+    const txt=PL_COMPONENTS.filter(c=>saved[c.k]).map(c=>c.txt).join('\n\n');
+    navigator.clipboard&&navigator.clipboard.writeText(txt);
+    e.target.textContent='Copiato ✓'; setTimeout(()=>e.target.textContent='Copia prompt',1400);
+  });
+  upd();
+}
+
+/* ---------- meta lab ---------- */
+function mountMetaLab(id){
+  const el=document.getElementById(id);
+  const saved=store.get('meta',{task:'',aud:'',out:'',hard:'',mode:'gen'});
+  const body=
+    '<label class="fl">Pattern</label><select id="'+id+'_mode">'+
+      '<option value="gen">1 · Generator — crea un prompt da zero</option>'+
+      '<option value="crit">2 · Critic — valuta un prompt esistente</option>'+
+      '<option value="fail">3 · Failure-driven — correggi partendo dagli errori</option>'+
+      '<option value="test">4 · Test-set — genera i casi di prova</option>'+
+    '</select>'+
+    '<label class="fl">Compito da automatizzare</label><input type="text" id="'+id+'_task" placeholder="Es. classificare le segnalazioni del gestionale per priorità">'+
+    '<label class="fl">Chi legge l’output e con che scopo</label><input type="text" id="'+id+'_aud" placeholder="Es. il capoturno, per smistare la coda in 15 minuti">'+
+    '<label class="fl">Formato e vincoli richiesti</label><input type="text" id="'+id+'_out" placeholder="Es. una riga per segnalazione: ID | LIVELLO | motivazione max 12 parole">'+
+    '<label class="fl">Il caso difficile su cui sbaglia oggi</label><input type="text" id="'+id+'_hard" placeholder="Es. segnalazioni scritte in tono allarmato ma di impatto basso">'+
+    '<div class="btnrow"><button class="btn primary" id="'+id+'_gen">Genera meta-prompt</button><button class="btn" id="'+id+'_cp">Copia</button>'+
+    '<span class="hint">Incollalo in un assistente e usa l’output come <em>bozza</em>, non come verità.</span></div>'+
+    '<div class="preview" id="'+id+'_pv" style="margin-top:12px">Compila i campi e premi «Genera meta-prompt».</div>';
+  el.innerHTML=widgetShell('Lab 3.1','Generatore di meta-prompt',
+    'Compila i quattro campi: il laboratorio compone il meta-prompt secondo il pattern scelto. Il valore dell’esercizio sta nei campi — se non sai riempirli, il problema non è il prompt.',body);
+  const F={mode:'_mode',task:'_task',aud:'_aud',out:'_out',hard:'_hard'};
+  Object.keys(F).forEach(k=>{ const e=document.getElementById(id+F[k]); e.value=saved[k]||''; e.addEventListener('input',()=>{saved[k]=e.value;store.set('meta',saved);}); });
+  function build(){
+    const v=k=>document.getElementById(id+F[k]).value.trim();
+    const task=v('task')||'{{DESCRIVI_IL_COMPITO}}', aud=v('aud')||'{{CHI_LEGGE_E_PERCHE}}',
+          out=v('out')||'{{FORMATO_E_VINCOLI}}', hard=v('hard')||'{{IL_CASO_DIFFICILE}}', mode=v('mode');
+    let s='';
+    if(mode==='gen'){
+      s='Sei un esperto di prompt engineering. Il tuo output NON e\' la soluzione\ndel compito: e\' IL PROMPT che risolvera\' quel compito.\n\n'+
+        '<compito>'+task+'</compito>\n<destinatario_output>'+aud+'</destinatario_output>\n'+
+        '<vincoli_output>'+out+'</vincoli_output>\n<caso_difficile>'+hard+'</caso_difficile>\n\n'+
+        'Il prompt che produci deve contenere, in questo ordine:\n'+
+        '1. Ruolo e conseguenza concreta della decisione.\n'+
+        '2. Definizione operativa di OGNI termine valutativo che usi.\n   Nessun "urgente", "rilevante", "conciso" senza criterio misurabile.\n'+
+        '3. Sezione dati delimitata con tag e segnaposto {{...}}.\n'+
+        '4. Formato di output mostrato con un esempio compilato.\n'+
+        '5. Regole per i casi limite: dato mancante, input ambiguo,\n   richiesta fuori perimetro, informazioni contraddittorie.\n'+
+        '6. Un vincolo di lunghezza verificabile.\n'+
+        '7. Un trattamento esplicito del <caso_difficile>.\n\n'+
+        'Dopo il prompt aggiungi:\n<assunzioni>Cosa hai assunto e quale risposta ti servirebbe da me.</assunzioni>\n'+
+        '<rischi>I 3 modi piu\' probabili in cui questo prompt fallira\'.</rischi>';
+    } else if(mode==='crit'){
+      s='Valuta il prompt in <candidato> come un revisore severo.\nContesto: serve a "'+task+'". Lo legge: '+aud+'.\nVincoli attesi: '+out+'.\n\n'+
+        'Per ogni criterio assegna 0-2 e CITA il testo che motiva il voto:\n'+
+        'C1 compito e destinatario espliciti\nC2 termini valutativi definiti operativamente\n'+
+        'C3 formato di output non ambiguo\nC4 casi limite governati\n'+
+        'C5 vincoli positivi e verificabili\nC6 nessuna istruzione in conflitto (anche tra istruzioni ed esempi)\n'+
+        'C7 densita\': ogni frase serve\n\nPoi:\n'+
+        '<diagnosi>I 3 difetti piu\' costosi, in ordine di impatto.</diagnosi>\n'+
+        '<riscrittura>Il prompt corretto, non piu\' lungo dell\'originale +20%.\nModifica solo cio\' che i difetti richiedono.</riscrittura>\n'+
+        '<diff>Cosa hai cambiato e perche\'.</diff>\n\n'+
+        'Verifica in particolare il comportamento su: '+hard+'\n\n<candidato>\n{{INCOLLA_QUI_IL_PROMPT}}\n</candidato>';
+    } else if(mode==='fail'){
+      s='Questo prompt e\' in uso per "'+task+'" e sbaglia su alcuni casi.\n\n'+
+        '<prompt_attuale>\n{{INCOLLA_QUI_IL_PROMPT}}\n</prompt_attuale>\n\n'+
+        '<fallimenti>\nCASO 1 — input: '+hard+'\n         output ottenuto: {{COSA_HA_FATTO}}\n         output desiderato: {{COSA_VOLEVO}}\nCASO 2 — ...\n</fallimenti>\n\n'+
+        'Procedi in tre passi separati.\n\n'+
+        '1. <diagnosi> Per ogni caso, quale carenza specifica del prompt lo spiega?\n'+
+        '   Classifica: informazione mancante | istruzione ambigua | esempio\n'+
+        '   fuorviante | formato non vincolato | caso limite non previsto |\n'+
+        '   compito oltre la portata di un singolo prompt.\n'+
+        '2. <pattern> Le diagnosi hanno una causa comune? Quale?\n'+
+        '3. <correzione> Modifica minima che risolve la causa comune senza\n   rompere i casi che oggi funzionano. Non riscrivere da zero.\n\n'+
+        'Se la causa e\' che il prompt fa troppe cose, proponi la scomposizione\nin piu\' chiamate invece di un prompt piu\' lungo.\n\n'+
+        'Vincolo di output finale: '+out;
+    } else {
+      s='Genera un set di test per valutare prompt che svolgono questo compito:\n"'+task+'".\nL\'output e\' letto da: '+aud+'. Vincoli: '+out+'.\n\n'+
+        'Produci 18 casi in tabella con colonne:\n'+
+        'ID | input (realistico, con la sporcizia dei dati veri) | output_atteso |\n'+
+        'criterio_di_accettazione (verificabile da una persona diversa da me) |\n'+
+        'categoria\n\nDistribuzione richiesta:\n'+
+        '- 6 casi tipici\n- 4 casi al confine tra due categorie\n'+
+        '- 3 casi con informazione mancante (l\'atteso e\' un\'astensione esplicita)\n'+
+        '- 3 casi fuori perimetro\n- 2 casi con informazioni contraddittorie\n\n'+
+        'Almeno 3 casi devono riguardare: '+hard+'\n\n'+
+        'Vincoli:\n- Nessun criterio soggettivo ("buono", "chiaro"): solo verificabili.\n'+
+        '- Per i casi di astensione, il criterio deve verificare che il modello\n  NON inventi il dato mancante.\n'+
+        '- Non generare due casi che testano la stessa cosa.';
+    }
+    document.getElementById(id+'_pv').textContent=s;
+    return s;
+  }
+  document.getElementById(id+'_gen').addEventListener('click',build);
+  document.getElementById(id+'_cp').addEventListener('click',(e)=>{
+    const s=build(); navigator.clipboard&&navigator.clipboard.writeText(s);
+    e.target.textContent='Copiato ✓'; setTimeout(()=>e.target.textContent='Copia',1400);
+  });
+  if(saved.task) build();
+}
+
+/* ---------- sorter ---------- */
+const SORT_ITEMS = [
+  {tx:'Le regole di tono e le policy aziendali che valgono per ogni risposta', a:'s',
+   why:'Statico: identico a ogni chiamata, definisce il comportamento di base. Sta nel system prompt.'},
+  {tx:'Le tre righe di anagrafica del cliente di cui si sta parlando adesso', a:'d',
+   why:'Dinamico: dipende dal turno e arriva da una query. Metterlo staticamente non ha senso — cambia a ogni conversazione.'},
+  {tx:'Lo schema delle tabelle del database su cui l’agente scrive query', a:'s',
+   why:'Statico: serve praticamente a ogni chiamata che tocchi i dati e cambia raramente. Se lo schema è enorme, si tiene statica la parte usata sempre e si recupera il resto.'},
+  {tx:'I 5 frammenti di manuale più pertinenti alla domanda dell’utente', a:'d',
+   why:'Dinamico: è il risultato di un retrieval, funzione della domanda corrente.'},
+  {tx:'L’elenco completo delle 300 FAQ del prodotto, incollato per sicurezza', a:'x',
+   why:'Fuori: è l’anti-pattern per definizione. 300 FAQ sono decine di migliaia di token di cui una sola serve. Va indicizzato e recuperato.'},
+  {tx:'La descrizione degli strumenti che l’agente può chiamare', a:'s',
+   why:'Statico: le tool definition entrano in ogni chiamata. Proprio per questo vanno tenute poche e asciutte — è un costo fisso per turno.'},
+  {tx:'Il corpo della procedura «chiusura pratica di rimborso», una delle 40 disponibili', a:'d',
+   why:'Dinamico: progressive disclosure. In contesto sta sempre solo la descrizione; il corpo si carica quando il modello decide che serve.'},
+  {tx:'Il riassunto strutturato dei 30 turni precedenti della conversazione', a:'d',
+   why:'Dinamico: è il prodotto della compattazione, cambia man mano che la conversazione avanza.'},
+  {tx:'Tre esempi canonici di risposta ben fatta, con il formato corretto', a:'s',
+   why:'Statico: sono il riferimento di qualità e formato, uguale per tutte le richieste dello stesso tipo.'},
+  {tx:'L’output integrale di 12 letture di file già usate e non più necessarie', a:'x',
+   why:'Fuori: è la principale causa di context rot negli agenti. Va compattato subito dopo l’uso, conservando solo l’informazione estratta.'},
+  {tx:'La conclusione in dieci righe di un sub-agente che ha esplorato il codice', a:'d',
+   why:'Dinamico: è esattamente il pattern corretto — l’esplorazione rumorosa avviene altrove, rientra solo il risultato.'},
+  {tx:'La cronologia di 200 conversazioni passate con lo stesso utente', a:'x',
+   why:'Fuori: non pre-caricabile. Se serve continuità, si tiene una memoria sintetica su file (preferenze, decisioni) e si rilegge la parte pertinente.'}
+];
+function mountSorter(id){
+  const el=document.getElementById(id);
+  const saved=store.get('sorter',{});
+  const B=[['s','Statico'],['d','Dinamico'],['x','Fuori dal contesto']];
+  const body='<div id="'+id+'_rows">'+SORT_ITEMS.map((it,k)=>
+    '<div class="sorter-row" data-k="'+k+'"><div class="it">'+it.tx+'</div><div class="bs">'+
+    B.map(b=>'<button class="bbtn'+(saved[k]===b[0]?' on':'')+'" data-b="'+b[0]+'">'+b[1]+'</button>').join('')+
+    '</div><div class="fb">'+it.why+'</div></div>').join('')+'</div>'+
+    '<div class="btnrow"><button class="btn primary" id="'+id+'_ck">Verifica</button><button class="btn" id="'+id+'_rs">Ricomincia</button>'+
+    '<span class="hint" id="'+id+'_sc"></span></div>';
+  el.innerHTML=widgetShell('Lab 4.1','Statico, dinamico o fuori?',
+    'Per ogni elemento scegli dove va nel contesto di un agente di supporto clienti. «Fuori dal contesto» non significa inutile: significa che non deve stare nella finestra in quella forma.',body);
+  const rows=el.querySelectorAll('.sorter-row');
+  rows.forEach(r=>{
+    const k=+r.dataset.k;
+    r.querySelectorAll('.bbtn').forEach(b=>b.addEventListener('click',()=>{
+      saved[k]=b.dataset.b; store.set('sorter',saved);
+      r.querySelectorAll('.bbtn').forEach(x=>x.classList.toggle('on',x.dataset.b===saved[k]));
+      r.classList.remove('done','ok','bad');
+    }));
+  });
+  function check(){
+    let n=0,tot=0;
+    rows.forEach(r=>{
+      const k=+r.dataset.k; if(saved[k]===undefined) return;
+      tot++; const ok=saved[k]===SORT_ITEMS[k].a; if(ok)n++;
+      r.classList.add('done'); r.classList.toggle('ok',ok); r.classList.toggle('bad',!ok);
+    });
+    document.getElementById(id+'_sc').textContent = tot? n+' su '+tot+' corretti'+(tot<SORT_ITEMS.length?' ('+(SORT_ITEMS.length-tot)+' senza risposta)':'') : 'Assegna almeno un elemento.';
+    refreshStats();
+  }
+  document.getElementById(id+'_ck').addEventListener('click',check);
+  document.getElementById(id+'_rs').addEventListener('click',()=>{
+    Object.keys(saved).forEach(k=>delete saved[k]); store.set('sorter',{});
+    rows.forEach(r=>{r.classList.remove('done','ok','bad'); r.querySelectorAll('.bbtn').forEach(x=>x.classList.remove('on'));});
+    document.getElementById(id+'_sc').textContent='';
+  });
+  if(Object.keys(saved).length) check();
+}
+
+/* ---------- budget ---------- */
+const BUD = [
+  {k:'sys', lb:'System prompt e policy', max:20, def:3, col:'#c2451f'},
+  {k:'tools', lb:'Definizioni degli strumenti', max:40, def:6, col:'#d98324'},
+  {k:'docs', lb:'File di progetto (AGENTS.md, glossari)', max:40, def:5, col:'#c9a227'},
+  {k:'few', lb:'Esempi few-shot', max:20, def:2, col:'#5b8c3a'},
+  {k:'rag', lb:'Frammenti recuperati (RAG)', max:120, def:12, col:'#2f7d78'},
+  {k:'tres', lb:'Output degli strumenti nel turno', max:120, def:15, col:'#3a6ea5'},
+  {k:'hist', lb:'Storico della conversazione', max:120, def:20, col:'#6a5acd'},
+  {k:'out', lb:'Riserva per l’output', max:40, def:8, col:'#8e5b9f'}
+];
+function mountBudget(id){
+  const el=document.getElementById(id);
+  const saved=store.get('budget',null) || BUD.reduce((o,b)=>(o[b.k]=b.def,o),{});
+  const body=
+    BUD.map(b=>'<div class="slider-row"><div>'+b.lb+'</div>'+
+      '<input type="range" min="0" max="'+b.max+'" step="1" data-k="'+b.k+'" value="'+(saved[b.k]||0)+'">'+
+      '<div class="val" id="'+id+'_v_'+b.k+'"></div></div>').join('')+
+    '<div class="stack" id="'+id+'_stack"></div>'+
+    '<div class="legend">'+BUD.map(b=>'<span><b style="background:'+b.col+'"></b>'+b.lb.split(' (')[0]+'</span>').join('')+'</div>'+
+    '<div class="scoreline" style="margin-top:12px"><span id="'+id+'_tot"></span><span id="'+id+'_pct"></span></div>'+
+    '<div class="diag" id="'+id+'_dg"></div>'+
+    '<div class="btnrow"><button class="btn" id="'+id+'_rs">Ripristina valori tipici</button></div>';
+  el.innerHTML=widgetShell('Lab 4.2','Budget di contesto',
+    'Finestra da 200k token, agente di supporto con conversazioni lunghe. Alloca i token (in migliaia) e leggi la diagnosi. Non esiste una risposta unica: esistono allocazioni difendibili e allocazioni che si romperanno.',body);
+  const sliders=el.querySelectorAll('input[type=range]');
+  function upd(){
+    let tot=0;
+    BUD.forEach(b=>{
+      const s=el.querySelector('input[data-k="'+b.k+'"]'); const v=+s.value; saved[b.k]=v; tot+=v;
+      document.getElementById(id+'_v_'+b.k).textContent=v+'k';
+    });
+    store.set('budget',saved);
+    const stack=document.getElementById(id+'_stack');
+    stack.innerHTML=BUD.map(b=>'<i style="width:'+(saved[b.k]/200*100)+'%;background:'+b.col+'" title="'+b.lb+'"></i>').join('')+
+      (tot<200?'<i style="flex:1"></i>':'');
+    document.getElementById(id+'_tot').textContent='Totale '+tot+'k / 200k';
+    const pct=Math.round(tot/200*100);
+    const pe=document.getElementById(id+'_pct'); pe.textContent=pct+'% della finestra';
+    pe.style.color = tot>200?'var(--bad)': tot>140?'var(--warn)':'var(--muted)';
+    const d=[];
+    if(tot>200) d.push(['bad','Sfori la finestra: la chiamata verrà rifiutata o troncata in modo imprevedibile. Il troncamento colpisce di solito ciò che ti serve di più.']);
+    else if(tot>140) d.push(['warn','Oltre il 70% della finestra. Su conversazioni lunghe qui compare il context rot: vincoli iniziali ignorati, ripetizioni, incoerenze. Se è il tuo punto di partenza, non hai margine per crescere.']);
+    if(saved.out<8) d.push(['bad','Riserva di output insufficiente ('+saved.out+'k). L’input mangia lo spazio della risposta e le generazioni lunghe si troncano a metà.']);
+    if(saved.tools>15) d.push(['warn','Definizioni degli strumenti a '+saved.tools+'k: probabilmente troppi tool o descrizioni troppo verbose. È un costo fisso a ogni turno e rende la selezione più difficile. Riduci il numero e separa meglio i perimetri.']);
+    if(saved.rag>50) d.push(['warn','RAG a '+saved.rag+'k: stai recuperando troppo. Se il primo frammento non è pertinente, il problema è l’indice, non la quantità. Abbassa top_k e migliora chunking e metadati.']);
+    if(saved.docs>15) d.push(['warn','File di progetto a '+saved.docs+'k su ogni chiamata: verifica quale parte serve davvero sempre. Il resto è materiale da caricare su richiesta.']);
+    if(saved.hist>60) d.push(['warn','Storico a '+saved.hist+'k senza compattazione aggressiva: qui si perdono i vincoli dichiarati all’inizio. Serve una compattazione a schema fisso (obiettivo, vincoli, decisioni, stato).']);
+    if(saved.sys<1) d.push(['bad','System prompt quasi assente: nessun ruolo, nessuna regola, nessun formato. Tutto il comportamento sarà improvvisato a ogni turno.']);
+    if(saved.few===0&&saved.sys<6) d.push(['warn','Né esempi né un system prompt sostanzioso: il formato di output sarà instabile.']);
+    if(!d.length) d.push(['ok','Allocazione difendibile: margine di crescita sulla finestra, riserva di output adeguata, nessuna categoria ipertrofica. La domanda successiva è empirica: su conversazioni reali, quale categoria cresce più in fretta?']);
+    document.getElementById(id+'_dg').innerHTML=d.map(x=>'<div style="color:'+(x[0]==='bad'?'var(--bad)':x[0]==='warn'?'var(--warn)':'var(--ok)')+'">'+
+      (x[0]==='bad'?'✗ ':x[0]==='warn'?'⚠ ':'✓ ')+x[1]+'</div>').join('');
+    refreshStats();
+  }
+  sliders.forEach(s=>s.addEventListener('input',upd));
+  document.getElementById(id+'_rs').addEventListener('click',()=>{
+    BUD.forEach(b=>{ el.querySelector('input[data-k="'+b.k+'"]').value=b.def; }); upd();
+  });
+  upd();
+}
+
+/* ---------- capstone ---------- */
+const CAP = [
+  {k:'task', lb:'1 · Il compito, in una frase verificabile', ph:'Es. «Dalla segnalazione grezza produce una scheda di triage con livello, motivazione e dato mancante.» Se contiene una «e», probabilmente sono due compiti.', rows:2},
+  {k:'sys', lb:'2 · System prompt (ruolo, criteri operativi, casi limite, formato)', ph:'Scrivilo per intero. Ogni termine valutativo che usi deve avere qui la sua definizione.', rows:9},
+  {k:'static', lb:'3 · Risorse statiche — e perché servono a OGNI chiamata', ph:'Es. glossario dei codici pratica (~800 token) — serve sempre perché ogni input li contiene.\nEs. 3 esempi canonici (~600 token) — definiscono il formato.', rows:5},
+  {k:'dyn', lb:'4 · Contesto dinamico — cosa entra, quando, come lo recuperi', ph:'Es. anagrafica cliente: query per ID, solo 5 campi.\nEs. procedura pertinente: 40 descrizioni sempre in contesto, corpo su richiesta.\nEs. storico: compattato ogni 15 turni con schema fisso.', rows:5},
+  {k:'tools', lb:'5 · Strumenti (max 5) — nome, cosa fa, quando NON usarlo', ph:'cerca_pratica — recupera per ID. NON usare per ricerche testuali libere: usa cerca_testo.', rows:4},
+  {k:'eval', lb:'6 · Valutazione — 6 casi di test con criterio verificabile (compila per primo)', ph:'T1 input: ... | criterio: ...\nL1 (dato mancante) input: ... | criterio: risponde NON_DETERMINABILE, non inventa la data', rows:6},
+  {k:'fail', lb:'7 · Il fallimento più costoso, e come lo intercetti prima dell’utente', ph:'Es. classificare BASSA una segnalazione critica. Intercettazione: ogni output CRITICA/BASSA su parole-chiave di reparto passa in revisione umana la prima settimana.', rows:3}
+];
+function mountCapstone(id){
+  const el=document.getElementById(id);
+  const body=CAP.map(f=>'<label class="fl">'+f.lb+'</label><textarea data-k="'+f.k+'" rows="'+f.rows+'" placeholder="'+esc(f.ph)+'"></textarea>').join('')+
+    '<div class="btnrow"><button class="btn primary" id="'+id+'_ex">Esporta scheda di progetto</button><span class="saved" id="'+id+'_sv">salvato</span></div>';
+  el.innerHTML=widgetShell('Capstone','Scheda di progetto',
+    'Sette sezioni. Compila la 6 per prima: se non riesci a definire i criteri di successo, il compito non è ancora abbastanza definito.',body);
+  const sv=document.getElementById(id+'_sv');
+  el.querySelectorAll('textarea').forEach(ta=>{
+    const k='cap.'+ta.dataset.k;
+    ta.value=answers[k]||'';
+    let t; ta.addEventListener('input',()=>{ answers[k]=ta.value; clearTimeout(t);
+      t=setTimeout(()=>{saveAll(); sv.classList.add('on'); setTimeout(()=>sv.classList.remove('on'),1200); refreshStats();},400); });
+  });
+  document.getElementById(id+'_ex').addEventListener('click',()=>doExport(true));
+}
+
+/* ============================================================
+   NAVIGAZIONE
+   ============================================================ */
+function renderNav(){
+  const nav=document.getElementById('nav');
+  nav.innerHTML=MODULES.map((m,i)=>
+    '<button class="navitem'+(i===current?' active':'')+'" data-i="'+i+'">'+
+    '<span class="idx">'+m.n+'</span><span><span class="nt">'+m.title+'</span><span class="nm">'+m.min+' minuti</span></span>'+
+    (done[m.id]?'<span class="tick">●</span>':'')+'</button>').join('');
+  nav.querySelectorAll('.navitem').forEach(b=>b.addEventListener('click',()=>go(+b.dataset.i)));
+}
+
+function renderModule(){
+  const m=MODULES[current];
+  mounts.length=0;
+  const main=document.getElementById('main');
+  const isBreak = m.id==='brk';
+  let html='';
+  if(!isBreak){
+    html+='<div class="eyebrow">Modulo '+m.n+' · '+m.min+' minuti</div><h1>'+m.title+'</h1>';
+    html+='<div class="mod-meta"><span class="badge">'+(current+1)+' di '+MODULES.length+'</span>'+
+      '<span class="badge" id="modTimer">⏱ --:--</span>'+
+      '<label class="chk" style="margin:0;padding:6px 11px"><input type="checkbox" id="modDone" '+(done[m.id]?'checked':'')+'><span class="lb" style="font-weight:600;font-size:13px">Modulo completato</span></label></div>';
+  }
+  html+=m.blocks.map((b,i)=>renderBlock(b,m.id,i)).join('');
+  html+='<div class="footnav">'+
+    (current>0?'<button class="btn" id="prevBtn">← '+MODULES[current-1].title+'</button>':'<span></span>')+
+    (current<MODULES.length-1?'<button class="btn primary" id="nextBtn">'+MODULES[current+1].title+' →</button>':'<span></span>')+
+    '</div>';
+  main.innerHTML=html;
+  mounts.forEach(f=>f());
+  const pb=document.getElementById('prevBtn'); if(pb) pb.addEventListener('click',()=>go(current-1));
+  const nb=document.getElementById('nextBtn'); if(nb) nb.addEventListener('click',()=>go(current+1));
+  const md=document.getElementById('modDone');
+  if(md) md.addEventListener('change',()=>{ if(md.checked) done[m.id]=true; else delete done[m.id]; saveAll(); renderNav(); refreshStats(); });
+  window.scrollTo({top:0,behavior:'instant'});
+  updModTimer();
+}
+
+function go(i){
+  if(i<0||i>=MODULES.length) return;
+  current=i; store.set('current',i); renderNav(); renderModule(); refreshStats();
+}
+
+/* ============================================================
+   TIMER
+   ============================================================ */
+const TOTAL=4*3600;
+let elapsed=store.get('elapsed',0), running=false, tick=null;
+let modStart=null;
+function fmt(s){ s=Math.max(0,Math.floor(s)); const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;
+  return (h?String(h).padStart(2,'0')+':':'00:')+String(m).padStart(2,'0')+':'+String(x).padStart(2,'0'); }
+function paintClock(){
+  const c=document.getElementById('clock');
+  c.textContent=fmt(elapsed)+' / 4:00:00';
+  c.style.color = elapsed>TOTAL?'var(--bad)': elapsed>TOTAL*0.9?'var(--warn)':'';
+}
+function updModTimer(){
+  const e=document.getElementById('modTimer'); if(!e) return;
+  const m=MODULES[current];
+  const spent = modStart!==null? Math.floor((elapsed-modStart)) : 0;
+  e.textContent='⏱ '+Math.floor(spent/60)+' / '+m.min+' min';
+  e.style.color = spent/60>m.min?'var(--warn)':'';
+}
+function toggleTimer(){
+  running=!running;
+  const b=document.getElementById('timerBtn');
+  b.textContent = running?'⏸ Pausa timer':'▶ Avvia timer';
+  if(running){ if(modStart===null) modStart=elapsed;
+    tick=setInterval(()=>{ elapsed++; store.set('elapsed',elapsed); paintClock(); updModTimer(); },1000); }
+  else clearInterval(tick);
+}
+
+/* ============================================================
+   STATS / EXPORT / TEMA
+   ============================================================ */
+function refreshStats(){
+  const nQ=MODULES.reduce((a,m)=>a+m.blocks.filter(b=>b.t==='quiz').length,0);
+  const aQ=Object.keys(quizState).length;
+  const okQ=MODULES.flatMap(m=>m.blocks.filter(b=>b.t==='quiz'))
+    .filter(b=>quizState[b.id]!==undefined && b.opts[quizState[b.id]].ok).length;
+  const exIds=MODULES.flatMap(m=>m.blocks.filter(b=>b.t==='exercise').map(b=>b.id));
+  const aE=exIds.filter(k=>(answers[k]||'').trim().length>20).length;
+  const capN=CAP.filter(f=>(answers['cap.'+f.k]||'').trim().length>20).length;
+  const dM=Object.keys(done).length;
+  const nM=MODULES.filter(m=>m.id!=='brk').length;
+  document.getElementById('statsBox').innerHTML=
+    'Moduli completati <strong>'+dM+'/'+nM+'</strong><br>'+
+    'Quiz risposti <strong>'+aQ+'/'+nQ+'</strong>'+(aQ?' · corretti <strong>'+okQ+'</strong>':'')+'<br>'+
+    'Esercizi svolti <strong>'+aE+'/'+exIds.length+'</strong><br>'+
+    'Capstone <strong>'+capN+'/'+CAP.length+'</strong> sezioni';
+  const tot=nM+nQ+exIds.length+CAP.length;
+  document.getElementById('pbar').style.width=((dM+aQ+aE+capN)/tot*100)+'%';
+}
+
+function doExport(capOnly){
+  const L=[];
+  const d=new Date();
+  const stamp=d.toLocaleDateString('it-IT')+' '+d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+  L.push('# Prompt · Metaprompting · Context Engineering');
+  L.push('');
+  L.push('Esportato il '+stamp+'  ·  tempo d’aula registrato: '+fmt(elapsed));
+  L.push('');
+  if(!capOnly){
+    L.push('## Risposte agli esercizi');
+    MODULES.forEach(m=>{
+      const ex=m.blocks.filter(b=>b.t==='exercise');
+      ex.forEach(b=>{
+        const v=(answers[b.id]||'').trim();
+        L.push(''); L.push('### '+m.n+' — '+b.label);
+        L.push(''); L.push('> '+b.prompt);
+        L.push(''); L.push(v||'_(non compilato)_');
+      });
+    });
+    L.push(''); L.push('## Quiz');
+    MODULES.forEach(m=>m.blocks.filter(b=>b.t==='quiz').forEach(b=>{
+      const k=quizState[b.id];
+      L.push('- **'+b.q+'**');
+      L.push('  - Risposta data: '+(k===undefined?'_nessuna_':b.opts[k].tx+(b.opts[k].ok?' ✅':' ❌')));
+      if(k!==undefined&&!b.opts[k].ok) L.push('  - Corretta: '+b.opts.find(o=>o.ok).tx);
+    }));
+    L.push(''); L.push('## Checklist');
+    MODULES.forEach(m=>m.blocks.filter(b=>b.t==='checklist').forEach(b=>{
+      const s=store.get('ck.'+b.id,[]);
+      L.push(''); L.push('### '+b.title);
+      b.items.forEach((it,i)=>L.push('- ['+(s[i]?'x':' ')+'] '+it));
+    }));
+    const bd=store.get('budget',null);
+    if(bd){ L.push(''); L.push('## Budget di contesto allocato');
+      let t=0; BUD.forEach(b=>{ t+=bd[b.k]||0; L.push('- '+b.lb+': '+(bd[b.k]||0)+'k'); });
+      L.push('- **Totale: '+t+'k / 200k**'); }
+  }
+  L.push(''); L.push('## Scheda di progetto (capstone)');
+  CAP.forEach(f=>{ L.push(''); L.push('### '+f.lb); L.push(''); L.push((answers['cap.'+f.k]||'').trim()||'_(non compilato)_'); });
+  const ck5=store.get('ck.ck5',[]);
+  const m5=MODULES.find(m=>m.id==='m5').blocks.find(b=>b.t==='checklist');
+  if(m5){ L.push(''); L.push('### Verifica finale'); m5.items.forEach((it,i)=>L.push('- ['+(ck5[i]?'x':' ')+'] '+it)); }
+  const blob=new Blob([L.join('\n')],{type:'text/markdown;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=(capOnly?'scheda-progetto-agente':'corso-prompt-context-engineering')+'.md';
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+document.getElementById('timerBtn').addEventListener('click',toggleTimer);
+document.getElementById('exportBtn').addEventListener('click',()=>doExport(false));
+document.getElementById('themeBtn').addEventListener('click',()=>{
+  const t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',t); store.set('theme',t);
+});
+document.getElementById('resetBtn').addEventListener('click',()=>{
+  if(!confirm('Azzerare tutte le risposte, le checklist e il timer? L’operazione non è reversibile.')) return;
+  store.clearAll(); location.reload();
+});
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return;
+  if(e.key==='ArrowRight') go(current+1);
+  if(e.key==='ArrowLeft') go(current-1);
+});
+if(!store.get('theme',null) && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+  document.documentElement.setAttribute('data-theme','dark');
+else document.documentElement.setAttribute('data-theme', store.get('theme','light'));
+
+renderNav(); renderModule(); paintClock(); refreshStats();
+</script>
+</body>
+</html>
