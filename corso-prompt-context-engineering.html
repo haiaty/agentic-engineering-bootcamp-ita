@@ -277,14 +277,14 @@ MODULES.push({
 MODULES.push({
   id:'m1', n:'01', title:'Che cos’è un prompt', min:35,
   blocks:[
-    {t:'p',html:`<p><strong>Definizione operativa.</strong> Un prompt &egrave; <em>l’intera sequenza di token che il modello riceve prima di produrre il primo token di risposta</em>. Non &egrave; solo &laquo;la domanda che scrivo in chat&raquo;: &egrave; tutto ci&ograve; che finisce nella finestra di contesto, in ordine, in quel preciso momento.</p>
-      <p>Questa definizione &egrave; scomoda ma utile, perch&eacute; chiarisce subito tre cose:</p>
+    {t:'p',html:`Un prompt &egrave; <em>l’intera sequenza di token che il modello riceve prima di produrre il primo token di risposta</em>. Non &egrave; solo &laquo;la domanda che scrivo in chat&raquo;: &egrave; tutto ci&ograve; che finisce nella finestra di contesto, in ordine, in quel preciso momento.</p>
+      <p>Questa definizione chiarisce subito tre cose:</p>
       <ul>
         <li>Il modello &egrave; <strong>stateless</strong>: fra due chiamate non ricorda niente. La &laquo;memoria&raquo; di una conversazione &egrave; una finzione ricostruita rimandando ogni volta lo storico.</li>
         <li>Quello che tu <em>non scrivi</em> semplicemente non esiste. Nessun contesto implicito, nessun &laquo;si capisce dal ruolo&raquo;.</li>
         <li>Se il modello sbaglia, la prima ipotesi non &egrave; &laquo;&egrave; stupido&raquo; ma <strong>&laquo;non aveva l’informazione, o l’aveva in una forma sbagliata&raquo;</strong>.</li>
       </ul>`},
-    {t:'callout',kind:'',title:'La frase da portare a casa',html:`Il modello non risponde alla tua <em>intenzione</em>. Risponde alla tua <em>stringa</em>.`},
+    {t:'callout',kind:'',title:'La frase da portare a casa',html:`Il prompt non è solo «la domanda che scrivo in chat»: è tutto ciò che finisce nella finestra di contesto`},
 
     {t:'p',html:`<h3>Anatomia di una chiamata reale</h3><p>Quando un’applicazione parla con un LLM, la richiesta &egrave; strutturata. Semplificando molto:</p>`},
     {t:'code',lang:'json',code:`{
@@ -761,7 +761,7 @@ MODULES.push({
   blocks:[
     {t:'p',html:`<h3>Le sei cose da ricordare</h3>
       <ol>
-        <li><strong>Il modello risponde alla tua stringa, non alla tua intenzione.</strong> Quando sbaglia, la prima ipotesi &egrave; sempre un difetto del contesto.</li>
+        <li>Il prompt non è solo «la domanda che scrivo in chat»: è tutto ciò che finisce nella finestra di contesto</li>
         <li><strong>Gli esempi battono le descrizioni.</strong> Se istruzioni ed esempi sono in conflitto, vincono gli esempi &mdash; quindi cura gli esempi come cureresti il codice.</li>
         <li><strong>Governa i casi limite.</strong> Un’uscita esplicita per &laquo;non lo so&raquo; &egrave; ci&ograve; che separa un prompt da demo da un prompt da produzione.</li>
         <li><strong>Il metaprompting genera ipotesi, non verit&agrave;.</strong> Accelera la scrittura, non sostituisce la misura.</li>
