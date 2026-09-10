@@ -275,8 +275,23 @@ MODULES.push({
 
 /* ---------- 1. Che cos'è un prompt ---------- */
 MODULES.push({
-  id:'m1', n:'01', title:'Che cos’è un prompt', min:35,
+  id:'m1', n:'01', title:'Che cos’è un prompt?', min:35,
   blocks:[
+    {t:'p',html:`<h3>Token, non parole</h3>
+      <p>Il modello non legge caratteri n&eacute; parole: legge <strong>token</strong>, frammenti ricorrenti di testo. In inglese un token vale in media ~4 caratteri; in italiano di meno (~3) Regola spannometrica utile in aula: <strong>1.000 token &asymp; 700 parole inglesi &asymp; 550 parole italiane</strong>.</p>
+      <p>Perch&eacute; ti interessa? Per tre ragioni molto pratiche: i token si <strong>pagano</strong>, occupano una finestra di contesto <strong>finita</strong>, e ogni token in pi&ugrave; &egrave; anche un’occasione in pi&ugrave; di distrarre il modello.</p>`},
+    {t:'tokenizer'},
+
+    {t:'p',html:`<h3>Contesto</h3>
+      <p>Che cos’&egrave; il <strong>contesto</strong>, in parole semplici? &Egrave; <em>tutto ci&ograve; che il modello ha &laquo;davanti agli occhi&raquo; nel momento esatto in cui scrive la risposta</em>: le istruzioni, la domanda, lo storico della conversazione, i documenti o i dati che gli hai passato. Nient’altro.</p>
+      <p>Un’immagine utile: pensa a un esperto bravissimo che entra in un ufficio <strong>senza ricordare nulla di quella che lascia</strong>, e che per lavorare pu&ograve; guardare solo il fascicolo che gli metti sul tavolo. Ogni volta che &laquo;parla&raquo; con un LLM &egrave; come se entrasse di nuovo in quell’ufficio: il fascicolo &egrave; il contesto, e la qualit&agrave; della sua risposta dipende da che cosa c’&egrave; dentro &mdash; n&eacute; pi&ugrave; n&eacute; meno.</p>
+      <p>Due propriet&agrave; da tenere a mente:</p>
+      <ul>
+        <li><strong>&Egrave; finito.</strong> Il contesto vive in una <em>finestra</em> di dimensione fissa, misurata in token (da alcune decine di migliaia a oltre un milione, a seconda del modello). Quando la finestra &egrave; piena, ci&ograve; che non c’&egrave; pi&ugrave; spazio di mettere &egrave; come se non esistesse: niente memoria implicita, niente &laquo;lo sa comunque&raquo;.</li>
+        <li><strong>&Egrave; in ordine.</strong> Il modello legge il contesto come si legge un testo: da cima a fondo. La posizione di un’informazione non &egrave; un dettaglio tecnico: conta davvero, e lo vedremo tra poco.</li>
+      </ul>
+      <p>&Egrave; per questo che l’espressione <em>context engineering</em> significa proprio questo: decidere con cura che cosa finisce nel fascicolo, in che ordine e in che forma &mdash; &egrave; l’argomento del modulo 04, ma il concetto lo stai usando gi&agrave; adesso.</p>`},
+
     {t:'p',html:`Un prompt &egrave; <em>l’intera sequenza di token che il modello riceve prima di produrre il primo token di risposta</em>. Non &egrave; solo &laquo;la domanda che scrivo in chat&raquo;: &egrave; tutto ci&ograve; che finisce nella finestra di contesto, in ordine, in quel preciso momento.</p>
       <p>Questa definizione chiarisce subito tre cose:</p>
       <ul>
@@ -308,11 +323,6 @@ MODULES.push({
       {tag:'tool_result',h:'Dati dal mondo',p:'Righe di database, ricerche, output di codice. Il canale della freschezza.'},
       {tag:'parametri',h:'Come campionare',p:'temperature, max_tokens, stop sequences. Non sono prompt ma cambiano l’esito.'}
     ]},
-
-    {t:'p',html:`<h3>Token, non parole</h3>
-      <p>Il modello non legge caratteri n&eacute; parole: legge <strong>token</strong>, frammenti ricorrenti di testo. In inglese un token vale in media ~4 caratteri; in italiano di meno (~3), perch&eacute; la nostra morfologia &egrave; pi&ugrave; ricca e le parole si spezzano pi&ugrave; spesso. Regola spannometrica utile in aula: <strong>1.000 token &asymp; 700 parole inglesi &asymp; 550 parole italiane</strong>.</p>
-      <p>Perch&eacute; ti interessa? Per tre ragioni molto pratiche: i token si <strong>pagano</strong>, occupano una finestra di contesto <strong>finita</strong>, e ogni token in pi&ugrave; &egrave; anche un’occasione in pi&ugrave; di distrarre il modello. Il tuo mestiere non &egrave; scrivere prompt lunghi: &egrave; scrivere prompt <em>densi di segnale</em>.</p>`},
-    {t:'tokenizer'},
 
     {t:'p',html:`<h3>Che cosa fa davvero il modello</h3>
       <p>Un LLM stima la distribuzione di probabilit&agrave; del token successivo dato tutto ci&ograve; che precede, e poi ne campiona uno; ripete, e cos&igrave; costruisce la risposta. Ne derivano conseguenze controintuitive ma sfruttabili:</p>
