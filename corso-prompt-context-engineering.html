@@ -319,6 +319,75 @@ MODULES.push({
 
     {t:'p',html:`<p>Questo JSON &egrave; il punto di partenza di tutto il corso. Da qui in avanti lo <strong>smontiamo</strong>: prima scendiamo fino all’unit&agrave; minima di cui &egrave; fatto ogni campo &mdash; il token &mdash; poi risaliamo per capire che cosa succede quando tutti questi pezzi vengono messi in fila davanti al modello.</p>`},
 
+    {t:'p',html:`<h3>Che cosa, di quel JSON, arriva davvero al modello</h3>
+      <p>Il JSON non &egrave; il prompt: &egrave; la <strong>busta</strong>. Arriva al server del provider, che la apre e smista il contenuto verso due destinazioni molto diverse.</p>
+      <ul>
+        <li><strong>Una parte diventa testo, e poi token.</strong> Il <code>system</code>, le definizioni dei <code>tools</code>, il contenuto di ogni messaggio, le chiamate ai tool e i loro risultati: tutto questo viene serializzato in <em>una sola</em> sequenza e dato in pasto al modello. Questo &egrave; il prompt vero.</li>
+        <li><strong>Una parte non diventa niente.</strong> <code>model</code>, <code>temperature</code>, <code>max_tokens</code>, <code>top_p</code>, <code>stream</code>: sono istruzioni per la <em>macchina che campiona</em>, non per il modello. Non entrano nella sequenza, non costano token, e il modello non pu&ograve; leggerli.</li>
+      </ul>
+      <p>La seconda riga ha una conseguenza che in aula sorprende sempre: <strong>scrivere <code>&quot;temperature&quot;: 0.2</code> non dice al modello di essere preciso</strong>. Il modello non sa a che temperatura verr&agrave; campionato, come tu non sai a che velocit&agrave; qualcuno sta leggendo quello che scrivi. Se vuoi prudenza, devi chiederla nel <code>system</code> &mdash; cio&egrave; in token.</p>`},
+
+    {t:'table',
+      head:['Campo del JSON','Diventa token?','Dove finisce'],
+      rows:[
+        ['<code>model</code>','No','Sceglie quale rete risponde &mdash; e quale tokenizzatore viene usato'],
+        ['<code>tools</code>','<strong>S&igrave;</strong>','Serializzato come testo in testa alla sequenza: nome, descrizione e schema di ogni tool'],
+        ['<code>system</code>','<strong>S&igrave;</strong>','Subito dopo i tool, prima di qualsiasi messaggio'],
+        ['<code>messages[].content</code>','<strong>S&igrave;</strong>','In ordine, ciascuno racchiuso fra i marcatori del proprio turno'],
+        ['<code>tool_use</code> / <code>tool_result</code>','<strong>S&igrave;</strong>','Sono contenuto di messaggi: il JSON degli argomenti e del risultato viene letto come testo'],
+        ['<code>temperature</code>, <code>top_p</code>','No','Agiscono sul campionamento, dopo che il modello ha prodotto le probabilit&agrave;'],
+        ['<code>max_tokens</code>','No','&Egrave; solo il punto in cui la generazione viene interrotta'],
+        ['<code>stream</code>','No','Riguarda come la risposta torna indietro, non come la domanda arriva']
+      ]},
+
+    {t:'p',html:`<h3>L&rsquo;appiattimento: da albero a riga</h3>
+      <p>Il JSON &egrave; annidato, con campi paralleli; il modello invece legge <strong>una sequenza lineare</strong>, una sola, dall&rsquo;inizio alla fine. Il passaggio fra i due mondi si chiama <em>template di chat</em>: il server ricompone i pezzi in un ordine fisso e separa i turni con <strong>marcatori speciali</strong> &mdash; token che non corrispondono a nessuna parola e che il modello ha imparato a riconoscere durante l&rsquo;addestramento. Nell&rsquo;API di Anthropic l&rsquo;ordine di composizione documentato &egrave; <code>tools</code> &rarr; <code>system</code> &rarr; <code>messages</code>.</p>
+      <p>La conversazione del simulatore, appiattita, ha grosso modo questa forma:</p>`},
+    {t:'code',lang:'text',code:`<|start|>system
+[ definizione dei tool, serializzata come testo:
+  cerca_contratto - "Cerca un contratto per numero e restituisce stato..."
+  schema: { id: integer } ]
+
+Sei l'assistente interno dell'ufficio contratti di ACME.
+Rispondi solo con dati verificati dai tool: se un dato non risulta, dillo.
+<|end|>
+<|start|>user
+Il contratto 4471 e' ancora attivo?
+<|end|>
+<|start|>assistant
+[chiamata] cerca_contratto {"id": 4471}
+<|end|>
+<|start|>user
+[risultato] {"stato": "scaduto", "fine": "2025-03-31", "referente": "M. Rossi"}
+<|end|>
+<|start|>assistant
+█   <- la sequenza finisce qui: il compito del modello e' continuarla`},
+    {t:'p',html:`<p>I marcatori qui sopra sono <strong>schematici</strong>: la forma esatta cambia da provider a provider e da generazione a generazione, e per i modelli chiusi non &egrave; pubblica (per quelli a pesi aperti la trovi scritta nel <code>chat_template</code> del tokenizzatore). Ma la struttura &egrave; sempre questa, e spiega tre cose che altrimenti sembrano magia:</p>
+      <ul>
+        <li><strong>Perch&eacute; i ruoli funzionano.</strong> <code>system</code>, <code>user</code> e <code>assistant</code> non sono categorie che il modello &laquo;capisce&raquo;: sono marcatori che ha visto milioni di volte in addestramento, sempre usati nello stesso modo. Il ruolo &egrave; una convenzione imparata, non un permesso.</li>
+        <li><strong>Perch&eacute; l&rsquo;ordine conta.</strong> Non esistono campi &laquo;paralleli&raquo;: dentro la sequenza qualcosa viene per forza prima e qualcosa dopo. Un&rsquo;istruzione nel <code>system</code> sta a decine di migliaia di token di distanza dall&rsquo;ultima domanda, e quella distanza si sente.</li>
+        <li><strong>Perch&eacute; la generazione &laquo;parte gi&agrave; avviata&raquo;.</strong> L&rsquo;ultima cosa nella sequenza &egrave; il marcatore di apertura del turno dell&rsquo;assistente. Il modello non riceve la domanda &laquo;cosa rispondi?&raquo;: riceve un testo che si interrompe e il compito di proseguirlo. Il <em>prefill</em> &egrave; esattamente questo &mdash; scrivere tu i primi token dopo quel marcatore, cos&igrave; che il seguito sia gi&agrave; condizionato. (Diversi modelli recenti, Claude 4.6 e successivi inclusi, non accettano pi&ugrave; il prefill esplicito, ma il meccanismo sottostante resta questo.)</li>
+      </ul>`},
+
+    {t:'p',html:`<h3>Da testo a token: come avviene il taglio</h3>
+      <p>Quella sequenza &egrave; ancora testo. L&rsquo;ultimo passaggio prima del modello &egrave; il <strong>tokenizzatore</strong>: un vocabolario fisso di frammenti &mdash; dell&rsquo;ordine di 100.000&ndash;200.000 pezzi &mdash; costruito una volta per tutte fondendo via via le coppie di caratteri pi&ugrave; frequenti nei dati di addestramento (&egrave; la famiglia di algoritmi <em>BPE</em>). Il taglio &egrave; puramente statistico e deterministico: nessuna grammatica, nessun significato, nessuna comprensione. Poi ogni frammento viene sostituito dal suo numero, e <em>quella</em> lista di numeri &egrave; ci&ograve; che entra nella rete.</p>
+      <p>Una segmentazione plausibile, con &laquo;&middot;&raquo; a marcare lo spazio iniziale:</p>`},
+    {t:'code',lang:'text',code:`"Il contratto 4471 e' scaduto"
+   |Il|·contratto|·44|71|·e|'|·sc|aduto|        -> 8 token
+
+'{"stato": "scaduto", "fine": "2025-03-31"}'
+   |{|"|stato|":|·"|scaduto|",|·"|fine|":|·"|2025|-|03|-|31|"|}|  -> 18 token`},
+    {t:'p',html:`<p>Da qui discendono quattro fatti che in produzione si pagano davvero:</p>
+      <ul>
+        <li><strong>Lo spazio fa parte del token.</strong> <code>&middot;contratto</code> e <code>contratto</code> sono due token diversi. &Egrave; il motivo per cui la formattazione &mdash; a capo, indentazioni, spaziature &mdash; non &egrave; gratis.</li>
+        <li><strong>Codici, ID e date costano sproporzionatamente.</strong> Una parola comune &egrave; un token solo; un numero di contratto o un UUID si frantuma in molti pezzi. Un <code>tool_result</code> pieno di identificativi pu&ograve; costare pi&ugrave; di un paragrafo di prosa lungo il doppio.</li>
+        <li><strong>La punteggiatura del JSON si paga.</strong> Nell&rsquo;esempio qui sopra met&agrave; dei token sono virgolette, parentesi e due punti. Restituire un risultato in forma compatta invece che in JSON verboso &egrave; un risparmio reale, a ogni turno.</li>
+        <li><strong>L&rsquo;italiano costa pi&ugrave; dell&rsquo;inglese.</strong> I vocabolari sono costruiti in gran parte su testo inglese: le nostre parole si spezzano pi&ugrave; spesso, e lo stesso contenuto ci costa in media il 20&ndash;30% di token in pi&ugrave;.</li>
+      </ul>
+      <p>Un&rsquo;ultima avvertenza pratica, per quando dovrai misurare invece che stimare. Il tokenizzatore &egrave; <strong>specifico del modello</strong>: lo stesso testo, su due modelli diversi, d&agrave; due conteggi diversi. Per i modelli OpenAI il tokenizzatore &egrave; pubblico (<code>tiktoken</code>); per Claude non lo &egrave;, e il conteggio esatto &mdash; comprensivo di <code>system</code>, <code>tools</code> e storico &mdash; si ottiene chiamando l&rsquo;endpoint <code>POST /v1/messages/count_tokens</code> con lo stesso <code>model</code> che userai davvero. Usare <code>tiktoken</code> per stimare i token di Claude &egrave; un errore comune: sottostima di circa il 15&ndash;20% sul testo ordinario, molto di pi&ugrave; su codice e lingue non inglesi.</p>`},
+    {t:'callout',kind:'warn',title:'La regola operativa',html:`Se un&rsquo;informazione non &egrave; stata trasformata in token, per il modello non esiste &mdash; per quanto &laquo;ovvia&raquo; ti sembri dalla struttura della richiesta. Il nome di un campo, l&rsquo;ordine delle chiavi, il fatto che una cosa sia un tool e non un messaggio: il modello lo sa solo se il template lo ha scritto nella sequenza. E i parametri di campionamento non sono token.`},
+    {t:'p',html:`<p>Resta l&rsquo;ultima domanda: quanto pesa tutto questo? Quanto costa, e quanto spazio occupa nella finestra. &Egrave; il prossimo passo.</p>`},
+
     {t:'p',html:`<h3>Token, non parole</h3>
       <p>Il modello non legge caratteri n&eacute; parole: legge <strong>token</strong>, frammenti ricorrenti di testo. In inglese un token vale in media ~4 caratteri; in italiano di meno (~3) Regola spannometrica utile in aula: <strong>1.000 token &asymp; 700 parole inglesi &asymp; 550 parole italiane</strong>.</p>
       <p>Perch&eacute; ti interessa? Per tre ragioni molto pratiche: i token si <strong>pagano</strong>, occupano una finestra di contesto <strong>finita</strong>, e ogni token in pi&ugrave; &egrave; anche un’occasione in pi&ugrave; di distrarre il modello.</p>`},
