@@ -291,7 +291,21 @@ MODULES.push({
   id:'m1', n:'01', title:'Capire cos\'è un prompt', min:50,
   blocks:[
     {t:'p',html:`<h3>Cosa viene inviato ai provider di AI (chatgpt, Antrophic, LMstudio, oMLX) quando invio nella chat/Cli? </h3>
-      <p>Partiamo da ci&ograve; che arriva all'AI provider. Quando un’applicazione (la chat o il tuo agente) parla con un provider di AI non manda solo il testo che hai messo nella chat/CLI: manda una richiesta strutturata. <br/>Semplificando molto questo è quello che invia:</p>`},
+      <p>Partiamo da ci&ograve; che scrivi tu. Apri la chat, batti tre parole e premi invio:</p>`},
+    {t:'code',lang:'text',code:`ciao, come stai?`},
+    {t:'p',html:`<p>Sembra ovvio che al provider arrivi &laquo;ciao, come stai?&raquo;. E invece no: <strong>non viene inviato solo quel testo</strong>. Parte una richiesta strutturata, in cui la tua frase &egrave; un campo fra gli altri &mdash; qualcosa di simile a questo:</p>`},
+    {t:'code',lang:'json',code:`{
+  "model": "claude-...",
+  "system": "Sei un assistente utile e conciso. Oggi e' il 15 settembre 2026.
+             Rispondi in italiano. Non inventare fatti: se non sai, dillo.",
+  "messages": [
+    { "role": "user", "content": "ciao, come stai?" }
+  ],
+  "temperature": 1.0,
+  "max_tokens": 1024
+}`},
+    {t:'p',html:`<p>Guarda che cosa c’&egrave; l&igrave; dentro che <em>tu non hai scritto</em>: un ruolo, una lingua, la data di oggi, una regola sul non inventare, un tetto alla lunghezza della risposta. Nelle chat commerciali quel campo <code>system</code> contiene centinaia di righe che non vedrai mai;</p>
+      <p>Questo &egrave; il caso pi&ugrave; semplice possibile: un turno, nessuno strumento, nessun passato. Appena la conversazione ha una storia e l’assistente pu&ograve; consultare dei dati, il pacchetto diventa cos&igrave;:</p>`},
     {t:'code',lang:'json',code:`{
   "model": "claude-...",
   "system": "Sei l'assistente interno dell'ufficio contratti di ACME. ...",
