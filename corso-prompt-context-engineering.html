@@ -277,6 +277,31 @@ MODULES.push({
 MODULES.push({
   id:'m1', n:'01', title:'Capire cos\'è un prompt', min:35,
   blocks:[
+    {t:'p',html:`<h3>Cosa viene inviato ai provider di AI (chatgpt, Antrophic, LMstudio, oMLX) quando invio nella chat/Cli? </h3>
+      <p>Partiamo da ci&ograve; che il modello <em>vede davvero</em>. Quando un’applicazione parla con un provider di AI non manda solo il testo messo nella chat/CLI: manda una richiesta strutturata. Semplificando molto:</p>`},
+    {t:'code',lang:'json',code:`{
+  "model": "claude-...",
+  "system": "Sei l'assistente interno dell'ufficio contratti di ACME. ...",
+  "tools":  [ { "name": "cerca_contratto", "description": "...", "input_schema": {...} } ],
+  "messages": [
+    { "role": "user",      "content": "Il contratto 4471 e' ancora attivo?" },
+    { "role": "assistant", "content": [ { "type": "tool_use", "name": "cerca_contratto", "input": {"id": 4471} } ] },
+    { "role": "user",      "content": [ { "type": "tool_result", "content": "{ stato: 'scaduto', fine: '2025-03-31' }" } ] }
+  ],
+  "temperature": 0.2,
+  "max_tokens": 1024
+}`},
+    {t:'p',html:`<p>Tutti questi pezzi sono <strong>prompt</strong>. Il campo <code>system</code> definisce ruolo e regole stabili. I <code>messages</code> alternano turni utente e assistente. Le <code>tools</code> sono descrizioni testuali di funzioni: il modello non &laquo;vede&raquo; il codice, legge il tuo testo e da quello decide se e come chiamarlo. I <code>tool_result</code> reimmettono dati freschi nel contesto. Persino un <em>prefill</em> &mdash; iniziare tu la risposta dell’assistente &mdash; &egrave; parte del prompt.</p>`},
+    {t:'cards',cards:[
+      {tag:'system',h:'Chi sei, cosa vale sempre',p:'Ruolo, dominio, regole non negoziabili, formato, tono. Stabile tra le richieste.'},
+      {tag:'user',h:'La richiesta del turno',p:'Il compito specifico, più i dati allegati per questo turno.'},
+      {tag:'assistant',h:'Turni precedenti e prefill',p:'Lo storico, e l’eventuale inizio forzato della risposta.'},
+      {tag:'tools',h:'Capacità disponibili',p:'Nome, descrizione, schema. Costano token a ogni chiamata.'},
+      {tag:'tool_result',h:'Dati dal mondo',p:'Righe di database, ricerche, output di codice. Il canale della freschezza.'},
+      {tag:'parametri',h:'Come campionare',p:'temperature, max_tokens, stop sequences. Non sono prompt ma cambiano l’esito.'}
+    ]},
+    {t:'p',html:`<p>Questo JSON &egrave; il punto di partenza di tutto il corso. Da qui in avanti lo <strong>smontiamo</strong>: prima scendiamo fino all’unit&agrave; minima di cui &egrave; fatto ogni campo &mdash; il token &mdash; poi risaliamo per capire che cosa succede quando tutti questi pezzi vengono messi in fila davanti al modello.</p>`},
+
     {t:'p',html:`<h3>Token, non parole</h3>
       <p>Il modello non legge caratteri n&eacute; parole: legge <strong>token</strong>, frammenti ricorrenti di testo. In inglese un token vale in media ~4 caratteri; in italiano di meno (~3) Regola spannometrica utile in aula: <strong>1.000 token &asymp; 700 parole inglesi &asymp; 550 parole italiane</strong>.</p>
       <p>Perch&eacute; ti interessa? Per tre ragioni molto pratiche: i token si <strong>pagano</strong>, occupano una finestra di contesto <strong>finita</strong>, e ogni token in pi&ugrave; &egrave; anche un’occasione in pi&ugrave; di distrarre il modello.</p>`},
@@ -300,29 +325,6 @@ MODULES.push({
         <li>Se il modello sbaglia, la prima ipotesi non &egrave; &laquo;&egrave; stupido&raquo; ma <strong>&laquo;non aveva l’informazione, o l’aveva in una forma sbagliata&raquo;</strong>.</li>
       </ul>`},
     {t:'callout',kind:'',title:'La frase da portare a casa',html:`Il prompt non è solo «la domanda che scrivo in chat»: è tutto ciò che finisce nella finestra di contesto`},
-
-    {t:'p',html:`<h3>Anatomia di una chiamata reale</h3><p>Quando un’applicazione parla con un LLM, la richiesta &egrave; strutturata. Semplificando molto:</p>`},
-    {t:'code',lang:'json',code:`{
-  "model": "claude-...",
-  "system": "Sei l'assistente interno dell'ufficio contratti di ACME. ...",
-  "tools":  [ { "name": "cerca_contratto", "description": "...", "input_schema": {...} } ],
-  "messages": [
-    { "role": "user",      "content": "Il contratto 4471 e' ancora attivo?" },
-    { "role": "assistant", "content": [ { "type": "tool_use", "name": "cerca_contratto", "input": {"id": 4471} } ] },
-    { "role": "user",      "content": [ { "type": "tool_result", "content": "{ stato: 'scaduto', fine: '2025-03-31' }" } ] }
-  ],
-  "temperature": 0.2,
-  "max_tokens": 1024
-}`},
-    {t:'p',html:`<p>Tutti questi pezzi sono <strong>prompt</strong>. Il campo <code>system</code> definisce ruolo e regole stabili. I <code>messages</code> alternano turni utente e assistente. Le <code>tools</code> sono descrizioni testuali di funzioni: il modello non &laquo;vede&raquo; il codice, legge il tuo testo e da quello decide se e come chiamarlo. I <code>tool_result</code> reimmettono dati freschi nel contesto. Persino un <em>prefill</em> &mdash; iniziare tu la risposta dell’assistente &mdash; &egrave; parte del prompt.</p>`},
-    {t:'cards',cards:[
-      {tag:'system',h:'Chi sei, cosa vale sempre',p:'Ruolo, dominio, regole non negoziabili, formato, tono. Stabile tra le richieste.'},
-      {tag:'user',h:'La richiesta del turno',p:'Il compito specifico, più i dati allegati per questo turno.'},
-      {tag:'assistant',h:'Turni precedenti e prefill',p:'Lo storico, e l’eventuale inizio forzato della risposta.'},
-      {tag:'tools',h:'Capacità disponibili',p:'Nome, descrizione, schema. Costano token a ogni chiamata.'},
-      {tag:'tool_result',h:'Dati dal mondo',p:'Righe di database, ricerche, output di codice. Il canale della freschezza.'},
-      {tag:'parametri',h:'Come campionare',p:'temperature, max_tokens, stop sequences. Non sono prompt ma cambiano l’esito.'}
-    ]},
 
     {t:'p',html:`<h3>Che cosa fa davvero il modello</h3>
       <p>Un LLM stima la distribuzione di probabilit&agrave; del token successivo dato tutto ci&ograve; che precede, e poi ne campiona uno; ripete, e cos&igrave; costruisce la risposta. Ne derivano conseguenze controintuitive ma sfruttabili:</p>
