@@ -263,11 +263,11 @@ MODULES.push({
     ]},
     {t:'table',head:['Blocco','Durata','Modalità'],rows:[
       ['00 · Apertura e patto d’aula','5′','Plenaria'],
-      ['01 · Che cos’è un prompt','35′','Teoria + 1 esercizio'],
-      ['02 · Prompt best practices','55′','Teoria + 3 esercizi'],
+      ['01 · Che cos’è un prompt','50′','Teoria + 2 lab + 1 esercizio'],
+      ['02 · Prompt best practices','50′','Teoria + 3 esercizi'],
       ['— Pausa','10′','—'],
-      ['03 · Metaprompting','40′','Teoria + 2 esercizi'],
-      ['04 · Context engineering','60′','Teoria + 3 esercizi'],
+      ['03 · Metaprompting','35′','Teoria + 2 esercizi'],
+      ['04 · Context engineering','55′','Teoria + 3 esercizi'],
       ['05 · Capstone: progetta un agente','30′','Lavoro individuale/coppie'],
       ['06 · Chiusura','5′','Plenaria']
     ]},
@@ -288,10 +288,10 @@ MODULES.push({
 
 /* ---------- 1. Che cos'è un prompt ---------- */
 MODULES.push({
-  id:'m1', n:'01', title:'Capire cos\'è un prompt', min:35,
+  id:'m1', n:'01', title:'Capire cos\'è un prompt', min:50,
   blocks:[
     {t:'p',html:`<h3>Cosa viene inviato ai provider di AI (chatgpt, Antrophic, LMstudio, oMLX) quando invio nella chat/Cli? </h3>
-      <p>Partiamo da ci&ograve; che il modello <em>vede davvero</em>. Quando un’applicazione parla con un provider di AI non manda solo il testo messo nella chat/CLI: manda una richiesta strutturata. Semplificando molto:</p>`},
+      <p>Partiamo da ci&ograve; che arriva all'AI provider. Quando un’applicazione (la chat o il tuo agente) parla con un provider di AI non manda solo il testo che hai messo nella chat/CLI: manda una richiesta strutturata. <br/>Semplificando molto questo è quello che invia:</p>`},
     {t:'code',lang:'json',code:`{
   "model": "claude-...",
   "system": "Sei l'assistente interno dell'ufficio contratti di ACME. ...",
@@ -304,16 +304,16 @@ MODULES.push({
   "temperature": 0.2,
   "max_tokens": 1024
 }`},
-    {t:'p',html:`<p>Tutti questi pezzi sono <strong>prompt</strong>. Il campo <code>system</code> definisce ruolo e regole stabili. I <code>messages</code> alternano turni utente e assistente. Le <code>tools</code> sono descrizioni testuali di funzioni: il modello non &laquo;vede&raquo; il codice, legge il tuo testo e da quello decide se e come chiamarlo. I <code>tool_result</code> reimmettono dati freschi nel contesto. Persino un <em>prefill</em> &mdash; iniziare tu la risposta dell’assistente &mdash; &egrave; parte del prompt.</p>`},
+    {t:'p',html:`<p>Tutti questi pezzi sono <strong>prompt</strong></p>`},
     {t:'cards',cards:[
       {tag:'system',h:'Chi sei, cosa vale sempre',p:'Ruolo, dominio, regole non negoziabili, formato, tono. Stabile tra le richieste.'},
-      {tag:'user',h:'La richiesta del turno',p:'Il compito specifico, più i dati allegati per questo turno.'},
-      {tag:'assistant',h:'Turni precedenti e prefill',p:'Lo storico, e l’eventuale inizio forzato della risposta.'},
-      {tag:'tools',h:'Capacità disponibili',p:'Nome, descrizione, schema. Costano token a ogni chiamata.'},
+      {tag:'user',h:'La richiesta del turno',p:'Il compito/il testo specifico per questo turno.'},
+      {tag:'assistant',h:'La risposta del modello',p:'il contenuto generato dal modello'},
+      {tag:'tools',h:'Capacità disponibili',p:'Nome, descrizione, inputs e outputs con i tipi '},
       {tag:'tool_result',h:'Dati dal mondo',p:'Righe di database, ricerche, output di codice. Il canale della freschezza.'},
       {tag:'parametri',h:'Come campionare',p:'temperature, max_tokens, stop sequences. Non sono prompt ma cambiano l’esito.'}
     ]},
-    {t:'p',html:`<p>Il modo pi&ugrave; rapido per convincersene &egrave; costruirne uno. Nel lab qui sotto scrivi una conversazione come la scriveresti in chat, e a destra vedi comparire il pacchetto che partirebbe davvero verso il provider &mdash; nei due dialetti che incontrerai nel 95% dei casi. La conversazione &egrave; la stessa: cambia solo <em>dove</em> ogni pezzo viene infilato.</p>`},
+    {t:'p',html:`<p>Il modo pi&ugrave; rapido per convincersene &egrave; costruirne uno. Nel lab qui sotto scrivi una conversazione come la scriveresti in chat, e a destra vedi comparire il pacchetto che partirebbe davvero verso il provider &mdash; nei due dialetti che incontrerai nel 95% dei casi.</p>`},
     {t:'apisim'},
     {t:'p',html:`<p>Tre cose da notare mentre giochi con il simulatore. La prima: <strong>a ogni turno riparte tutto</strong> &mdash; system, tool e storico completo &mdash; perch&eacute; il modello non ricorda nulla fra una chiamata e l&rsquo;altra. La seconda: il contatore dei token cresce a ogni turno, e quella crescita &egrave; il costo reale di una conversazione lunga. La terza: la &laquo;chat&raquo; &egrave; un&rsquo;illusione dell&rsquo;interfaccia. Esiste solo un array di messaggi che qualcuno ricompone e rispedisce ogni volta.</p>`},
 
@@ -366,7 +366,7 @@ Il contratto 4471 e' ancora attivo?
       <ul>
         <li><strong>Perch&eacute; i ruoli funzionano.</strong> <code>system</code>, <code>user</code> e <code>assistant</code> non sono categorie che il modello &laquo;capisce&raquo;: sono marcatori che ha visto milioni di volte in addestramento, sempre usati nello stesso modo. Il ruolo &egrave; una convenzione imparata, non un permesso.</li>
         <li><strong>Perch&eacute; l&rsquo;ordine conta.</strong> Non esistono campi &laquo;paralleli&raquo;: dentro la sequenza qualcosa viene per forza prima e qualcosa dopo. Un&rsquo;istruzione nel <code>system</code> sta a decine di migliaia di token di distanza dall&rsquo;ultima domanda, e quella distanza si sente.</li>
-        <li><strong>Perch&eacute; la generazione &laquo;parte gi&agrave; avviata&raquo;.</strong> L&rsquo;ultima cosa nella sequenza &egrave; il marcatore di apertura del turno dell&rsquo;assistente. Il modello non riceve la domanda &laquo;cosa rispondi?&raquo;: riceve un testo che si interrompe e il compito di proseguirlo. Il <em>prefill</em> &egrave; esattamente questo &mdash; scrivere tu i primi token dopo quel marcatore, cos&igrave; che il seguito sia gi&agrave; condizionato. (Diversi modelli recenti, Claude 4.6 e successivi inclusi, non accettano pi&ugrave; il prefill esplicito, ma il meccanismo sottostante resta questo.)</li>
+        <li><strong>Perch&eacute; la generazione &laquo;parte gi&agrave; avviata&raquo;.</strong> L&rsquo;ultima cosa nella sequenza &egrave; il marcatore di apertura del turno dell&rsquo;assistente. Il modello non riceve la domanda &laquo;cosa rispondi?&raquo;: riceve un testo che si interrompe e il compito di proseguirlo.
       </ul>`},
 
     {t:'p',html:`<h3>Da testo a token: come avviene il taglio</h3>
@@ -398,7 +398,7 @@ Il contratto 4471 e' ancora attivo?
       <p>Un’immagine utile: pensa a un esperto bravissimo che entra in un ufficio <strong>senza ricordare nulla di quella che lascia</strong>, e che per lavorare pu&ograve; guardare solo il fascicolo che gli metti sul tavolo. Ogni volta che &laquo;parla&raquo; con un LLM &egrave; come se entrasse di nuovo in quell’ufficio: il fascicolo &egrave; il contesto, e la qualit&agrave; della sua risposta dipende da che cosa c’&egrave; dentro &mdash; n&eacute; pi&ugrave; n&eacute; meno.</p>
       <p>Due propriet&agrave; da tenere a mente:</p>
       <ul>
-        <li><strong>&Egrave; finito.</strong> Il contesto vive in una <em>finestra</em> di dimensione fissa, misurata in token (da alcune decine di migliaia a oltre un milione, a seconda del modello). Quando la finestra &egrave; piena, ci&ograve; che non c’&egrave; pi&ugrave; spazio di mettere &egrave; come se non esistesse: niente memoria implicita, niente &laquo;lo sa comunque&raquo;.</li>
+        <li><strong>&Egrave; finito.</strong> Il contesto vive in una <em>finestra</em> di dimensione fissa, la cosidetta 'context window', misurata in token (da alcune decine di migliaia a oltre un milione, a seconda del modello).</li>
         <li><strong>&Egrave; in ordine.</strong> Il modello legge il contesto come si legge un testo: da cima a fondo. La posizione di un’informazione non &egrave; un dettaglio tecnico: conta davvero, e lo vedremo tra poco.</li>
       </ul>
       <p>&Egrave; per questo che l’espressione <em>context engineering</em> significa proprio questo: decidere con cura che cosa finisce nel fascicolo, in che ordine e in che forma &mdash; &egrave; l’argomento del modulo 04, ma il concetto lo stai usando gi&agrave; adesso.</p>`},
@@ -473,7 +473,7 @@ Regole:
 
 /* ---------- 2. Best practices ---------- */
 MODULES.push({
-  id:'m2', n:'02', title:'Prompt best practices', min:55,
+  id:'m2', n:'02', title:'Prompt best practices', min:50,
   blocks:[
     {t:'p',html:`<p>Le tecniche che seguono sono ordinate per <strong>rapporto tra beneficio e sforzo</strong>. Le prime cinque risolvono la grande maggioranza dei problemi reali; le ultime servono quando stai spremendo l’ultimo 10% di qualit&agrave;. Applicarle tutte a un prompt banale &egrave; uno spreco: il criterio &egrave; sempre &laquo;quale fallimento sto cercando di prevenire?&raquo;.</p>`},
 
@@ -599,7 +599,7 @@ MODULES.push({
 
 /* ---------- 3. Metaprompting ---------- */
 MODULES.push({
-  id:'m3', n:'03', title:'Metaprompting', min:40,
+  id:'m3', n:'03', title:'Metaprompting', min:35,
   blocks:[
     {t:'p',html:`<p><strong>Metaprompting</strong> &egrave; usare un modello linguistico come strumento per lavorare <em>sui prompt</em> anzich&eacute; <em>sul compito</em>: generarli, criticarli, riscriverli, comprimerli, generare i casi di test per valutarli e in alcuni casi valutarli. Il modello passa da esecutore a collaboratore nel design del prompt.</p>
       <p>&Egrave; molto efficace per una ragione asimmetrica: <em>riconoscere</em> che cosa manca a un prompt &egrave; pi&ugrave; facile che <em>scriverlo</em> perfetto al primo colpo. Il modello, che ha visto un numero enorme di istruzioni ben scritte, &egrave; un buon critico anche quando non sarebbe un buon autore.</p>`},
@@ -730,7 +730,7 @@ in piu' chiamate invece di un prompt piu' lungo.`},
 
 /* ---------- 4. Context engineering ---------- */
 MODULES.push({
-  id:'m4', n:'04', title:'Context engineering', min:60,
+  id:'m4', n:'04', title:'Context engineering', min:55,
   blocks:[
     {t:'p',html:`<p><strong>Context engineering</strong> &egrave; la disciplina che decide <em>quali informazioni entrano nella finestra di contesto, in quale momento, in quale forma e con quale priorit&agrave;</em>. Il prompt engineering ne &egrave; un sottoinsieme: si occupa di come formulare le istruzioni: il context engineering si occupa di <strong>tutto il resto che accompagna quelle istruzioni</strong> &mdash; e nei sistemi agentici &egrave; l&igrave; che si vince o si perde.</p>
       <p>Il cambio di prospettiva &egrave; questo: quando passi da una singola risposta a un sistema che gira in loop, chiama strumenti, accumula risultati e prosegue per decine di turni, il prompt non &egrave; pi&ugrave; una cosa che <em>scrivi</em>. &Egrave; una cosa che il tuo sistema <strong>assembla dinamicamente a ogni turno</strong>. Progettare quell’assemblaggio &egrave; il lavoro.</p>`},
