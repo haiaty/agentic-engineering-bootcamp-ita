@@ -132,6 +132,19 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute
 .meter > i{display:block;height:100%;background:var(--accent);transition:width .3s}
 .scoreline{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);font-family:var(--mono)}
 
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.tab{border:1px solid var(--line);background:var(--panel-2);color:var(--muted);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;font-family:var(--mono)}
+.tab:hover{border-color:var(--accent)}
+.tab.on{border-color:var(--accent);background:var(--accent-soft);color:var(--text)}
+.chatlog{border:1px solid var(--line);border-radius:10px;background:var(--panel-2);padding:10px;max-height:280px;overflow-y:auto;margin:10px 0}
+.bub{border:1px solid var(--line);background:var(--panel);border-radius:9px;padding:7px 10px;margin-bottom:6px;font-size:13px;white-space:pre-wrap}
+.bub:last-child{margin-bottom:0}
+.bub .who{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.bub.u{border-color:var(--accent)}
+.bub.a{color:var(--muted);font-style:italic}
+.bub.t{background:var(--accent-soft);font-family:var(--mono);font-size:12px}
+.bub.empty{border-style:dashed;color:var(--muted);font-size:12.5px}
+
 textarea,input[type="text"],select{
   width:100%;font-family:inherit;font-size:14px;color:var(--text);background:var(--panel-2);
   border:1px solid var(--line);border-radius:9px;padding:10px 12px;resize:vertical;
@@ -300,6 +313,10 @@ MODULES.push({
       {tag:'tool_result',h:'Dati dal mondo',p:'Righe di database, ricerche, output di codice. Il canale della freschezza.'},
       {tag:'parametri',h:'Come campionare',p:'temperature, max_tokens, stop sequences. Non sono prompt ma cambiano l’esito.'}
     ]},
+    {t:'p',html:`<p>Il modo pi&ugrave; rapido per convincersene &egrave; costruirne uno. Nel lab qui sotto scrivi una conversazione come la scriveresti in chat, e a destra vedi comparire il pacchetto che partirebbe davvero verso il provider &mdash; nei due dialetti che incontrerai nel 95% dei casi. La conversazione &egrave; la stessa: cambia solo <em>dove</em> ogni pezzo viene infilato.</p>`},
+    {t:'apisim'},
+    {t:'p',html:`<p>Tre cose da notare mentre giochi con il simulatore. La prima: <strong>a ogni turno riparte tutto</strong> &mdash; system, tool e storico completo &mdash; perch&eacute; il modello non ricorda nulla fra una chiamata e l&rsquo;altra. La seconda: il contatore dei token cresce a ogni turno, e quella crescita &egrave; il costo reale di una conversazione lunga. La terza: la &laquo;chat&raquo; &egrave; un&rsquo;illusione dell&rsquo;interfaccia. Esiste solo un array di messaggi che qualcuno ricompone e rispedisce ogni volta.</p>`},
+
     {t:'p',html:`<p>Questo JSON &egrave; il punto di partenza di tutto il corso. Da qui in avanti lo <strong>smontiamo</strong>: prima scendiamo fino all’unit&agrave; minima di cui &egrave; fatto ogni campo &mdash; il token &mdash; poi risaliamo per capire che cosa succede quando tutti questi pezzi vengono messi in fila davanti al modello.</p>`},
 
     {t:'p',html:`<h3>Token, non parole</h3>
@@ -844,6 +861,8 @@ function renderBlock(b, mid, i){
       mounts.push(()=>mountChecklist(id,b)); return '<div id="'+id+'"></div>';
     case 'tokenizer':
       mounts.push(()=>mountTokenizer(id)); return '<div id="'+id+'"></div>';
+    case 'apisim':
+      mounts.push(()=>mountApiSim(id)); return '<div id="'+id+'"></div>';
     case 'promptlab':
       mounts.push(()=>mountPromptLab(id)); return '<div id="'+id+'"></div>';
     case 'metalab':
@@ -935,6 +954,185 @@ function mountChecklist(id, b){
   upd();
 }
 
+/* ---------- simulatore di chiamata API ---------- */
+const AS_TOOL = {
+  name:'cerca_contratto',
+  description:'Cerca un contratto per numero e restituisce stato, data di fine e referente.',
+  schema:{type:'object',properties:{id:{type:'integer',description:'Numero del contratto'}},required:['id']}
+};
+const AS_DEF_SYS = "Sei l’assistente interno dell’ufficio contratti di ACME.\nRispondi solo con dati verificati dai tool: se un dato non risulta, dillo.\nFormato: massimo 3 righe, nessun preambolo.";
+const AS_STUB = [
+  '[risposta del modello — qui finirebbe il testo generato]',
+  '[risposta del modello — nota: questo turno è ora storico, e ripartirà con la prossima chiamata]',
+  '[risposta del modello — lo storico cresce, e con lui il costo di ogni turno]'
+];
+const AS_DIFFS = [
+  ['Il <code>system</code>',
+   'campo di primo livello, fuori da <code>messages</code>',
+   'primo messaggio dell’array, con <code>role: "system"</code> (o <code>"developer"</code>)'],
+  ['Lo schema dei tool',
+   '<code>{ name, description, input_schema }</code>',
+   '<code>{ type:"function", function:{ name, description, parameters } }</code>'],
+  ['La chiamata al tool',
+   'blocco <code>tool_use</code> dentro il <code>content</code> dell’assistente',
+   'array <code>tool_calls</code> accanto al <code>content</code>, con <code>arguments</code> come <em>stringa</em> JSON'],
+  ['Il risultato del tool',
+   'blocco <code>tool_result</code> dentro un messaggio <code>role: "user"</code>',
+   'messaggio dedicato <code>role: "tool"</code> con <code>tool_call_id</code>'],
+  ['Il tetto di output',
+   '<code>max_tokens</code> obbligatorio',
+   '<code>max_completion_tokens</code> facoltativo']
+];
+
+function mountApiSim(id){
+  const el = document.getElementById(id);
+  const st = store.get('apisim', null) || {sys:AS_DEF_SYS, tools:true, fmt:'anthropic', ev:[]};
+  if(!Array.isArray(st.ev)) st.ev = [];
+  if(st.fmt!=='openai') st.fmt='anthropic';
+
+  const body =
+    '<div class="split"><div>'+
+      '<label class="fl">Campo <code>system</code> — le regole stabili</label>'+
+      '<textarea id="'+id+'_sys" rows="4"></textarea>'+
+      '<label class="chk" style="margin-top:8px"><input type="checkbox" id="'+id+'_tl"><span>'+
+        '<span class="lb">Includi la definizione dei tool</span>'+
+        '<span class="ds">Un solo tool, cerca_contratto. Guarda quanti token costa — e che li paghi a ogni turno.</span></span></label>'+
+      '<div class="chatlog" id="'+id+'_log"></div>'+
+      '<input type="text" id="'+id+'_in" placeholder="Scrivi il messaggio dell’utente…">'+
+      '<div class="btnrow">'+
+        '<button class="btn primary" id="'+id+'_send">Invia turno</button>'+
+        '<button class="btn" id="'+id+'_tool">Turno con chiamata a tool</button>'+
+        '<button class="btn" id="'+id+'_undo">Annulla ultimo</button>'+
+        '<button class="btn" id="'+id+'_rs">Azzera</button>'+
+      '</div>'+
+      '<div class="hint" style="margin-top:8px">Le risposte dell’assistente sono segnaposto: qui non gira nessun modello. Quello che conta è il pacchetto che parte.</div>'+
+    '</div><div>'+
+      '<div class="tabs">'+
+        '<button class="tab" data-f="anthropic">Anthropic · POST /v1/messages</button>'+
+        '<button class="tab" data-f="openai">OpenAI · POST /v1/chat/completions</button>'+
+      '</div>'+
+      '<div class="preview" id="'+id+'_pv"></div>'+
+      '<div class="scoreline" style="margin-top:8px"><span id="'+id+'_ms"></span><span id="'+id+'_tk"></span></div>'+
+      '<div class="btnrow"><button class="btn" id="'+id+'_cp">Copia JSON</button>'+
+        '<span class="saved" id="'+id+'_sv">copiato</span></div>'+
+      '<div class="diag" id="'+id+'_dg"></div>'+
+    '</div></div>';
+
+  el.innerHTML = widgetShell('Lab 1.1','Simulatore di chiamata API',
+    'Costruisci una conversazione a sinistra e guarda a destra il JSON che partirebbe davvero verso il provider, nei due dialetti più diffusi. È la stessa conversazione: cambia solo dove finiscono system, tool e risultati.', body);
+
+  const sys = document.getElementById(id+'_sys'), tl = document.getElementById(id+'_tl'),
+        log = document.getElementById(id+'_log'), inp = document.getElementById(id+'_in'),
+        pv  = document.getElementById(id+'_pv'),  dg = document.getElementById(id+'_dg'),
+        sv  = document.getElementById(id+'_sv');
+  sys.value = st.sys; tl.checked = !!st.tools;
+
+  function uid(pfx){ return pfx+Math.random().toString(36).slice(2,10); }
+
+  function addTurn(withTool){
+    const t = inp.value.trim() || 'Il contratto 4471 è ancora attivo?';
+    inp.value = '';
+    st.ev.push({k:'user', t:t});
+    if(withTool){
+      const n = (t.match(/\d{3,6}/)||['4471'])[0];
+      st.ev.push({k:'tool', aid:uid('toolu_'), oid:uid('call_'), name:AS_TOOL.name,
+                  input:{id:parseInt(n,10)},
+                  result:'{"id": '+n+', "stato": "scaduto", "fine": "2025-03-31", "referente": "M. Rossi"}'});
+      st.ev.push({k:'assistant', t:'[risposta del modello, ora informata dal tool_result]'});
+      if(!st.tools){ st.tools = true; tl.checked = true; }
+    } else {
+      st.ev.push({k:'assistant', t:AS_STUB[st.ev.filter(e=>e.k==='assistant').length % AS_STUB.length]});
+    }
+    upd();
+  }
+
+  function renderLog(){
+    if(!st.ev.length){
+      log.innerHTML = '<div class="bub empty">Nessun turno. La chiamata conterrebbe solo <code>system</code> e <code>tools</code>: è già un prompt completo.</div>';
+      return;
+    }
+    log.innerHTML = st.ev.map(e=>{
+      if(e.k==='user')      return '<div class="bub u"><span class="who">user</span>'+esc(e.t)+'</div>';
+      if(e.k==='assistant') return '<div class="bub a"><span class="who">assistant · segnaposto</span>'+esc(e.t)+'</div>';
+      return '<div class="bub t"><span class="who">tool_use → tool_result</span>'+
+             esc(e.name+'('+JSON.stringify(e.input)+')\n→ '+e.result)+'</div>';
+    }).join('');
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function buildAnthropic(){
+    const o = {model:'claude-opus-5', max_tokens:1024, temperature:0.2, system:st.sys};
+    if(st.tools) o.tools = [{name:AS_TOOL.name, description:AS_TOOL.description, input_schema:AS_TOOL.schema}];
+    o.messages = [];
+    st.ev.forEach(e=>{
+      if(e.k==='user')      o.messages.push({role:'user', content:e.t});
+      else if(e.k==='assistant') o.messages.push({role:'assistant', content:e.t});
+      else {
+        o.messages.push({role:'assistant', content:[{type:'tool_use', id:e.aid, name:e.name, input:e.input}]});
+        o.messages.push({role:'user',      content:[{type:'tool_result', tool_use_id:e.aid, content:e.result}]});
+      }
+    });
+    return o;
+  }
+
+  function buildOpenAI(){
+    const msgs = [{role:'system', content:st.sys}];
+    st.ev.forEach(e=>{
+      if(e.k==='user')      msgs.push({role:'user', content:e.t});
+      else if(e.k==='assistant') msgs.push({role:'assistant', content:e.t});
+      else {
+        msgs.push({role:'assistant', content:null, tool_calls:[
+          {id:e.oid, type:'function', function:{name:e.name, arguments:JSON.stringify(e.input)}}]});
+        msgs.push({role:'tool', tool_call_id:e.oid, content:e.result});
+      }
+    });
+    const o = {model:'gpt-4.1', messages:msgs, temperature:0.2, max_completion_tokens:1024};
+    if(st.tools) o.tools = [{type:'function', function:{name:AS_TOOL.name, description:AS_TOOL.description, parameters:AS_TOOL.schema}}];
+    return o;
+  }
+
+  function renderDiffs(){
+    const isA = st.fmt==='anthropic';
+    dg.innerHTML = AS_DIFFS.map(d=>{
+      const a = '<span style="'+(isA?'':'opacity:.45')+'"><strong style="font-family:var(--mono);font-size:11.5px">ANTHROPIC</strong> '+d[1]+'</span>';
+      const b = '<span style="'+(isA?'opacity:.45':'')+'"><strong style="font-family:var(--mono);font-size:11.5px">OPENAI</strong> '+d[2]+'</span>';
+      return '<div><strong>'+d[0]+'</strong><div style="color:var(--muted);font-size:13px;margin-top:3px">'+a+'<br>'+b+'</div></div>';
+    }).join('');
+  }
+
+  let last = '';
+  function upd(){
+    st.sys = sys.value; st.tools = tl.checked; store.set('apisim', st);
+    renderLog();
+    const o = st.fmt==='anthropic' ? buildAnthropic() : buildOpenAI();
+    last = JSON.stringify(o, null, 2);
+    pv.textContent = last;
+    const nMsg = o.messages.length;
+    const nCall = st.ev.filter(e=>e.k==='user').length + 1;
+    document.getElementById(id+'_ms').textContent = 'chiamata n. '+nCall+' · '+nMsg+' messaggi';
+    document.getElementById(id+'_tk').textContent = '≈ '+Math.round(last.length/3.4).toLocaleString('it-IT')+' token di input';
+    el.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on', t.dataset.f===st.fmt));
+    renderDiffs();
+  }
+
+  el.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{ st.fmt = t.dataset.f; upd(); }));
+  sys.addEventListener('input', upd);
+  tl.addEventListener('change', upd);
+  inp.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); addTurn(false); } });
+  document.getElementById(id+'_send').addEventListener('click', ()=>addTurn(false));
+  document.getElementById(id+'_tool').addEventListener('click', ()=>addTurn(true));
+  document.getElementById(id+'_undo').addEventListener('click', ()=>{
+    while(st.ev.length){ const e = st.ev.pop(); if(e.k==='user') break; }
+    upd();
+  });
+  document.getElementById(id+'_rs').addEventListener('click', ()=>{ st.ev = []; upd(); });
+  document.getElementById(id+'_cp').addEventListener('click', ()=>{
+    navigator.clipboard && navigator.clipboard.writeText(last);
+    sv.classList.add('on'); setTimeout(()=>sv.classList.remove('on'), 1400);
+  });
+  upd();
+}
+
 /* ---------- tokenizer stimatore ---------- */
 function mountTokenizer(id){
   const el = document.getElementById(id);
@@ -942,7 +1140,7 @@ function mountTokenizer(id){
     '<div class="grid c3" style="margin-top:12px">'+
     ['ch','wd','tk','ctx'].map(k=>'<div class="card"><div class="tag" id="'+id+'_'+k+'l"></div><h5 id="'+id+'_'+k+'" style="font-family:var(--mono);font-size:19px">0</h5></div>').join('')+
     '</div><div class="hint" id="'+id+'_h" style="margin-top:8px"></div>';
-  el.innerHTML = widgetShell('Lab 1.1','Stimatore di token','Stima approssimata (~3 caratteri per token in italiano). Serve a farsi l’occhio sugli ordini di grandezza, non a contare con precisione.',body);
+  el.innerHTML = widgetShell('Lab 1.2','Stimatore di token','Stima approssimata (~3 caratteri per token in italiano). Serve a farsi l’occhio sugli ordini di grandezza, non a contare con precisione.',body);
   const ta=document.getElementById(id+'_ta');
   const lbl={ch:'Caratteri',wd:'Parole',tk:'Token stimati',ctx:'% di 200k'};
   Object.keys(lbl).forEach(k=>document.getElementById(id+'_'+k+'l').textContent=lbl[k]);
