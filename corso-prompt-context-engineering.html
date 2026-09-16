@@ -261,21 +261,21 @@ MODULES.push({
       {tag:'Ora 3',h:'Metaprompting',p:'Usare il modello per scrivere, criticare e testare i prompt. Il ciclo eval-driven.'},
       {tag:'Ora 4',h:'Context engineering',p:'Risorse statiche vs contesto dinamico, RAG, skill, compattazione, budget di token.'}
     ]},
-    {t:'table',head:['Blocco','Durata','Modalità'],rows:[
-      ['00 · Apertura','5′','Plenaria'],
-      ['01 · Che cos’è un prompt','50′','Teoria + 2 lab + 1 esercizio'],
-      ['02 · Prompt best practices','50′','Teoria + 3 esercizi'],
-      ['— Pausa','10′','—'],
-      ['03 · Metaprompting','35′','Teoria + 2 esercizi'],
-      ['04 · Context engineering','55′','Teoria + 3 esercizi'],
-      ['05 · Capstone: progetta un agente','30′','Lavoro individuale/coppie'],
-      ['06 · Chiusura','5′','Plenaria']
+    {t:'table',head:['Blocco'],rows:[
+      ['00 · Apertura'],
+      ['01 · Che cos’è un prompt'],
+      ['02 · Prompt best practices'],
+      ['— Pausa'],
+      ['03 · Metaprompting'],
+      ['04 · Context engineering'],
+      ['05 · Capstone: progetta un agente'],
+      ['06 · Chiusura']
     ]},
     {t:'callout',kind:'ok',title:'Come si usa questo materiale',html:`Naviga con la barra laterale o con i pulsanti in fondo a ogni modulo. Ogni esercizio si salva automaticamente nel browser (nessun dato lascia il tuo computer): puoi chiudere e riprendere. Con <strong>&#8681; Esporta</strong> scarichi tutte le tue risposte in un file Markdown. Il timer in alto serve al docente per tenere il ritmo.`},
     {t:'p',html:`<h3>Obiettivi di apprendimento</h3><p>Alla fine delle 4 ore ogni partecipante deve essere in grado di:</p>
       <ol>
-        <li>Descrivere che cosa entra concretamente in una chiamata a un LLM e in quale ordine.</li>
-        <li>Riscrivere un prompt vago in un prompt operativo applicando una checklist di 12 punti.</li>
+        <li>Descrivere che cosa entra concretamente in una chiamata a un LLM.</li>
+        <li>Riscrivere un prompt vago in un prompt operativo efficace.</li>
         <li>Costruire un meta-prompt che generi o critichi altri prompt, e un mini set di test per valutarli.</li>
         <li>Distinguere risorse statiche e contesto dinamico, e allocare un budget di token motivandolo.</li>
         <li>Progettare il contesto di un assistente reale del proprio ufficio, con criteri di valutazione.</li>
@@ -417,6 +417,14 @@ Il contratto 4471 e' ancora attivo?
       </ul>
       <p>&Egrave; per questo che l’espressione <em>context engineering</em> significa proprio questo: decidere con cura che cosa finisce nel fascicolo, in che ordine e in che forma &mdash; &egrave; l’argomento del modulo 04, ma il concetto lo stai usando gi&agrave; adesso.</p>`},
 
+    {t:'quiz',id:'q1ctx',q:'Che cos&rsquo;&egrave; la <strong>finestra di contesto</strong> (context window) di un modello?',
+      opts:[
+        {tx:'Il numero massimo di token che il modello pu&ograve; avere davanti in una singola chiamata, storico e risposta compresi',ok:true,why:'Esatto. È una capienza, misurata in token, ed è condivisa: system, definizioni dei tool, storico, documenti allegati e anche i token che il modello sta generando stanno tutti lì dentro. Quando non ci sta più nulla, qualcosa deve uscire — e ciò che esce, per il modello, smette di esistere.'},
+        {tx:'La memoria del modello: tutto quello che ha imparato durante l&rsquo;addestramento',ok:false,why:'Sono due cose diverse. Ciò che il modello ha imparato sta nei pesi ed è fisso: è la biblioteca. La finestra di contesto è la scrivania — vuota a ogni chiamata, e la riempi tu.'},
+        {tx:'Il limite di caratteri del messaggio che posso scrivere nella chat',ok:false,why:'Due errori in una riga. Non si misura in caratteri ma in token, e non riguarda solo il tuo messaggio: il tuo testo è spesso la parte più piccola di ciò che occupa la finestra.'},
+        {tx:'Uno spazio che si libera da solo quando &egrave; pieno, conservando le informazioni importanti',ok:false,why:'Niente si libera da solo, e soprattutto niente decide che cosa è importante. Quando lo spazio finisce è l&rsquo;applicazione che deve tagliare, riassumere o scegliere: è una decisione di progetto, ed è esattamente il mestiere del context engineering.'}
+      ]},
+
     {t:'p',html:`<h3>Il Prompt</h3>Un prompt &egrave; <em>l’intera sequenza di token che il modello riceve prima di produrre il primo token di risposta</em>. Non &egrave; solo &laquo;la domanda che scrivo in chat&raquo;: &egrave; tutto ci&ograve; che finisce nella finestra di contesto, in ordine, in quel preciso momento.</p>
       <p>Questa definizione chiarisce subito tre cose:</p>
       <ul>
@@ -425,6 +433,13 @@ Il contratto 4471 e' ancora attivo?
         <li>Se il modello sbaglia, la prima ipotesi non &egrave; &laquo;&egrave; stupido&raquo; ma <strong>&laquo;non aveva l’informazione, o l’aveva in una forma sbagliata&raquo;</strong>.</li>
       </ul>`},
     {t:'callout',kind:'',title:'La frase da portare a casa',html:`Il prompt non è solo «la domanda che scrivo in chat»: è tutto ciò che finisce nella finestra di contesto`},
+    {t:'quiz',id:'q1def',q:'In base a quanto visto finora, che cos&rsquo;&egrave; un <strong>prompt</strong>?',
+      opts:[
+        {tx:'L&rsquo;intera sequenza di token che il modello riceve prima di generare il primo token della risposta',ok:true,why:'Esatto. Non una frase, ma tutto il pacchetto appiattito in sequenza: definizioni dei tool, system, storico dei turni, risultati dei tool e infine la tua richiesta. Se è in quella sequenza è prompt, chiunque l&rsquo;abbia scritto.'},
+        {tx:'Il testo che scrivo nella casella della chat e invio al modello',ok:false,why:'È la parte visibile, e quasi sempre la più piccola. Nel simulatore qui sopra la tua frase erano poche decine di token su diverse centinaia: tutto il resto lo aveva messo l&rsquo;applicazione.'},
+        {tx:'Le istruzioni permanenti che l&rsquo;assistente ricorda da una conversazione all&rsquo;altra',ok:false,why:'Non esiste niente di permanente: il modello è stateless. Ciò che sembra memoria è testo che qualcuno rimette nel pacchetto a ogni chiamata — e che paghi a ogni chiamata.'},
+        {tx:'La configurazione della richiesta: modello, temperature, max_tokens',ok:false,why:'Quelli sono parametri, non prompt: non diventano token e il modello non li legge. Governano il campionamento, non il contenuto.'}
+      ]},
 
     {t:'p',html:`<h3>Che cosa fa davvero il modello</h3>
       <p>Un LLM stima la distribuzione di probabilit&agrave; del token successivo dato tutto ci&ograve; che precede, e poi ne campiona uno; ripete, e cos&igrave; costruisce la risposta. Ne derivano conseguenze controintuitive ma sfruttabili:</p>
