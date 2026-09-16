@@ -407,15 +407,39 @@ Il contratto 4471 e' ancora attivo?
       <p>Perch&eacute; ti interessa? Per tre ragioni molto pratiche: i token si <strong>pagano</strong>, occupano una finestra di contesto <strong>finita</strong>, e ogni token in pi&ugrave; &egrave; anche un’occasione in pi&ugrave; di distrarre il modello.</p>`},
     {t:'tokenizer'},
 
-    {t:'p',html:`<h3>Contesto</h3>
-      <p>Che cos’&egrave; il <strong>contesto</strong>, in parole semplici? &Egrave; <em>tutto ci&ograve; che il modello ha &laquo;davanti agli occhi&raquo; nel momento esatto in cui scrive la risposta</em>: le istruzioni, la domanda, lo storico della conversazione, i documenti o i dati che gli hai passato. Nient’altro.</p>
-      <p>Un’immagine utile: pensa a un esperto bravissimo che entra in un ufficio <strong>senza ricordare nulla di quella che lascia</strong>, e che per lavorare pu&ograve; guardare solo il fascicolo che gli metti sul tavolo. Ogni volta che &laquo;parla&raquo; con un LLM &egrave; come se entrasse di nuovo in quell’ufficio: il fascicolo &egrave; il contesto, e la qualit&agrave; della sua risposta dipende da che cosa c’&egrave; dentro &mdash; n&eacute; pi&ugrave; n&eacute; meno.</p>
-      <p>Due propriet&agrave; da tenere a mente:</p>
+    {t:'p',html:`<h3>Il contesto &egrave; quella sequenza. La finestra &egrave; la sua lunghezza massima.</h3>
+      <p>Ricapitoliamo il percorso fatto finora, perch&eacute; adesso si chiude. Hai scritto una frase in chat; l&rsquo;applicazione l&rsquo;ha messa dentro un JSON insieme a <code>system</code>, <code>tools</code> e storico; il server ha appiattito quel JSON in un testo unico con i marcatori di turno; il tokenizzatore ha tagliato quel testo in frammenti e li ha sostituiti con dei numeri. Il risultato finale &egrave; <strong>una lista di interi</strong>, lunga qualche migliaio di elementi.</p>
+      <p>Quella lista ha un nome: &egrave; il <strong>contesto</strong>. E la sua lunghezza massima consentita &mdash; quanti elementi ci stanno &mdash; &egrave; la <strong>finestra di contesto</strong>. Non c&rsquo;&egrave; nient&rsquo;altro: il contesto non &egrave; un database, non &egrave; una cache, non &egrave; una sessione. &Egrave; solo quella lista, ricostruita da zero a ogni chiamata.</p>`},
+    {t:'code',lang:'text',code:`// Nessuna sessione lato server, nessuno stato tenuto da parte fra
+// una chiamata e l'altra.
+
+contesto = [ tools, system, turno_1, turno_2, ..., turno_n ]   // lo costruisci tu
+risposta = POST /v1/messages { contesto }                      // una chiamata
+// ...e il server dimentica tutto.
+
+// Il turno dopo non "aggiunge" niente da nessuna parte:
+// ricostruisce l'intero array e lo rispedisce daccapo.
+contesto = [ tools, system, turno_1, ..., turno_n, turno_n+1 ]`},
+    {t:'p',html:`<p>Lo stato non vive dalla parte del modello: vive nel client &mdash; la chat, il tuo codice, l&rsquo;agente &mdash; ed &egrave; il client a doverlo riallegare per intero a ogni richiesta. Se ti serve un&rsquo;immagine: un consulente bravissimo che a ogni chiamata entra in una stanza vuota. Sa tutto del mondo, niente di te, e pu&ograve; leggere solo il fascicolo che gli hai messo sul tavolo.</p>
+      <p>Da questa unica premessa discendono tre conseguenze che in aula ne spiegano il 90%.</p>`},
+    {t:'p',html:`<p><strong>1. Il modello non ha accesso a niente.</strong> Non al tuo database, non al repository, non al file aperto nell&rsquo;editor, non alla conversazione di ieri, e nemmeno a quello che ha scritto lui stesso dieci minuti fa. Non esiste una connessione da qualche parte: esiste solo l&rsquo;array. Se un dato non &egrave; stato serializzato l&igrave; dentro &mdash; a mano, da un <code>tool_result</code>, da un documento allegato &mdash; per il modello <em>non esiste</em>. &Egrave; la causa numero uno dei &laquo;ma perch&eacute; non lo sa?&raquo;, e il primo posto dove guardare quando succede non &egrave; il modello: &egrave; il pacchetto che gli hai spedito.</p>
+      <p><strong>2. La memoria &egrave; un&rsquo;illusione del client.</strong> Quando in ChatGPT scrivi &laquo;e il contratto 5580?&raquo; e l&rsquo;assistente capisce che stai ancora parlando di contratti, non sta ricordando: la chat ha rispedito tutti i turni precedenti insieme alla tua frase. La continuit&agrave; &egrave; ricostruita da fuori, a ogni giro. Toglile lo storico e l&rsquo;assistente non ha la minima idea di cosa tu stia parlando &mdash; ed &egrave; esattamente ci&ograve; che accade quando la finestra si riempie e qualcuno comincia a tagliare.</p>
+      <p><strong>3. Rispedire tutto costa, e il costo cresce in fretta.</strong> Non paghi quello che scrivi: paghi quello che <em>viene rispedito</em>, a ogni turno. Ipotizza un <code>system</code> con i <code>tools</code> da 1.000 token, domande tue da 50 token e risposte da 150:</p>`},
+    {t:'table',
+      head:['Turno','Token inviati in quella chiamata','Token di input pagati in totale'],
+      rows:[
+        ['1','1.050','1.050'],
+        ['5','1.850','7.250'],
+        ['10','2.850','19.500'],
+        ['20','4.850','<strong>59.000</strong>']
+      ]},
+    {t:'p',html:`<p>Venti turni: hai battuto sulla tastiera un totale di mille token, e ne hai pagati <strong>cinquantanovemila</strong> di input. La crescita &egrave; quadratica, non lineare, e vale per ogni agente che gira in loop. &Egrave; il motivo per cui esistono la compattazione dello storico (modulo 04) e il <em>prompt caching</em>, che sconta il prefisso stabile finch&eacute; non lo tocchi &mdash; e, prima ancora, per cui conviene non riempire il contesto di roba che non serve.</p>`},
+    {t:'p',html:`<p>Restano due propriet&agrave; della finestra da fissare, perch&eacute; governano tutte le decisioni del modulo 04.</p>
       <ul>
-        <li><strong>&Egrave; finito.</strong> Il contesto vive in una <em>finestra</em> di dimensione fissa, la cosidetta 'context window', misurata in token (da alcune decine di migliaia a oltre un milione, a seconda del modello).</li>
-        <li><strong>&Egrave; in ordine.</strong> Il modello legge il contesto come si legge un testo: da cima a fondo. La posizione di un’informazione non &egrave; un dettaglio tecnico: conta davvero, e lo vedremo tra poco.</li>
+        <li><strong>&Egrave; finita, ed &egrave; un buffer, non un disco.</strong> La dimensione &egrave; fissata quando il modello viene addestrato &mdash; da alcune decine di migliaia a oltre un milione di token &mdash; ed &egrave; <em>condivisa</em> fra quello che mandi e quello che il modello genera: la risposta occupa spazio nella stessa finestra. Non c&rsquo;&egrave; swap e non c&rsquo;&egrave; sfratto automatico: se sfori, la chiamata viene rifiutata con un errore. Le chat che &laquo;continuano all&rsquo;infinito&raquo; non hanno una finestra pi&ugrave; grande: hanno qualcuno che, dietro le quinte, taglia o riassume i turni vecchi.</li>
+        <li><strong>&Egrave; ordinata: &egrave; un array, non un insieme.</strong> Ogni token ha una posizione, e la posizione pesa. Un&rsquo;istruzione in cima e la stessa istruzione sepolta a met&agrave; di ottantamila token di documenti non producono lo stesso comportamento &mdash; e non &egrave; un bug, &egrave; come funziona l&rsquo;attenzione. Dove metti una cosa &egrave; una decisione di progetto quanto il deciderne il contenuto.</li>
       </ul>
-      <p>&Egrave; per questo che l’espressione <em>context engineering</em> significa proprio questo: decidere con cura che cosa finisce nel fascicolo, in che ordine e in che forma &mdash; &egrave; l’argomento del modulo 04, ma il concetto lo stai usando gi&agrave; adesso.</p>`},
+      <p>Messe insieme, queste due propriet&agrave; sono tutto il <em>context engineering</em>: decidere che cosa entra nel fascicolo, in che ordine, in che forma e quando buttarlo via. &Egrave; il mestiere del modulo 04 &mdash; ma, come vedi, lo stai gi&agrave; facendo da mezz&rsquo;ora.</p>`},
 
     {t:'quiz',id:'q1ctx',q:'Che cos&rsquo;&egrave; la <strong>finestra di contesto</strong> (context window) di un modello?',
       opts:[
