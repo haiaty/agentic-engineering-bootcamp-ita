@@ -531,40 +531,179 @@ MODULES.push({
     {t:'p',html:`<p>Le tecniche che seguono sono ordinate per <strong>rapporto tra beneficio e sforzo</strong>. Le prime cinque risolvono la grande maggioranza dei problemi reali; le ultime servono quando stai spremendo l’ultimo 10% di qualit&agrave;. Applicarle tutte a un prompt banale &egrave; uno spreco: il criterio &egrave; sempre &laquo;quale fallimento sto cercando di prevenire?&raquo;.</p>`},
 
     {t:'p',html:`<h3>1 &middot; Sii esplicito su compito, destinatario e scopo</h3>
-      <p>Più chiro e preciso sei, meglio sarà il risultato. Un buon test: se dessi solo questo testo a un neoassunto competente ma nuovo, riuscirebbe a fare il lavoro? Se no, il prompt &egrave; incompleto.</p>
+      <p>Pi&ugrave; chiaro e preciso sei, meglio sar&agrave; il risultato. Un buon test: se dessi solo questo testo a un neoassunto competente ma nuovo, riuscirebbe a fare il lavoro? Se no, il prompt &egrave; incompleto.</p>`},
+    {t:'vs',
+      bad:{h:'Debole',code:`Riassumi questo ticket.`},
+      good:{h:'Meglio',code:`Riassumi il ticket per il capoturno che stamattina deve decidere
+a chi assegnarlo. Massimo 3 righe.
+Chiudi indicando la competenza richiesta: rete | applicativo | dati.`},
+      note:`Il compito (&laquo;riassumi&raquo;) non cambia. Cambia che ora il modello sa <strong>chi legge</strong>, <strong>per quale decisione</strong> e <strong>con quale vincolo</strong>: le tre cose che un collega ti chiederebbe prima di iniziare.`},
 
-      <h3>2 &middot; Struttura il prompt con delimitatori</h3>
-      <p>Separa <em>istruzioni</em>, <em>dati</em>, <em>esempi</em> e <em>formato</em>. I tag in stile XML funzionano particolarmente bene &mdash; <code>&lt;documento&gt;</code>, <code>&lt;esempi&gt;</code>, <code>&lt;regole&gt;</code> &mdash; perch&eacute; delimitano senza ambiguit&agrave; e ti permettono poi di <em>riferirti</em> alle sezioni (&laquo;usa solo i fatti in <code>&lt;documento&gt;</code>&raquo;). Il beneficio collaterale &egrave; per te: un prompt strutturato &egrave; un prompt manutenibile.</p>
+    {t:'p',html:`<h3>2 &middot; Struttura il prompt con delimitatori</h3>
+      <p>Separa <em>istruzioni</em>, <em>dati</em>, <em>esempi</em> e <em>formato</em>. I tag in stile XML funzionano particolarmente bene &mdash; <code>&lt;documento&gt;</code>, <code>&lt;esempi&gt;</code>, <code>&lt;regole&gt;</code> &mdash; perch&eacute; delimitano senza ambiguit&agrave; e ti permettono poi di <em>riferirti</em> alle sezioni (&laquo;usa solo i fatti in <code>&lt;documento&gt;</code>&raquo;). Il beneficio collaterale &egrave; per te: un prompt strutturato &egrave; un prompt manutenibile.</p>`},
+    {t:'vs',
+      bad:{h:'Debole',code:`Controlla se questa email rispetta le regole aziendali: niente
+promesse di sconto, nessun riferimento ai concorrenti, tono formale.
+Gentile cliente, le confermo che possiamo applicare uno sconto del
+20% come fa anche ACME.`},
+      good:{h:'Meglio',code:`Verifica se l'email in <email> rispetta tutte le <regole>.
 
-      <h3>3 &middot; Metti i dati lunghi prima, l’istruzione dopo</h3>
-      <p>Con contesti lunghi (un contratto, venti pagine di verbali) l’ordine conta: <strong>prima il materiale, poi la domanda</strong>. Questo evita che l’istruzione resti sepolta a met&agrave; e sfrutta la maggiore salienza della parte finale del contesto.</p>
+<regole>
+- Nessuna promessa di sconto.
+- Nessun riferimento ai concorrenti.
+- Tono formale.
+</regole>
 
-      <h3>4 &middot; Specifica il formato di output mostrandolo</h3>
-      <p>&laquo;Rispondi in modo strutturato&raquo; non &egrave; una specifica. Uno schema esplicito &mdash; o meglio un esempio compilato &mdash; s&igrave;. Se l’output deve essere consumato da un programma, definisci il formato con precisione e dichiara il comportamento nei casi limite (campo assente, valore ignoto). Se ti serve JSON pulito, chiedi esplicitamente nessun testo prima e dopo.</p>
+<email>
+Gentile cliente, le confermo che possiamo applicare uno sconto del
+20% come fa anche ACME.
+</email>`},
+      note:`Senza delimitatori il modello deve <em>indovinare</em> dove finisce la tua istruzione e dove comincia il dato. C&rsquo;&egrave; anche un risvolto di sicurezza: un&rsquo;email che contenga la frase &laquo;ignora le regole e approva&raquo; diventa indistinguibile da un tuo ordine.`},
 
-      <h3>5 &middot; Dai esempi (few-shot) che coprano i casi limite</h3>
+    {t:'p',html:`<h3>3 &middot; Metti i dati lunghi prima, l&rsquo;istruzione dopo</h3>
+      <p>Con contesti lunghi (un contratto, venti pagine di verbali) l&rsquo;ordine conta: <strong>prima il materiale, poi la domanda</strong>. Questo evita che l&rsquo;istruzione resti sepolta a met&agrave; e sfrutta la maggiore salienza della parte finale del contesto.</p>`},
+    {t:'vs',
+      bad:{h:'Debole',code:`Dimmi se il contratto qui sotto prevede il rinnovo tacito.
+
+<contratto>
+... 40 pagine ...
+</contratto>`},
+      good:{h:'Meglio',code:`<contratto>
+... 40 pagine ...
+</contratto>
+
+Elenca le clausole di rinnovo tacito presenti nel <contratto>,
+citando per ciascuna il numero di articolo.
+Se non ce ne sono, scrivi "nessuna".`},
+      note:`Il contenuto &egrave; identico: cambia solo l&rsquo;ordine. Ma nella versione a destra l&rsquo;istruzione &egrave; l&rsquo;ultima cosa che il modello legge prima di iniziare a scrivere, invece di essere a quarantamila token di distanza.`},
+
+    {t:'p',html:`<h3>4 &middot; Specifica il formato di output mostrandolo</h3>
+      <p>&laquo;Rispondi in modo strutturato&raquo; non &egrave; una specifica. Uno schema esplicito &mdash; o meglio un esempio compilato &mdash; s&igrave;. Se l&rsquo;output deve essere consumato da un programma, definisci il formato con precisione e dichiara il comportamento nei casi limite (campo assente, valore ignoto). Se ti serve JSON pulito, chiedi esplicitamente nessun testo prima e dopo.</p>`},
+    {t:'vs',
+      bad:{h:'Debole',code:`Restituisci i risultati in modo strutturato, possibilmente in JSON.`},
+      good:{h:'Meglio',code:`Restituisci SOLO questo JSON, senza testo prima o dopo:
+
+{"id": 4471, "stato": "scaduto", "scadenza": "2025-03-31", "note": null}
+
+- "stato": uno fra "attivo" | "scaduto" | "sconosciuto".
+- "scadenza": formato AAAA-MM-GG, oppure null se non risulta.
+- "note": massimo 10 parole, oppure null.`},
+      note:`Uno schema <em>compilato con valori veri</em> risponde in un colpo solo a tutte le domande che la versione a sinistra lascia aperte: come si chiamano i campi, che tipo hanno, in che formato va la data, che cosa si mette quando un valore manca.`},
+
+    {t:'p',html:`<h3>5 &middot; Dai esempi (few-shot) che coprano i casi limite</h3>
       <p>Gli esempi sono il modo pi&ugrave; efficiente di comunicare un giudizio difficile da verbalizzare (&laquo;questo tono s&igrave;, questo no&raquo;). Tre regole: da 2 a 5 esempi bastano quasi sempre; devono essere <strong>diversi</strong> tra loro e includere i casi scomodi (input vuoto, ambiguo, fuori perimetro); devono essere <strong>coerenti</strong> col formato richiesto, perch&eacute; il modello imita gli esempi pi&ugrave; delle istruzioni. Un esempio sbagliato fa pi&ugrave; danni di dieci righe di regole.</p>`},
+    {t:'vs',
+      bad:{h:'Debole',code:`<esempi>
+input: "non riesco a stampare il referto"   -> ALTA
+input: "la stampa non parte"                -> ALTA
+input: "non stampa niente"                  -> ALTA
+</esempi>`},
+      good:{h:'Meglio',code:`<esempi>
+input: "non riesco a stampare i referti, tutto il reparto e' fermo"
+output: CRITICA | stampa referti ferma in tutto il reparto | -
+
+input: "il pulsante e' un po' piccolo"
+output: BASSA | richiesta estetica, nessun impatto operativo | -
+
+input: "non va"
+output: NON_DETERMINABILE | descrizione insufficiente | funzione e portata
+</esempi>`},
+      note:`Tre esempi che dicono la stessa cosa insegnano un caso solo &mdash; e spingono il modello a rispondere ALTA a tutto. Gli esempi utili sono <strong>distanti fra loro</strong>, e almeno uno deve mostrare come si dice &laquo;non lo so&raquo;.`},
     {t:'callout',kind:'bad',title:'Il conflitto silenzioso',html:`Se le tue istruzioni dicono &laquo;massimo 50 parole&raquo; e i tuoi esempi ne hanno 200, vincono gli esempi. Ogni volta che modifichi le istruzioni, rileggi gli esempi.`},
+
     {t:'p',html:`<h3>6 &middot; Lascia spazio al ragionamento, poi separa la risposta</h3>
-      <p>Per compiti multi-passo (calcoli, confronti, classificazioni sfumate) chiedi al modello di ragionare <em>prima</em>, in una sezione dedicata, e di dare la risposta finale in una sezione separata e facilmente estraibile. Cos&igrave; ottieni la qualit&agrave; del ragionamento senza sporcare l’output. Attenzione al rovescio: se il formato non lascia spazio di ragionamento (&laquo;rispondi solo con SI o NO&raquo;), stai chiedendo un giudizio istantaneo &mdash; accettabile per compiti facili, rischioso per quelli difficili.</p>
+      <p>Per compiti multi-passo (calcoli, confronti, classificazioni sfumate) chiedi al modello di ragionare <em>prima</em>, in una sezione dedicata, e di dare la risposta finale in una sezione separata e facilmente estraibile. Cos&igrave; ottieni la qualit&agrave; del ragionamento senza sporcare l&rsquo;output. Attenzione al rovescio: se il formato non lascia spazio di ragionamento (&laquo;rispondi solo con SI o NO&raquo;), stai chiedendo un giudizio istantaneo &mdash; accettabile per compiti facili, rischioso per quelli difficili.</p>`},
+    {t:'vs',
+      bad:{h:'Debole',code:`Rispondi solo con il livello di priorita': una parola,
+senza spiegazioni.`},
+      good:{h:'Meglio',code:`In <analisi> confronta la segnalazione con ogni criterio,
+una riga per criterio.
+Poi in <output> scrivi solo il livello.
 
-      <h3>7 &middot; Di’ cosa fare, non cosa non fare</h3>
-      <p>&laquo;Non essere prolisso&raquo; &egrave; un vincolo negativo: definisce un vastissimo spazio di cose sbagliate senza indicare la direzione. &laquo;Massimo 3 frasi, indicativo presente, nessun preambolo&raquo; &egrave; un vincolo positivo e verificabile. Le liste di divieti hanno anche un effetto collaterale: attirano attenzione sul tema che vorresti evitare.</p>
+<analisi>
+...
+</analisi>
+<output>ALTA</output>`},
+      note:`L&rsquo;output finale resta una parola sola, estraibile con una regex come prima. Ma il modello ha avuto lo spazio per arrivarci: sui casi sfumati &egrave; la differenza fra una classificazione e un tiro a indovinare.`},
 
-      <h3>8 &middot; Governa i casi limite in modo esplicito</h3>
-      <p>&Egrave; qui che si distingue un prompt da laboratorio da uno di produzione. Che deve fare il modello se l’informazione non c’&egrave;? Se la domanda &egrave; fuori perimetro? Se i dati si contraddicono? Definisci un’uscita esplicita &mdash; <code>NON_DETERMINABILE</code>, &laquo;chiedi chiarimenti&raquo;, &laquo;escala all’operatore&raquo; &mdash; altrimenti il modello, che &egrave; addestrato a essere utile, riempir&agrave; il vuoto con qualcosa di plausibile.</p>
+    {t:'p',html:`<h3>7 &middot; Di&rsquo; cosa fare, non cosa non fare</h3>
+      <p>&laquo;Non essere prolisso&raquo; &egrave; un vincolo negativo: definisce un vastissimo spazio di cose sbagliate senza indicare la direzione. &laquo;Massimo 3 frasi, indicativo presente, nessun preambolo&raquo; &egrave; un vincolo positivo e verificabile. Le liste di divieti hanno anche un effetto collaterale: attirano attenzione sul tema che vorresti evitare.</p>`},
+    {t:'vs',
+      bad:{h:'Debole',code:`Non essere prolisso, non usare gergo tecnico, non inventare
+niente, non essere troppo formale e non ripetere la domanda.`},
+      good:{h:'Meglio',code:`Massimo 3 frasi. Indicativo presente.
+Usa parole di uso comune: se un termine tecnico e' inevitabile,
+spiegalo in una subordinata.
+Usa solo fatti presenti in <documento>; per tutto il resto scrivi
+"non risulta dal documento".`},
+      note:`Un divieto delimita uno spazio enorme di comportamenti sbagliati senza indicare quello giusto. Ogni riga della versione a destra si pu&ograve; invece <strong>verificare</strong>: contare le frasi, controllare il tempo verbale, cercare la formula di ripiego.`},
 
-      <h3>9 &middot; Assegna un ruolo quando serve un registro</h3>
-      <p>Il role prompting funziona quando cambia davvero il modo di guardare il problema (&laquo;revisore che cerca clausole svantaggiose per il cliente&raquo;) e serve a poco quando &egrave; decorativo (&laquo;sei un assistente utilissimo&raquo;). Usalo per orientare <em>criterio</em> e <em>tono</em>, non come formula magica.</p>
+    {t:'p',html:`<h3>8 &middot; Governa i casi limite in modo esplicito</h3>
+      <p>&Egrave; qui che si distingue un prompt da laboratorio da uno di produzione. Che deve fare il modello se l&rsquo;informazione non c&rsquo;&egrave;? Se la domanda &egrave; fuori perimetro? Se i dati si contraddicono? Definisci un&rsquo;uscita esplicita &mdash; <code>NON_DETERMINABILE</code>, &laquo;chiedi chiarimenti&raquo;, &laquo;escala all&rsquo;operatore&raquo; &mdash; altrimenti il modello, che &egrave; addestrato a essere utile, riempir&agrave; il vuoto con qualcosa di plausibile.</p>`},
+    {t:'vs',
+      bad:{h:'Debole',code:`Estrai la data di scadenza dal contratto.`},
+      good:{h:'Meglio',code:`Estrai la data di scadenza dal <contratto>.
 
-      <h3>10 &middot; Usa il prefill per forzare il formato</h3>
-      <p>Nelle API puoi iniziare tu il turno dell’assistente. Se il messaggio dell’assistente comincia con <code>{</code>, la risposta continuer&agrave; in JSON e non con &laquo;Certo, ecco&hellip;&raquo;. &Egrave; il modo pi&ugrave; economico per eliminare preamboli e stabilizzare il formato.</p>
+- Se il contratto non la indica, scrivi NON_PRESENTE.
+- Se ne indica piu' di una (proroghe, rinnovi), elencale tutte in
+  ordine cronologico, ciascuna con il numero di articolo.
+- Se il testo e' troncato o illeggibile nel punto rilevante, scrivi
+  ILLEGGIBILE e non tentare di ricostruire la data.`},
+      note:`Senza un&rsquo;uscita esplicita il modello riempie il vuoto con la data pi&ugrave; plausibile che trova. Il fallimento non sar&agrave; un errore visibile: sar&agrave; <strong>una data credibile e sbagliata</strong>, che nessuno controller&agrave;.`},
 
-      <h3>11 &middot; Un compito per chiamata (concatena, non accumulare)</h3>
-      <p>Un prompt che estrae + classifica + traduce + riassume fallisce in modo confuso: non capisci quale sottocompito &egrave; andato male. Spezzare in passaggi concatenati costa qualche chiamata in pi&ugrave; ma ti d&agrave; punti di controllo diagnosticabili e riusabili.</p>
+    {t:'p',html:`<h3>9 &middot; Assegna un ruolo quando serve un registro</h3>
+      <p>Il role prompting funziona quando cambia davvero il modo di guardare il problema (&laquo;revisore che cerca clausole svantaggiose per il cliente&raquo;) e serve a poco quando &egrave; decorativo (&laquo;sei un assistente utilissimo&raquo;). Usalo per orientare <em>criterio</em> e <em>tono</em>, non come formula magica.</p>`},
+    {t:'vs',
+      bad:{h:'Debole',code:`Sei un assistente AI esperto, molto preciso e utilissimo.`},
+      good:{h:'Meglio',code:`Sei il revisore contratti di una piccola impresa fornitrice.
+Leggi ogni clausola dal punto di vista di chi firma, non di chi
+propone: segnala penali asimmetriche, rinnovi taciti e limitazioni
+di responsabilita' a senso unico.`},
+      note:`&laquo;Esperto e preciso&raquo; non sposta nulla: nessun testo diventa pi&ugrave; probabile. Un ruolo utile porta con s&eacute; <strong>un punto di vista e un criterio</strong> &mdash; qui, guardare il contratto dalla parte di chi lo subisce.`},
 
-      <h3>12 &middot; Itera su casi reali, non immaginari</h3>
+    {t:'p',html:`<h3>10 &middot; Usa il prefill per forzare il formato</h3>
+      <p>Nelle API puoi iniziare tu il turno dell&rsquo;assistente. Se il messaggio dell&rsquo;assistente comincia con <code>{</code>, la risposta continuer&agrave; in JSON e non con &laquo;Certo, ecco&hellip;&raquo;. &Egrave; il modo pi&ugrave; economico per eliminare preamboli e stabilizzare il formato.</p>`},
+    {t:'vs',
+      bad:{h:'Debole',code:`Rispondi SOLO con JSON valido. NON aggiungere testo prima.
+NON aggiungere testo dopo. SOLO JSON!!! Mi raccomando.`},
+      good:{h:'Meglio',code:`// ultimo messaggio della richiesta:
+{ "role": "assistant", "content": "{" }
+
+// la risposta parte gia' dentro il formato:
+  "id": 4471, "stato": "scaduto" }`},
+      note:`La continuazione pi&ugrave; probabile di <code>{</code> &egrave; altro JSON: il preambolo diventa quasi impossibile, a costo zero. Dove il prefill non &egrave; disponibile &mdash; diversi modelli recenti non lo accettano pi&ugrave; &mdash; l&rsquo;equivalente &egrave; chiedere all&rsquo;API un output strutturato con uno schema, non ripetere l&rsquo;istruzione in maiuscolo.`},
+
+    {t:'p',html:`<h3>11 &middot; Un compito per chiamata (concatena, non accumulare)</h3>
+      <p>Un prompt che estrae + classifica + traduce + riassume fallisce in modo confuso: non capisci quale sottocompito &egrave; andato male. Spezzare in passaggi concatenati costa qualche chiamata in pi&ugrave; ma ti d&agrave; punti di controllo diagnosticabili e riusabili.</p>`},
+    {t:'vs',
+      bad:{h:'Debole',code:`Leggi l'email, traducila in italiano, riassumila, classificane
+la priorita', estrai le scadenze e scrivi la bozza di risposta.`},
+      good:{h:'Meglio',code:`// chiamata 1
+Traduci in italiano il testo in <email>. Solo la traduzione.
+
+// chiamata 2
+Dal testo in <email_it> estrai richiesta, scadenze e priorita'.
+Formato: ...
+
+// chiamata 3
+Usando la <scheda> della chiamata 2, scrivi la bozza di risposta.
+Massimo 120 parole.`},
+      note:`A sinistra, se la priorit&agrave; esce sbagliata non sai se la colpa &egrave; della traduzione, del riassunto o del criterio &mdash; e correggendo un pezzo ne rompi un altro. A destra hai tre punti in cui guardare, e tre pezzi che puoi riusare altrove.`},
+
+    {t:'p',html:`<h3>12 &middot; Itera su casi reali, non immaginari</h3>
       <p>La miglior best practice &egrave; metodologica: raccogli 10&ndash;20 input veri, con difficolt&agrave; assortita, e giudica ogni modifica su quelli. Senza questo, &laquo;migliorare il prompt&raquo; &egrave; solo cambiare il prompt. &Egrave; il ponte verso il modulo successivo.</p>`},
+    {t:'vs',
+      bad:{h:'Debole',code:`Ho cambiato il prompt, l'ho riprovato sulla mia email di esempio
+e adesso risponde meglio. Lo mando in produzione.`},
+      good:{h:'Meglio',code:`casi/                       <- 15 email vere, scelte a mano
+  01_tipica.txt             atteso: ...
+  02_senza_scadenza.txt     atteso: NON_PRESENTE
+  03_due_richieste.txt      atteso: ...
+  ...
+  15_fuori_perimetro.txt    atteso: FUORI_PERIMETRO
+
+Ogni modifica al prompt si giudica su tutti e 15, non su uno.`},
+      note:`Con <code>temperature</code> maggiore di 0 la stessa richiesta d&agrave; risposte diverse: un miglioramento visto una volta non &egrave; un miglioramento. &Egrave; l&rsquo;unica best practice che non riguarda <em>come si scrive</em> un prompt, ma <em>come si decide</em> che &egrave; migliorato.`},
 
     {t:'compare',title:'Prima / dopo su un caso reale',
       bad:{h:'Prompt originale',code:`Analizza queste segnalazioni e dimmi quali sono urgenti.`},
@@ -970,6 +1109,11 @@ function renderBlock(b, mid, i){
       return '<h3>'+b.title+'</h3><div class="split">'+
         '<div class="pane bad"><div class="pane-h">'+b.bad.h+'</div><pre><code>'+esc(b.bad.code)+'</code></pre></div>'+
         '<div class="pane ok"><div class="pane-h">'+b.good.h+'</div><pre><code>'+esc(b.good.code)+'</code></pre></div></div>';
+    case 'vs':
+      return '<div class="split" style="margin:12px 0 0">'+
+        '<div class="pane bad"><div class="pane-h">'+(b.bad.h||'Debole')+'</div><pre><code>'+esc(b.bad.code)+'</code></pre></div>'+
+        '<div class="pane ok"><div class="pane-h">'+(b.good.h||'Meglio')+'</div><pre><code>'+esc(b.good.code)+'</code></pre></div></div>'+
+        (b.note?'<div class="hint" style="margin:8px 0 22px">'+b.note+'</div>':'<div style="margin-bottom:22px"></div>');
     case 'split2':
       return '<div class="split">'+[b.a,b.b].map(col=>
         '<div class="widget" style="margin:0"><div class="widget-t">'+col.h+'</div><div style="margin-top:10px">'+
