@@ -255,7 +255,7 @@ MODULES.push({
     {t:'cards',cards:[
       {tag:'Ora 1',h:'Teoria',p:'Cosa sono, quali sono, i file che leggono (AGENTS.md e CLAUDE.md), le skill.'},
       {tag:'Ora 2',h:'Primi task',p:'Installare Pi, creare e modificare script, usarlo in sessione e con un solo comando.'},
-      {tag:'Ora 3',h:'Codice vero',p:'Capire un progetto sconosciuto, cercare problemi di sicurezza e di concorrenza.'},
+      {tag:'Ora 3',h:'Codice vero',p:'Capire un progetto sconosciuto, aggiungere un comando nuovo alla CLI.'},
       {tag:'Ora 4',h:'Lavoro vero',p:'Aggiungere una funzione, test di concorrenza, un test BDD, debug da log e payload.'}
     ]},
     {t:'table',head:['Blocco','Durata'],rows:[
@@ -267,7 +267,7 @@ MODULES.push({
       ['05 · Task 2 — Creare e modificare script','28 min'],
       ['— Pausa','10 min'],
       ['06 · Task 3 — Capire un progetto vero','28 min'],
-      ['07 · Task 4 — Sicurezza e concorrenza','22 min'],
+      ['07 · Task 4 — Aggiungere una nuova funzionalità da essere usata con la CLI','22 min'],
       ['08 · Task 5 — Aggiungere una piccola funzione','22 min'],
       ['09 · Task 6 — Script di test con concorrenza','14 min'],
       ['10 · Task 7 — Un test BDD','14 min'],
@@ -920,120 +920,135 @@ Vincoli:
   ]
 });
 
-/* ---------- 7. Sicurezza e concorrenza ---------- */
+/* ---------- 7. Aggiungere una nuova funzionalità da essere usata con la CLI ---------- */
 MODULES.push({
-  id:'m7', n:'07', title:'Task 4 — Sicurezza e concorrenza', min:22,
+  id:'m7', n:'07', title:'Task 4 — Aggiungere una nuova funzionalità da essere usata con la CLI', min:22,
   blocks:[
-    {t:'p',html:`<p>Adesso si passa dall'esplorare al giudicare: prendi un pezzo di codice — una API, un servizio, un modulo — e chiedi all'agente di cercarci problemi.</p>
-      <p>Qui l'agente è forte su una cosa e debole su un'altra, ed è bene saperlo prima. È <strong>bravo</strong> a trovare gli errori di sicurezza che hanno una forma riconoscibile. È <strong>molto meno bravo</strong> sui problemi di concorrenza, perché richiedono di immaginare due cose che succedono insieme — e i modelli leggono il codice come una storia che va in ordine.</p>`},
-    {t:'callout',kind:'warn',title:'Serve un pezzo, non tutto',html:`Non chiedere «controlla la sicurezza del progetto». Su una repo intera ottieni una lista lunga e generica, dove il 90% sono cose che non ti riguardano. <strong>Scegli un file o un gruppo di file</strong> — un gruppo di endpoint, un servizio — e lavora lì. Meno superficie, più profondità.</p><p style="margin:8px 0 0">Nota: qui si <strong>guarda</strong>, non si corregge. Le correzioni arrivano dopo, una alla volta.`},
+    {t:'p',html:`<p>Fin qui l'agente ha solo letto. Adesso scrive, e si parte da una cosa piccola e ben delimitata: <strong>un comando nuovo nella riga di comando del progetto</strong>. Per esempio un comando che esporta dei dati in CSV, uno che controlla la configurazione prima di un deploy, uno che stampa le statistiche di una tabella.</p>
+      <p>È un buon primo lavoro di scrittura perché un comando nuovo si aggiunge <strong>accanto</strong> a quelli che ci sono, senza cambiarli, e si prova subito dal terminale. Se il progetto non ha ancora una CLI, prendi uno degli script del modulo 05 e trasformalo in un comando con le sue opzioni.</p>`},
+    {t:'callout',kind:'warn',title:'Branch nuovo, adesso',html:`<code>git checkout -b lab/cli</code>. Da qui in poi si scrive sul serio. Un branch a parte vuol dire che se il risultato non va bene lo butti via con un comando e non resta niente.`},
 
-    {t:'p',html:`<h3>4A — Analisi di sicurezza (12 min)</h3>`},
-    {t:'promptkit',id:'pk7a',title:'Compito: analisi di sicurezza',
-      sub:'Indica il pezzo di codice e il contesto. Più il contesto è preciso, meno risposte generiche ottieni.',
+    {t:'p',html:`<h3>4A — Come è fatta la CLI oggi (6 min)</h3>
+      <p>Prima di chiedere il comando nuovo, fatti spiegare <strong>come sono fatti quelli che ci sono</strong>. Ogni CLI ha le sue abitudini: una libreria per leggere gli argomenti, un modo di registrare i comandi, un formato per l'aiuto, un modo di segnalare gli errori. Il comando nuovo le deve seguire tutte, e l'agente le segue solo se le ha viste.</p>`},
+    {t:'promptkit',id:'pk7c',title:'Compito: come è fatta la CLI',
+      sub:'Solo lettura. Ti serve sapere dove si mette il comando e quale comando esistente prendere come modello.',
       fields:[
-        {k:'file',lb:'File o cartella da analizzare',ph:'Es. src/api/ordini/ (4 endpoint) oppure src/services/pagamenti.ts',rows:2},
-        {k:'chi',lb:'Chi può chiamare questo codice',ph:'Es. utenti autenticati con ruolo "operatore"; un endpoint è pubblico senza login',rows:2},
-        {k:'dati',lb:'Che dati tocca',ph:'Es. dati anagrafici clienti, importi, IBAN. Scrive su Postgres e manda email.',rows:2}
+        {k:'cli',lb:'Come si lancia oggi la CLI',ph:'Es. python -m gestionale <comando>; oppure npm run cli -- <comando>; oppure ./bin/tool',rows:2},
+        {k:'cosa',lb:'Cosa dovrà fare il comando nuovo (in una riga)',ph:'Es. esportare gli ordini di un periodo in un file CSV',rows:2}
       ],
       build:(v)=>
-`Analisi di sicurezza, solo lettura: non modificare niente.
+`Analisi della CLI, solo lettura: non modificare niente.
 
-Codice da analizzare: `+(v.file||'[file o cartella]')+`
-Chi puo' chiamarlo: `+(v.chi||'[utenti e ruoli]')+`
-Dati toccati: `+(v.dati||'[tipo di dati]')+`
+La CLI si lancia cosi': `+(v.cli||'[comando di avvio]')+`
+Dovro' aggiungere un comando che: `+(v.cosa||'[cosa deve fare]')+`
 
-Cerca in particolare:
-1. Controlli di accesso: c'e' un punto in cui si puo' arrivare al dato
-   di un altro utente cambiando un id nella richiesta?
-2. Validazione dell'input: cosa arriva da fuori e non viene controllato
-   prima di essere usato?
-3. Query al database costruite concatenando stringhe.
-4. Dati sensibili che finiscono nei log o nei messaggi di errore.
-5. Segreti scritti nel codice.
-6. Se il codice genera HTML o esegue comandi: input non trattato che
-   ci finisce dentro.
+Rispondimi con:
+1. Il punto di ingresso della CLI e la libreria usata per leggere
+   gli argomenti. File e riga.
+2. Come si registra un comando nuovo: dove va il codice, dove va
+   aggiunto il nome. File e riga.
+3. Le abitudini che vedi nei comandi esistenti:
+   - come sono scritti l'aiuto e i nomi delle opzioni
+   - dove vanno i risultati (stdout) e dove i messaggi (stderr)
+   - con che codice esce quando va bene e quando c'e' un errore
+   - come leggono la configurazione (file, variabili d'ambiente)
+4. Il comando esistente piu' simile a quello che devo aggiungere,
+   da usare come modello. Perche' proprio quello.
+5. Se ci sono test per la CLI: dove sono e come si lanciano.
 
-Per ogni problema scrivi ESATTAMENTE in questo formato:
-  FILE:RIGA
-  Problema: (una riga)
-  Come si sfrutta: (uno scenario concreto, con una richiesta di esempio)
-  Gravita': alta / media / bassa
-  Perche' quella gravita': (una riga)
+Cita sempre file e riga. Se una cosa non la trovi, scrivi NON SO.`},
+    {t:'exercise',id:'ex7c',label:'Esercizio 7.1 — Controlla il modello (3 minuti)',
+      prompt:'Lancia tu il comando che l\'agente ha scelto come modello, con --help e poi una volta vera. Quello che vedi corrisponde a quello che ti ha descritto?',
+      placeholder:'Comando modello: ...\nAiuto e opzioni come descritto? ...\nCodice di uscita (echo $?): ...\nDifferenze con la descrizione: ...',
+      solution:'Il comando modello è la scelta più importante di tutto il task: il codice nuovo gli somiglierà. Se l\'agente ne ha scelto uno vecchio o fuori stile (capita spesso: il primo che trova), <strong>diglielo adesso</strong> e indicagli tu quello giusto. Cambiare modello dopo vuol dire riscrivere il comando.'},
 
-REGOLE:
-- Se non riesci a costruire uno scenario concreto, NON elencarlo.
-- Non elencare buone pratiche generiche: solo problemi presenti
-  in questo codice, con il punto esatto.
-- Ordina dal piu' grave al meno grave.`},
-    {t:'p',html:`<p>Il campo <em>«Come si sfrutta»</em> non è decorativo: è il <strong>filtro</strong>. Un modello sa elencare categorie di vulnerabilità a memoria, e lo fa volentieri anche quando nel tuo codice non ci sono. Costringerlo a scrivere lo scenario concreto fa cadere da solo metà dell'elenco.</p>`},
-    {t:'callout',kind:'bad',title:'Due errori opposti, tutti e due costosi',html:`<strong>Falsi allarmi:</strong> segnala come grave una cosa che nel tuo contesto non lo è (un endpoint "senza autenticazione" che sta dietro un gateway che autentica). Costano tempo. <strong>Cose non viste:</strong> tutto quello che dipende da come il sistema è messo in piedi fuori dal codice — permessi sul database, configurazione della rete, chi può arrivare dove. L'agente vede il codice, non il mondo intorno. <strong>Questa analisi non sostituisce un controllo di sicurezza vero.</strong>`},
-    {t:'exercise',id:'ex7a',label:'Esercizio 7.1 — Verifica due segnalazioni (4 minuti)',
-      prompt:'Prendi le due segnalazioni più gravi. Apri i file e prova a rifare mentalmente lo scenario descritto. Sono vere?',
-      placeholder:'Segnalazione 1: ... → vera / falsa perché ...\nSegnalazione 2: ... → vera / falsa perché ...',
-      solution:'Il rapporto normale è circa <strong>una segnalazione vera e utile ogni tre</strong>. Non è un fallimento: trovare una cosa vera in cinque minuti di lettura automatica è un buon affare. Il fallimento sarebbe <em>crederci senza controllare</em> — e aprire tre ticket per problemi che non esistono.'},
-
-    {t:'p',html:`<h3>4B — Analisi di concorrenza (10 min)</h3>
-      <p>Qui serve un compito diverso. Chiedere «ci sono problemi di concorrenza?» non funziona quasi mai. Quello che funziona è <strong>fargli seguire una risorsa alla volta</strong>: prendi un dato condiviso e chiedi chi lo legge e chi lo scrive.</p>`},
-    {t:'promptkit',id:'pk7b',title:'Compito: analisi di concorrenza',
-      sub:'Indica cosa gira in parallelo e quale dato è condiviso. Senza questi due dati l\'analisi resta generica.',
+    {t:'p',html:`<h3>4B — Il comando nuovo (8 min)</h3>
+      <p>Adesso descrivi il comando <strong>come lo userebbe qualcuno</strong>: il nome, le opzioni, un esempio di chiamata e cosa si vede dopo. Un esempio d'uso scritto vale più di un paragrafo di spiegazione.</p>`},
+    {t:'promptkit',id:'pk7d',title:'Compito: il comando nuovo',
+      sub:'Più l\'esempio d\'uso è preciso, meno cose l\'agente deve inventare.',
       fields:[
-        {k:'par',lb:'Cosa gira in parallelo',ph:'Es. 4 processi Node dietro un bilanciatore; ogni processo ha un pool di 10 connessioni',rows:2},
-        {k:'ris',lb:'Il dato condiviso da seguire',ph:'Es. la riga ordini.stato; oppure il contatore di scorte; oppure un file su disco',rows:2},
-        {k:'file',lb:'Dove sta il codice che lo tocca',ph:'Es. src/services/ordini.ts e src/jobs/riconciliazione.ts',rows:2}
+        {k:'uso',lb:'Esempio di chiamata',ph:'Es. gestionale export-ordini --dal 2026-01-01 --al 2026-01-31 --out ordini.csv',rows:2},
+        {k:'out',lb:'Cosa deve succedere',ph:'Es. scrive il CSV con una riga per ordine (id, data, cliente, totale) e stampa su stderr "Esportati 312 ordini"',rows:3},
+        {k:'err',lb:'I casi di errore',ph:'Es. date non valide o --dal dopo --al: messaggio chiaro ed esce con 2. File già esistente: non lo sovrascrive senza --force',rows:3},
+        {k:'mod',lb:'Il comando da usare come modello',ph:'Es. export-clienti in src/cli/export_clienti.py',rows:1}
       ],
       build:(v)=>
-`Analisi di concorrenza, solo lettura: non modificare niente.
+`Aggiungi un comando nuovo alla CLI.
 
-Come gira il sistema: `+(v.par||'[processi/thread in parallelo]')+`
-Dato condiviso da seguire: `+(v.ris||'[la risorsa condivisa]')+`
-Codice che lo tocca: `+(v.file||'[file]')+`
+Esempio d'uso: `+(v.uso||'[esempio di chiamata]')+`
+Cosa deve succedere: `+(v.out||'[risultato atteso]')+`
+Casi di errore: `+(v.err||'[errori e cosa fare]')+`
+Comando da usare come modello: `+(v.mod||'[comando esistente]')+`
 
-Fai questo lavoro, nell'ordine:
+Vincoli:
+- Segui il comando modello: stessa struttura, stessi nomi delle
+  opzioni quando significano la stessa cosa, stesso modo di
+  gestire gli errori e la configurazione.
+- Scrivi l'aiuto (--help) come quello degli altri comandi, con
+  almeno un esempio d'uso.
+- Risultati su stdout (o nel file indicato), messaggi e errori
+  su stderr. Codice di uscita 0 se va bene, diverso da 0 se no.
+- Non modificare i comandi esistenti. Nessuna dipendenza nuova
+  senza chiedermelo prima.
+- Se ci sono test per la CLI, aggiungine uno per il caso normale
+  e uno per un caso di errore, nello stile di quelli che ci sono.
 
-1. Elenca TUTTI i punti del codice che leggono quel dato e tutti quelli
-   che lo scrivono. File e riga per ognuno.
-2. Per ogni scrittura, dimmi se c'e' qualcosa che la protegge
-   (transazione, lock, vincolo unico sul database, operazione atomica)
-   oppure se non c'e' niente.
-3. Trova le sequenze "leggo, decido, scrivo": sono il punto tipico
-   in cui due esecuzioni in parallelo si pestano i piedi.
-4. Per ognuna scrivi uno scenario a due colonne, cosi':
+Alla fine:
+1. Lancia il comando con --help, poi con l'esempio d'uso, poi con
+   un caso di errore. Mostrami l'output vero e il codice di uscita
+   di ognuno.
+2. Lancia i test esistenti e mostrami l'output vero.
+3. Mostrami git diff --stat e spiegami in 3 righe cosa hai cambiato.`},
+    {t:'callout',kind:'',title:'Un comando è un contratto',html:`Chi usa la CLI non legge il codice: legge l'aiuto, guarda l'output e, se lo mette in uno script, guarda il <strong>codice di uscita</strong>. Un comando che stampa «errore» ma esce con 0 fa credere a uno script che sia andato tutto bene. Un comando che mescola messaggi e dati su stdout non si può mettere in pipe. Sono le cose che l'agente sbaglia più spesso, perché dal codice «sembra funzionare» lo stesso.`},
 
-   Tempo | Esecuzione A          | Esecuzione B
-   t1    | legge stato = "nuovo" |
-   t2    |                       | legge stato = "nuovo"
-   t3    | scrive "in corso"     |
-   t4    |                       | scrive "in corso"   <- doppia lavorazione
+    {t:'p',html:`<h3>4C — Provalo come lo userebbe qualcuno (8 min)</h3>
+      <p>L'agente ti ha mostrato che funziona. Adesso lo provi tu, da utente, e soprattutto nei casi che nessuno ha provato:</p>`},
+    {t:'code',lang:'bash',code:`# L'aiuto: si capisce cosa fa senza leggere il codice?
+gestionale export-ordini --help
 
-5. Dimmi cosa vedrebbe l'utente quando succede, e ogni quanto
-   puo' succedere.
+# Il caso normale, poi il codice di uscita
+gestionale export-ordini --dal 2026-01-01 --al 2026-01-31 --out ordini.csv
+echo $?
 
-REGOLE:
-- Se non riesci a scrivere lo scenario a due colonne, NON elencarlo:
-  vuol dire che non e' un problema di concorrenza vero.
-- Distingui i problemi reali dai casi impossibili perche' qualcosa a monte
-  garantisce l'ordine (una coda, una chiave unica, un lock esterno).
-- Non proporre correzioni adesso: prima l'elenco.`},
-    {t:'callout',kind:'',title:'Perché lo schema a due colonne',html:`È il trucco del modulo. Un modello legge il codice come un racconto in ordine, e in un racconto in ordine le gare fra processi non si vedono. <strong>Costringendolo a scrivere la tabella dei tempi lo obblighi a immaginare due storie che si intrecciano</strong> — ed è lì che i problemi saltano fuori. Lo stesso trucco funziona sui deadlock: fagli scrivere l'ordine in cui ogni percorso prende i lock.`},
-    {t:'quiz',id:'q7a',q:'Su cosa è meno affidabile l\'analisi di un agente?',
+# Un errore: messaggio chiaro, codice diverso da 0
+gestionale export-ordini --dal 2026-02-31
+echo $?
+
+# Senza argomenti obbligatori
+gestionale export-ordini
+
+# In pipe: su stdout ci sono solo i dati?
+gestionale export-ordini --dal 2026-01-01 --al 2026-01-31 | head -3
+
+# Cosa ha toccato
+git diff --stat`},
+    {t:'table',head:['Cosa guardi','Cosa cerchi'],rows:[
+      ['<code>--help</code>','Stesso formato degli altri comandi, almeno un esempio, nessuna opzione descritta male.'],
+      ['Codice di uscita','0 quando va bene, diverso da 0 quando no. Sempre, non solo nel caso che ha provato lui.'],
+      ['Messaggi di errore','Dicono cosa è sbagliato e come si corregge. Niente stack trace per un input sbagliato.'],
+      ['Output in pipe','Su stdout solo i dati. Se ci sono anche i messaggi, il comando non si può usare negli script.'],
+      ['<code>git diff --stat</code>','Solo i file nuovi e il punto di registrazione. Se ha toccato altri comandi, chiedi perché.']
+    ]},
+    {t:'quiz',id:'q7b',q:'Il comando nuovo funziona, ma quando le date non sono valide stampa un errore ed esce con codice 0. È un problema?',
       opts:[
-        {tx:'Query costruite concatenando stringhe',ok:false,why:'È il caso in cui è più bravo: ha una forma riconoscibile nel codice.'},
-        {tx:'Segreti scritti nel codice',ok:false,why:'Li trova facilmente, anche solo cercando per forma.'},
-        {tx:'Gare fra processi in parallelo e problemi che dipendono da come il sistema è configurato fuori dal codice',ok:true,why:'Esatto. Le prime richiedono di immaginare più esecuzioni insieme; le seconde dipendono da informazioni che nel codice non ci sono. In tutti e due i casi devi essere tu a dargli il contesto e a verificare.'},
-        {tx:'Dati sensibili nei log',ok:false,why:'Cerca le chiamate di log e guarda cosa ci finisce dentro: se lo cava bene.'}
+        {tx:'No: l\'errore si legge, quindi l\'utente capisce',ok:false,why:'Una persona sì. Uno script no: legge solo il codice di uscita, e 0 vuol dire «tutto bene».'},
+        {tx:'Sì: chi usa il comando in uno script o in CI crede che sia andato tutto bene',ok:true,why:'Esatto. Il codice di uscita è la parte del contratto che leggono le macchine. Un errore con 0 passa inosservato finché qualcuno non trova il file vuoto.'},
+        {tx:'Solo se il comando verrà usato in produzione',ok:false,why:'Una CLI si usa negli script proprio perché è comoda. Se il comando esiste, prima o poi ci finisce dentro.'},
+        {tx:'No, basta che i test passino',ok:false,why:'I test passano se controllano il messaggio e non il codice di uscita. È proprio il caso da aggiungere ai test.'}
       ]},
-    {t:'exercise',id:'ex7b',label:'Esercizio 7.2 — Il ticket (4 minuti)',
-      prompt:'Prendi il problema più credibile che hai trovato (di sicurezza o di concorrenza) e scrivi il ticket che apriresti davvero: dove sta, cosa succede, cosa vede l\'utente, quanto è urgente.',
-      placeholder:'File:riga: ...\nCosa succede: ...\nCosa vede l\'utente: ...\nUrgenza e perché: ...'},
-    {t:'checklist',id:'ck7',title:'Task 4 completato quando...',
+    {t:'exercise',id:'ex7d',label:'Esercizio 7.2 — Il caso che non ha provato (4 minuti)',
+      prompt:'Trova un modo di usare il comando che l\'agente non ha provato (un input strano, un file che esiste già, un periodo senza dati) e lancialo. Cosa è successo? Cosa gli hai chiesto di sistemare?',
+      placeholder:'Ho provato: ...\nÈ successo: ...\nCodice di uscita: ...\nGli ho chiesto: ...',
+      solution:'Quasi sempre c\'è almeno un caso scoperto: il periodo senza dati che produce un file vuoto senza dirlo, il file che viene sovrascritto senza chiedere, l\'input sbagliato che finisce in uno stack trace. Non è colpa dell\'agente: prova i casi che gli hai descritto. <strong>I casi che non gli hai descritto li devi provare tu.</strong>'},
+    {t:'checklist',id:'ck7b',title:'Task 4 completato quando...',
       items:[
-        'Ho analizzato un pezzo circoscritto, non tutta la repo',
-        'Ho ottenuto segnalazioni con file, riga e scenario concreto',
-        'Ho verificato a mano almeno due segnalazioni',
-        'Ho trovato almeno un falso allarme e capito perché lo era',
-        'Ho ottenuto almeno uno scenario di concorrenza a due colonne',
-        'Ho scritto un ticket vero per il problema più credibile'
+        'Ho lavorato su un branch a parte',
+        'So dove si registra un comando e quale comando ho usato come modello',
+        'Il comando nuovo ha un --help nello stile degli altri, con un esempio',
+        'Esce con 0 quando va bene e con un codice diverso da 0 quando no',
+        'Su stdout ci sono solo i dati: si può mettere in pipe',
+        'Ho provato almeno un caso che l\'agente non aveva provato',
+        'Il diff tocca solo il comando nuovo e il punto dove si registra'
       ]}
   ]
 });
@@ -1042,9 +1057,9 @@ REGOLE:
 MODULES.push({
   id:'m8', n:'08', title:'Task 5 — Aggiungere una piccola funzione', min:22,
   blocks:[
-    {t:'p',html:`<p>Fin qui l'agente ha solo letto. Adesso scrive. Il compito di esempio è utile davvero: <strong>tracciare le chiamate al database</strong> — per ogni query, sapere quale, quanto ci ha messo, e da dove è partita.</p>
+    {t:'p',html:`<p>Nel modulo 07 hai aggiunto un comando accanto a quelli che c'erano. Adesso una modifica che <strong>entra nel codice esistente</strong> e tocca più file. Il compito di esempio è utile davvero: <strong>tracciare le chiamate al database</strong> — per ogni query, sapere quale, quanto ci ha messo, e da dove è partita.</p>
       <p>Se nel tuo progetto esiste già, scegli un'altra funzione piccola: un endpoint di stato che dice se il servizio è vivo, un contatore di quante volte viene usata una funzione, un log strutturato su un punto che oggi non ne ha.</p>`},
-    {t:'callout',kind:'warn',title:'Branch nuovo, adesso',html:`<code>git checkout -b lab/tracing</code>. Da qui in poi si scrive sul serio. Un branch a parte vuol dire che se il risultato non va bene lo butti via con un comando e non resta niente.`},
+    {t:'callout',kind:'warn',title:'Branch nuovo, adesso',html:`Torna su main e parti da zero: <code>git checkout main && git checkout -b lab/tracing</code>. Una modifica per branch. Un branch a parte vuol dire che se il risultato non va bene lo butti via con un comando e non resta niente.`},
 
     {t:'p',html:`<h3>5A — Prima il piano, poi il codice (7 min)</h3>
       <p>È la regola che fa più differenza di tutte quelle di oggi: <strong>su un cambiamento che tocca più file, chiedi prima il piano</strong>. Leggi il piano, correggilo, e solo dopo lascia scrivere.</p>
@@ -1130,7 +1145,7 @@ Poi fermati e aspetta il mio ok.`},
 MODULES.push({
   id:'m9', n:'09', title:'Task 6 — Uno script di test con concorrenza', min:14,
   blocks:[
-    {t:'p',html:`<p>Nel modulo 07 hai <em>ipotizzato</em> dei problemi di concorrenza. Adesso li <strong>provi</strong>. È il modo migliore di chiudere il cerchio: uno script che lancia tante richieste insieme e guarda se il sistema si comporta come dovrebbe.</p>
+    {t:'p',html:`<p>I problemi di concorrenza sono quelli su cui un agente è meno affidabile quando legge il codice: legge il codice come una storia che va in ordine, e in una storia in ordine due richieste che arrivano insieme non si vedono. Per questo non glieli fai <em>cercare</em>: li <strong>provi</strong>. Uno script che lancia tante richieste insieme e guarda se il sistema si comporta come dovrebbe.</p>
       <p>Attenzione: non stiamo misurando la velocità. Ci interessa un'altra cosa — <strong>quando due richieste arrivano insieme, il risultato è ancora giusto?</strong></p>`},
     {t:'callout',kind:'bad',title:'Dove si lancia',html:`<strong>Solo su ambiente locale o di sviluppo.</strong> Mai contro un ambiente condiviso, mai contro produzione. Uno script del genere, puntato sul posto sbagliato, è indistinguibile da un attacco: riempie i log, satura le connessioni, e può bloccare il lavoro di altri. Prima di lanciarlo, guarda due volte l'indirizzo che c'è dentro.`},
 
