@@ -1,0 +1,2053 @@
+<!doctype html>
+<html lang="it" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coding Agents — Teoria e laboratorio · Programma 4 ore</title>
+<style>
+:root{
+  --bg:#f7f7f5; --panel:#ffffff; --panel-2:#f1f1ee; --text:#1c1c1a; --muted:#6b6b63;
+  --line:#e2e2dc; --accent:#c2451f; --accent-soft:#fdefe9; --ok:#1f7a4d; --ok-soft:#e8f5ee;
+  --warn:#8a5a00; --warn-soft:#fdf3e0; --bad:#a52020; --bad-soft:#fbeaea;
+  --code-bg:#1e1e1c; --code-text:#f0efe9; --shadow:0 1px 2px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.05);
+  --radius:12px; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+}
+html[data-theme="dark"]{
+  --bg:#141413; --panel:#1e1e1c; --panel-2:#26261f; --text:#f0efe9; --muted:#a3a39a;
+  --line:#33332c; --accent:#e8825c; --accent-soft:#2e211c; --ok:#5ec48d; --ok-soft:#17281f;
+  --warn:#e0b45f; --warn-soft:#2a2318; --bad:#e88b8b; --bad-soft:#2b1a1a;
+  --code-bg:#0f0f0e; --code-text:#e8e7e1; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;font-size:inherit;cursor:pointer}
+a{color:var(--accent)}
+
+/* ---------- layout ---------- */
+header.top{
+  position:sticky;top:0;z-index:40;background:var(--panel);border-bottom:1px solid var(--line);
+  display:flex;flex-wrap:wrap;align-items:center;gap:14px;padding:10px 18px;
+}
+.brand{font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;gap:9px;font-size:15px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--accent);flex:none}
+.brand small{display:block;font-weight:500;color:var(--muted);font-size:11.5px;letter-spacing:0}
+.spacer{flex:1}
+.pill{
+  border:1px solid var(--line);background:var(--panel-2);color:var(--text);
+  border-radius:999px;padding:6px 12px;font-size:12.5px;font-weight:600;display:inline-flex;align-items:center;gap:7px;
+}
+.pill.ghost{background:transparent}
+.pill:hover{border-color:var(--accent)}
+.clock{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.progress-wrap{width:100%;height:3px;background:var(--panel-2)}
+.progress-bar{height:100%;width:0;background:var(--accent);transition:width .35s ease}
+
+.shell{display:grid;grid-template-columns:274px minmax(0,1fr);gap:0;align-items:start}
+nav.side{
+  position:sticky;top:57px;height:calc(100vh - 57px);overflow-y:auto;
+  border-right:1px solid var(--line);padding:16px 12px 40px;background:var(--bg);
+}
+nav.side h4{font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:6px 8px 8px}
+.navitem{
+  display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;border:0;background:transparent;
+  color:var(--text);padding:8px 10px;border-radius:9px;margin-bottom:2px;line-height:1.35;
+}
+.navitem:hover{background:var(--panel-2)}
+.navitem.active{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.navitem .idx{font-family:var(--mono);font-size:11px;color:var(--muted);width:20px;flex:none;padding-top:2px}
+.navitem.active .idx{color:var(--accent)}
+.navitem .nt{font-size:13.5px}
+.navitem .nm{font-size:11px;color:var(--muted);display:block}
+.navitem .tick{margin-left:auto;color:var(--ok);font-size:12px;flex:none}
+
+main{padding:30px 34px 90px;max-width:920px;margin:0 auto;width:100%}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+h1{font-size:31px;line-height:1.18;letter-spacing:-.02em;margin:0 0 6px}
+h2{font-size:21px;letter-spacing:-.01em;margin:38px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h3{font-size:16px;margin:24px 0 8px}
+.lede{color:var(--muted);font-size:15px;margin:0 0 4px}
+.prose{font-size:15px}
+.prose p{margin:12px 0}
+.prose ul,.prose ol{margin:12px 0;padding-left:22px}
+.prose li{margin:6px 0}
+.prose strong{font-weight:650}
+code{font-family:var(--mono);font-size:.875em;background:var(--panel-2);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+pre{background:var(--code-bg);color:var(--code-text);padding:14px 16px;border-radius:var(--radius);overflow-x:auto;font-size:12.5px;line-height:1.55;margin:14px 0}
+pre code{background:none;border:0;padding:0;color:inherit;font-size:12.5px}
+
+.callout{border:1px solid var(--line);border-left:3px solid var(--accent);background:var(--panel);border-radius:10px;padding:13px 16px;margin:16px 0;font-size:14px;box-shadow:var(--shadow)}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.callout.ok{border-left-color:var(--ok);background:var(--ok-soft)}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.callout .ct{display:block;font-weight:700;font-size:12.5px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+
+.grid{display:grid;gap:12px;margin:16px 0}
+.grid.c2{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.grid.c3{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
+.card h5{margin:0 0 5px;font-size:13.5px}
+.card p{margin:0;font-size:13px;color:var(--muted)}
+.card .tag{font-family:var(--mono);font-size:10.5px;color:var(--accent);text-transform:uppercase;letter-spacing:.06em}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin:16px 0}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}
+.tablewrap table{margin:0}
+
+/* ---------- widgets ---------- */
+.widget{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin:20px 0;box-shadow:var(--shadow)}
+.widget-h{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}
+.widget-k{font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:1px 6px;flex:none}
+.widget-t{font-weight:650;font-size:15px}
+.widget-s{color:var(--muted);font-size:13.5px;margin:2px 0 14px}
+
+.opt{display:block;width:100%;text-align:left;border:1px solid var(--line);background:var(--panel-2);color:var(--text);border-radius:9px;padding:10px 13px;margin-bottom:7px;font-size:14px;transition:.15s}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:disabled{cursor:default}
+.opt.sel-ok{border-color:var(--ok);background:var(--ok-soft)}
+.opt.sel-bad{border-color:var(--bad);background:var(--bad-soft)}
+.opt.reveal-ok{border-color:var(--ok)}
+.opt .mk{font-family:var(--mono);font-weight:700;margin-right:8px;color:var(--muted)}
+.why{font-size:13px;color:var(--muted);margin-top:6px;padding-left:2px;display:none}
+.opt.shown .why{display:block}
+
+.chk{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--panel-2);margin-bottom:6px;cursor:pointer;font-size:14px}
+.chk input{margin-top:4px;flex:none;accent-color:var(--accent);width:15px;height:15px}
+.chk.on{border-color:var(--accent);background:var(--accent-soft)}
+.chk .lb{font-weight:600}
+.chk .ds{display:block;font-size:12.5px;color:var(--muted);font-weight:400}
+
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.pane{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.pane-h{padding:7px 12px;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.pane.bad .pane-h{background:var(--bad-soft);color:var(--bad)}
+.pane.ok .pane-h{background:var(--ok-soft);color:var(--ok)}
+.pane pre{margin:0;border-radius:0;max-height:340px}
+
+.preview{background:var(--code-bg);color:var(--code-text);border-radius:10px;padding:14px 16px;font-family:var(--mono);font-size:12px;line-height:1.6;white-space:pre-wrap;max-height:400px;overflow-y:auto;min-height:80px}
+.meter{height:7px;border-radius:99px;background:var(--panel-2);overflow:hidden;margin:12px 0 6px;border:1px solid var(--line)}
+.meter > i{display:block;height:100%;background:var(--accent);transition:width .3s}
+.scoreline{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);font-family:var(--mono)}
+
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.tab{border:1px solid var(--line);background:var(--panel-2);color:var(--muted);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;font-family:var(--mono)}
+.tab:hover{border-color:var(--accent)}
+.tab.on{border-color:var(--accent);background:var(--accent-soft);color:var(--text)}
+
+textarea,input[type="text"],select{
+  width:100%;font-family:inherit;font-size:14px;color:var(--text);background:var(--panel-2);
+  border:1px solid var(--line);border-radius:9px;padding:10px 12px;resize:vertical;
+}
+textarea:focus,input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+label.fl{display:block;font-size:12px;font-weight:650;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:12px 0 5px}
+.btn{border:1px solid var(--line);background:var(--panel-2);color:var(--text);border-radius:8px;padding:8px 14px;font-size:13.5px;font-weight:600}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{filter:brightness(1.07)}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}
+.hint{font-size:12.5px;color:var(--muted)}
+.saved{font-size:12px;color:var(--ok);opacity:0;transition:.3s}
+.saved.on{opacity:1}
+
+.sorter-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--panel-2);margin-bottom:7px}
+.sorter-row .it{flex:1 1 240px;font-size:13.5px}
+.sorter-row .bs{display:flex;gap:5px;flex:none}
+.bbtn{border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:7px;padding:4px 9px;font-size:11.5px;font-weight:650}
+.bbtn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.sorter-row.ok{border-color:var(--ok);background:var(--ok-soft)}
+.sorter-row.bad{border-color:var(--bad);background:var(--bad-soft)}
+.sorter-row .fb{flex:1 1 100%;font-size:12.5px;color:var(--muted);display:none}
+.sorter-row.done .fb{display:block}
+
+.diag{margin-top:12px;font-size:13.5px}
+.diag div{padding:6px 0;border-top:1px dashed var(--line)}
+
+/* ---------- ciclo dell'agente ---------- */
+.loopgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:6px 0 12px}
+.lstep{border:1px solid var(--line);background:var(--panel-2);border-radius:10px;padding:10px 11px;font-size:13px;opacity:.45;transition:.2s}
+.lstep.on{opacity:1;border-color:var(--accent);background:var(--accent-soft)}
+.lstep.past{opacity:.85}
+.lstep b{display:block;font-size:11px;font-family:var(--mono);color:var(--accent);letter-spacing:.05em;text-transform:uppercase;margin-bottom:3px}
+.lstep span{color:var(--muted);font-size:12.5px;display:block;margin-top:3px}
+
+/* ---------- builder file di contesto ---------- */
+.fl-row{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:var(--panel-2);margin-bottom:5px;cursor:pointer;font-size:13.5px}
+.fl-row input{margin-top:4px;flex:none;accent-color:var(--accent);width:15px;height:15px}
+.fl-row.on{border-color:var(--accent);background:var(--accent-soft)}
+.fl-row .w{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--muted);flex:none;padding-top:2px}
+.fl-sec{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:14px 0 6px;font-weight:700}
+
+.footnav{display:flex;justify-content:space-between;gap:10px;margin-top:46px;padding-top:18px;border-top:1px solid var(--line)}
+.timerbox{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+.mod-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0 24px}
+.badge{font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-radius:6px;padding:3px 8px;color:var(--muted)}
+
+@media (max-width:900px){
+  .shell{grid-template-columns:1fr}
+  nav.side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);max-height:290px}
+  main{padding:22px 16px 70px}
+  h1{font-size:25px}
+}
+@media print{
+  nav.side,header.top,.footnav,.btnrow{display:none}
+  main{max-width:none;padding:0}
+  .widget,.card,.callout{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand"><span class="dot"></span><span>Coding Agents<small>Programma formativo — 4 ore, teoria + laboratorio su codice vero</small></span></div>
+  <div class="spacer"></div>
+  <div class="timerbox">
+    <button class="pill ghost" id="timerBtn">▶ Avvia timer</button>
+    <span class="pill clock" id="clock">00:00:00 / 4:00:00</span>
+  </div>
+  <button class="pill ghost" id="exportBtn" title="Scarica risposte e note in Markdown">⬇ Esporta</button>
+  <button class="pill ghost" id="themeBtn" title="Tema chiaro/scuro">◐</button>
+</header>
+<div class="progress-wrap"><div class="progress-bar" id="pbar"></div></div>
+
+<div class="shell">
+  <nav class="side">
+    <h4>Programma</h4>
+    <div id="nav"></div>
+    <h4 style="margin-top:18px">Avanzamento</h4>
+    <div style="padding:0 10px;font-size:12.5px;color:var(--muted)" id="statsBox"></div>
+    <div style="padding:10px">
+      <button class="btn" id="resetBtn" style="width:100%;font-size:12px">Azzera avanzamento</button>
+    </div>
+  </nav>
+  <main id="main"></main>
+</div>
+
+<script>
+/* ============================================================
+   STATO + PERSISTENZA
+   ============================================================ */
+const NS = 'agc8h.';
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(NS+k); return v===null? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(NS+k, JSON.stringify(v)); }catch(e){} },
+  del(k){ try{ localStorage.removeItem(NS+k); }catch(e){} },
+  clearAll(){ try{ Object.keys(localStorage).filter(k=>k.indexOf(NS)===0).forEach(k=>localStorage.removeItem(k)); }catch(e){} }
+};
+let current = store.get('current', 0);
+let done = store.get('done', {});
+let answers = store.get('answers', {});
+let quizState = store.get('quiz', {});
+
+function saveAll(){ store.set('done', done); store.set('answers', answers); store.set('quiz', quizState); }
+
+/* ============================================================
+   CONTENUTI
+   ============================================================ */
+const MODULES = [];
+
+/* ---------- 0. Apertura ---------- */
+MODULES.push({
+  id:'m0', n:'00', title:'Apertura', min:5,
+  blocks:[
+    {t:'p',html:`<p>Il corso è diviso in due metà. Nella prima impari come funziona e ti alleni su script piccoli, dove se sbagli non succede niente. Nella seconda lavori su una repo vera del tuo lavoro: capire, analizzare, aggiungere, testare, debuggare.</p>`},
+    {t:'cards',cards:[
+      {tag:'Ora 1',h:'Teoria',p:'Cosa sono, quali sono, i file che leggono (AGENTS.md e CLAUDE.md), le skill.'},
+      {tag:'Ora 2',h:'Primi task',p:'Installare Pi, creare e modificare script, usarlo in sessione e con un solo comando.'},
+      {tag:'Ora 3',h:'Codice vero',p:'Capire un progetto sconosciuto, cercare problemi di sicurezza e di concorrenza.'},
+      {tag:'Ora 4',h:'Lavoro vero',p:'Aggiungere una funzione, test di concorrenza, un test BDD, debug da log e payload.'}
+    ]},
+    {t:'table',head:['Blocco','Durata'],rows:[
+      ['00 · Apertura','5 min'],
+      ['01 · Cosa sono i coding agent','18 min'],
+      ['02 · I file che l\'agente legge: AGENTS.md e CLAUDE.md','22 min'],
+      ['03 · Le skill','14 min'],
+      ['04 · Task 1 — Installare Pi','12 min'],
+      ['05 · Task 2 — Creare e modificare script','28 min'],
+      ['— Pausa','10 min'],
+      ['06 · Task 3 — Capire un progetto vero','28 min'],
+      ['07 · Task 4 — Sicurezza e concorrenza','22 min'],
+      ['08 · Task 5 — Aggiungere una piccola funzione','22 min'],
+      ['09 · Task 6 — Script di test con concorrenza','14 min'],
+      ['10 · Task 7 — Un test BDD','14 min'],
+      ['11 · Task 8 — Debug da log e payload','20 min'],
+      ['12 · Chiusura','11 min']
+    ]},
+    {t:'callout',kind:'ok',title:'Come si usa questo materiale',html:`Naviga con la barra a sinistra o con i pulsanti in fondo a ogni modulo. Ogni esercizio si salva da solo nel browser (niente esce dal tuo computer): puoi chiudere e riprendere. Con <strong>&#8681; Esporta</strong> scarichi tutte le tue risposte in un file Markdown. Il timer in alto serve al docente per tenere il ritmo.`},
+    {t:'p',html:`<h3>Cosa devi saper fare a fine giornata</h3>
+      <ol>
+        <li>Spiegare con parole tue cosa fa un coding agent e dove sbaglia di più.</li>
+        <li>Scrivere un <code>AGENTS.md</code> o <code>CLAUDE.md</code> corto e utile per un progetto tuo.</li>
+        <li>Capire quando serve una skill e come si scrive.</li>
+        <li>Usare Pi sia in sessione sia con un solo comando dal terminale.</li>
+        <li>Far capire all'agente un progetto che non conosce, e verificare che abbia capito davvero.</li>
+        <li>Farti aiutare su un fix, un test e un debug, controllando il risultato passo per passo.</li>
+      </ol>`}
+  ]
+});
+
+/* ---------- 1. Cosa sono i coding agent ---------- */
+MODULES.push({
+  id:'m1', n:'01', title:'Cosa sono i coding agent', min:18,
+  blocks:[
+    {t:'p',html:`<h3>Una definizione in una riga</h3>
+      <p>Un <strong>coding agent</strong> è un programma che riceve un compito scritto a parole, <strong>legge i file del tuo progetto, lancia comandi sul tuo computer, scrive o modifica codice, guarda cosa è successo e riprova</strong> finché il compito è finito o finché si ferma a chiederti qualcosa.</p>
+      <p>Dentro c'è un modello linguistico, ma il modello da solo non basta. Servono tre pezzi:</p>`},
+    {t:'cards',cards:[
+      {tag:'1',h:'Il modello',p:'Decide cosa fare al passo successivo. Non fa nulla da solo: dice solo "adesso leggi questo file".'},
+      {tag:'2',h:'Gli strumenti',p:'Leggi file, scrivi file, cerca nel codice, lancia un comando di shell, apri una pagina web.'},
+      {tag:'3',h:'Il ciclo',p:'Il programma esegue lo strumento, rimanda il risultato al modello e riparte. Finché non ha finito.'}
+    ]},
+    {t:'p',html:`<p>Il terzo pezzo è quello che cambia tutto. Una chat risponde una volta e si ferma. Un agente <strong>va avanti da solo</strong>: se un test fallisce lo legge, capisce perché e riprova. Se un file non esiste lo cerca altrove. Ogni giro costa tempo e token, ma il lavoro lo porta avanti lui.</p>`},
+    {t:'agentloop'},
+    {t:'callout',kind:'',title:'La cosa più importante da capire',html:`L'agente <strong>non ricorda niente</strong> fra una sessione e l'altra. Ogni volta che lo avvii riparte da zero e non sa nulla del tuo progetto. Tutto quello che sa arriva da: le tue parole, i file che legge in quel momento, e i file di contesto (modulo 02). Non è pigrizia: è come funziona.`},
+
+    {t:'p',html:`<h3>Non è la stessa cosa dell'autocompletamento</h3>
+      <p>In giro ci sono tre cose diverse che vengono tutte chiamate "AI per il codice". Conviene tenerle separate:</p>`},
+    {t:'table',head:['Tipo','Cosa fa','Chi decide','Esempi'],rows:[
+      ['<strong>Completamento</strong>','Suggerisce la riga o il blocco che stai scrivendo','Tu, riga per riga','Copilot nell\'editor, Tabnine'],
+      ['<strong>Chat sul codice</strong>','Risponde a domande, propone un pezzo di codice da copiare','Tu: copi e incolli','La chat dell\'IDE, ChatGPT'],
+      ['<strong>Agente</strong>','Legge, scrive, lancia comandi, va avanti da solo per più passi','Lui, dentro i limiti che gli dai','Claude Code, Pi, Codex CLI, Cursor Agent, Aider']
+    ]},
+    {t:'p',html:`<p>Il salto vero è fra la seconda e la terza riga. Con la chat il lavoro di applicare le modifiche resta tuo. Con l'agente il lavoro passa a lui, e il tuo lavoro diventa un altro: <strong>dare il compito bene e controllare il risultato</strong>.</p>`},
+
+    {t:'p',html:`<h3>Quali sono</h3>
+      <p>Il campo si muove in fretta e i nomi cambiano. Quello che non cambia è la divisione per <em>dove girano</em>:</p>`},
+    {t:'table',head:['Strumento','Dove gira','Note'],rows:[
+      ['<strong>Claude Code</strong> (Anthropic)','Terminale, estensione IDE, web','Molto usato su codebase grandi. Legge <code>CLAUDE.md</code>. Ha skill, sub-agenti, hook.'],
+      ['<strong>Pi</strong>','Terminale','Leggero e veloce da configurare. È quello che usiamo oggi nei laboratori.'],
+      ['<strong>Codex CLI</strong> (OpenAI)','Terminale','Simile come idea. Legge <code>AGENTS.md</code>.'],
+      ['<strong>Gemini CLI</strong> (Google)','Terminale','Open source, generoso nel piano gratuito.'],
+      ['<strong>Cursor</strong> / <strong>Windsurf</strong>','Editor completo','Editor con l\'agente dentro. Comodi se vivi nell\'IDE.'],
+      ['<strong>Cline</strong> / <strong>Roo Code</strong>','Estensione VS Code','Open source, scegli tu il modello dietro.'],
+      ['<strong>Aider</strong>','Terminale','Open source, storico, lavora molto a colpi di commit git.'],
+      ['<strong>Agenti in cloud</strong>','Su un server remoto','Gli dai una issue e ti tornano una pull request. Utili per lavori isolati e ripetitivi.']
+    ]},
+    {t:'callout',kind:'ok',title:'La buona notizia',html:`Quello che impari oggi non è legato a uno strumento. Il modo di dare i compiti, i file di contesto, il modo di controllare il lavoro: <strong>funzionano uguale su tutti</strong>. Cambiano i nomi dei comandi, non il metodo.`},
+
+    {t:'p',html:`<h3>I due modi di usarlo</h3>
+      <p>Ogni agente da terminale si usa in due modi molto diversi, ed è bene sceglierli apposta:</p>`},
+    {t:'split2',a:{h:'In sessione (interattivo)',items:[
+      ['Come funziona','Lanci il comando, si apre una sessione, parli con lui a più giri.'],
+      ['Quando serve','Lavori esplorativi, cose poco chiare, quando vuoi guardare mentre lavora.'],
+      ['Vantaggio','Correggi il tiro subito, vedi cosa sta facendo, puoi fermarlo.'],
+      ['Svantaggio','Devi stare lì. Non lo puoi mettere in uno script.']
+    ]},b:{h:'Con un solo comando (non interattivo)',items:[
+      ['Come funziona','Gli passi il compito nel comando stesso, lui lavora e stampa il risultato. Poi esce.'],
+      ['Quando serve','Compiti chiari e ripetitivi, lavori in serie su tanti file, uso dentro altri script o in CI.'],
+      ['Vantaggio','Lo puoi automatizzare, mettere in pipe, far girare su cento cartelle.'],
+      ['Svantaggio','Se il compito è scritto male te ne accorgi alla fine. Serve un compito preciso.']
+    ]}},
+    {t:'p',html:`<p>Nel modulo 05 li proviamo tutti e due sullo stesso compito, così la differenza si vede con gli occhi.</p>`},
+
+    {t:'p',html:`<h3>Cosa fanno bene e cosa fanno male</h3>
+      <p>Dirlo chiaro all'inizio evita due errori opposti: aspettarsi troppo, e non usarlo dove serve.</p>`},
+    {t:'split2',a:{h:'Fanno bene',items:[
+      ['Girare per il codice','Trovano dove sta una cosa in un progetto grande molto più in fretta di te.'],
+      ['Lavori noiosi e ripetitivi','Rinominare, spostare, aggiornare cento file allo stesso modo.'],
+      ['Scrivere test','Soprattutto se hanno già degli esempi di test da cui copiare lo stile.'],
+      ['Primo giro di debug','Leggono log lunghi e ci trovano il punto strano prima di te.'],
+      ['Codice di contorno','Script, parser, comandi CLI, conversioni di formato.']
+    ]},b:{h:'Fanno male',items:[
+      ['Decisioni di architettura','Ti danno una risposta sicura anche quando la scelta giusta dipende da cose che non sanno.'],
+      ['Regole di business non scritte','Se una regola sta solo nella testa di un collega, l\'agente la inventa.'],
+      ['Concorrenza e tempi','Le gare fra thread e i problemi di ordine sono la cosa in cui sbagliano di più.'],
+      ['Sapere quando fermarsi','Se non lo limiti, continua a "migliorare" cose che non avevi chiesto.'],
+      ['Dire "non lo so"','Tende a rispondere comunque. Il tuo lavoro è chiedere le prove.']
+    ]}},
+
+    {t:'p',html:`<h3>Il punto delicato: lancia comandi veri</h3>
+      <p>Un agente può cancellare file, fare <code>git reset</code>, mandare richieste in rete, toccare un database. Non è teoria: succede. Tre regole che valgono sempre, da oggi in poi:</p>
+      <ul>
+        <li><strong>Git pulito prima di iniziare.</strong> Se parti con <code>git status</code> pulito, qualunque cosa faccia l'agente la vedi nel diff e la butti via con un comando. Senza git sei senza rete.</li>
+        <li><strong>Mai su dati veri.</strong> Database di sviluppo, chiavi di test, ambienti finti. Se l'agente deve toccare un database, che sia una copia.</li>
+        <li><strong>Leggi prima di approvare.</strong> Quando ti chiede il permesso di lanciare un comando, guardalo davvero. Il momento in cui smetti di leggere è il momento in cui ti fai male.</li>
+      </ul>`},
+    {t:'callout',kind:'bad',title:'La modalità "approva tutto"',html:`Tutti gli agenti hanno un'opzione per non chiedere mai il permesso. Serve, ma <strong>solo dentro un contenitore isolato o su una copia usa e getta</strong> del progetto. Usarla sul tuo computer di lavoro, sulla repo vera, è il modo più rapido per perdere un pomeriggio.`},
+
+    {t:'quiz',id:'q1a',q:'Qual è la differenza vera fra una chat sul codice e un coding agent?',
+      opts:[
+        {tx:'L\'agente ha un modello più potente dietro',ok:false,why:'Spesso è lo stesso identico modello. La differenza non sta nel modello.'},
+        {tx:'L\'agente può usare strumenti e va avanti da solo per più passi, finché il compito è finito',ok:true,why:'Esatto. Il ciclo "prova → guarda il risultato → correggi" è ciò che rende un agente un agente. La chat si ferma dopo una risposta.'},
+        {tx:'L\'agente ricorda le sessioni precedenti',ok:false,why:'No: riparte da zero ogni volta. Quello che sembra memoria sono i file di contesto riletti ogni volta.'},
+        {tx:'L\'agente scrive codice migliore',ok:false,why:'Non per forza. Scrive codice che ha potuto verificare lanciando i test — che è un\'altra cosa, e dipende dai test che hai.'}
+      ]},
+    {t:'quiz',id:'q1b',q:'Prima di far partire un agente su una repo, la cosa più importante è:',
+      opts:[
+        {tx:'Chiudere l\'editor per non avere conflitti',ok:false,why:'Non serve. Gli editor si accorgono da soli dei file cambiati da fuori.'},
+        {tx:'Avere git pulito, così ogni modifica è visibile nel diff e annullabile',ok:true,why:'Esatto. È la rete di protezione: qualunque cosa succeda, <code>git diff</code> te la mostra e <code>git checkout .</code> la cancella.'},
+        {tx:'Spiegargli tutta la storia del progetto',ok:false,why:'La storia non gli serve quasi mai. Gli servono i comandi per costruire e testare, e le trappole del progetto.'},
+        {tx:'Scegliere il modello più economico per contenere i costi',ok:false,why:'Il costo vero di un agente è il tuo tempo speso a correggere un lavoro fatto male, non i token.'}
+      ]},
+    {t:'exercise',id:'ex1',label:'Esercizio 1.1 — Dove lo useresti (3 minuti)',
+      prompt:'Scrivi due compiti del tuo lavoro: uno che daresti volentieri a un agente e uno che non gli daresti mai. Per ognuno una riga sul perché.',
+      placeholder:'Glielo darei: ...\nPerché: ...\n\nNon glielo darei: ...\nPerché: ...',
+      solution:'Non c\'è una risposta giusta, ma un buon segnale c\'è: i compiti adatti hanno <strong>un modo chiaro di sapere se sono andati bene</strong> (un test passa, un file si genera, un comando non dà errore). I compiti non adatti sono quelli in cui il "giusto" dipende da cose che stanno solo nella testa delle persone.'}
+  ]
+});
+
+/* ---------- 2. AGENTS.md e CLAUDE.md ---------- */
+MODULES.push({
+  id:'m2', n:'02', title:'I file che l\'agente legge', min:22,
+  blocks:[
+    {t:'p',html:`<h3>Il problema</h3>
+      <p>Hai appena visto che l'agente riparte da zero ogni volta. Vuol dire che ogni mattina, su ogni nuovo compito, non sa: con che comando si lanciano i test, dove sta il codice che conta, che il file <code>legacy/pagamenti.py</code> non va toccato, che in questo progetto si usa <code>pnpm</code> e non <code>npm</code>.</p>
+      <p>Puoi riscrivergli queste cose ogni volta. Oppure puoi metterle in un file che <strong>legge da solo all'avvio</strong>. È tutto qui.</p>`},
+    {t:'p',html:`<h3>Due nomi, una cosa sola</h3>`},
+    {t:'table',head:['File','Chi lo legge','Note'],rows:[
+      ['<code>AGENTS.md</code>','Codex, Gemini CLI, Cursor, Aider, Pi e molti altri','È il nome che si sta imponendo come standard comune fra strumenti diversi.'],
+      ['<code>CLAUDE.md</code>','Claude Code','Stesso ruolo, nome proprio. Claude Code legge anche <code>AGENTS.md</code> se glielo indichi.']
+    ]},
+    {t:'callout',kind:'ok',title:'Consiglio pratico',html:`Scrivi il contenuto vero in <code>AGENTS.md</code>, così lo leggono tutti gli strumenti. Se ti serve anche <code>CLAUDE.md</code>, fallo di una riga sola: <code>Vedi @AGENTS.md</code>. Un contenuto solo, nessuna copia da tenere allineata.`},
+    {t:'p',html:`<h3>Dove si mettono</h3>
+      <p>Non c'è un file solo: ce ne sono a livelli, e l'agente li mette insieme.</p>`},
+    {t:'code',lang:'text',code:`~/.claude/CLAUDE.md          -> tuo personale, vale su tutti i progetti
+                                (le tue abitudini: "rispondi in italiano",
+                                 "non aggiungere commenti inutili")
+
+progetto/AGENTS.md           -> il file principale del progetto,
+                                condiviso con il team, sta in git
+
+progetto/backend/AGENTS.md   -> regole solo del backend, letto quando
+                                l'agente lavora li dentro
+
+progetto/frontend/AGENTS.md  -> regole solo del frontend`},
+    {t:'p',html:`<p>La regola è semplice: <strong>più il file è vicino al codice, più è specifico</strong>. Le cose che valgono per tutto il progetto stanno in alto; le cose che valgono solo per una parte stanno dentro quella parte.</p>`},
+
+    {t:'p',html:`<h3>Cosa metterci davvero</h3>
+      <p>Il test è sempre lo stesso: <em>«se un collega nuovo arrivasse oggi, quali cinque cose gli direi prima di lasciarlo lavorare?»</em>. Quelle vanno nel file. Il resto no.</p>`},
+    {t:'split2',a:{h:'Sì, serve',items:[
+      ['I comandi','Come si installa, come si costruisce, come si lanciano i test e il linter. Con la riga esatta da copiare.'],
+      ['La mappa in 5 righe','Dove sta il codice che conta, da dove parte l\'applicazione, dove stanno i test.'],
+      ['Le convenzioni non ovvie','"I nomi dei file sono in kebab-case", "ogni endpoint nuovo va aggiunto anche a routes.ts".'],
+      ['Le trappole','"Non toccare la cartella generated/", "il file di migrazione va creato solo con il comando X".'],
+      ['Le regole nate da un errore','Ogni volta che l\'agente sbaglia due volte uguale, quella diventa una riga qui.']
+    ]},b:{h:'No, non serve',items:[
+      ['La storia del progetto','A chi legge il codice non cambia niente, e costa token a ogni chiamata.'],
+      ['Cose ovvie','"Scrivi codice pulito", "usa nomi chiari". Non cambiano il comportamento: sono rumore.'],
+      ['La documentazione lunga','Le guide stanno in docs/. Qui ci va al massimo il link.'],
+      ['Elenchi di file','Si sballano in una settimana e l\'agente sa cercare da solo.'],
+      ['Chiavi e password','Mai. Questo file finisce in git e viene letto ad alta voce dal modello.']
+    ]}},
+
+    {t:'p',html:`<h3>La regola numero uno: tienilo corto</h3>
+      <p>Questo file viene <strong>riletto per intero a ogni richiesta</strong>. Non è una wiki che si consulta: è un peso fisso che porti sempre. Un file da 600 righe fa tre danni insieme:</p>
+      <ul>
+        <li><strong>Costa</strong>, a ogni singolo messaggio, per tutta la giornata.</li>
+        <li><strong>Diluisce</strong>: le tre righe che contano davvero finiscono in mezzo a cinquanta righe di contorno, e l'agente le segue meno.</li>
+        <li><strong>Invecchia</strong>: nessuno aggiorna un file lungo, quindi dopo un mese contiene istruzioni sbagliate. E un'istruzione sbagliata è peggio di nessuna istruzione.</li>
+      </ul>
+      <p>Obiettivo ragionevole: <strong>una pagina</strong>. Se cresce, non allungarlo: spezzalo.</p>`},
+    {t:'compare',title:'Lo stesso progetto, due file di contesto',
+      bad:{h:'Troppo lungo e troppo vago',code:`# CLAUDE.md
+
+## Il progetto
+Questo progetto e' nato nel 2019 come evoluzione del vecchio
+gestionale in PHP. Nel 2021 e' stato riscritto in TypeScript
+dal team di Milano. L'obiettivo era migliorare la scalabilita'
+e ridurre il debito tecnico...
+
+## Linee guida
+- Scrivi sempre codice pulito e leggibile
+- Usa nomi di variabile significativi
+- Segui i principi SOLID
+- Aggiungi commenti dove serve
+- Scrivi test per il codice nuovo
+- Fai attenzione alle performance
+
+## Struttura
+src/
+  api/
+    routes/
+      users.ts
+      orders.ts
+      products.ts
+      ... (altre 40 righe di albero)
+
+## Note
+Per qualsiasi dubbio chiedere a Marco.`},
+      good:{h:'Corto, concreto, verificabile',code:`# AGENTS.md
+
+## Comandi
+pnpm install          # NON usare npm: i lockfile vanno in conflitto
+pnpm dev              # avvia in locale su :3000
+pnpm test             # vitest, tutti
+pnpm test src/x.test.ts   # un file solo
+pnpm lint --fix       # obbligatorio prima di ogni commit
+
+## Mappa
+- Entry point: src/server.ts
+- Logica di dominio: src/domain/  <- le regole vere stanno qui
+- API HTTP: src/api/ (solo validazione e traduzione, zero logica)
+- Test: accanto al file, nome *.test.ts
+
+## Regole
+- Ogni rotta nuova va aggiunta anche a src/api/routes.ts, altrimenti
+  non viene registrata e il 404 non e' evidente.
+- src/generated/ e' prodotto da `+'`pnpm codegen`'+`: non modificarlo a mano.
+- Le date si salvano sempre in UTC. Nessuna eccezione: e' gia' costato
+  due bug in produzione.
+- Le query al DB passano da src/db/client.ts. Non aprire connessioni altrove.
+
+## Approfondimenti
+- Autenticazione: docs/auth.md
+- Deploy e ambienti: docs/deploy.md`}},
+    {t:'p',html:`<p>Guarda la differenza: il secondo file non dice <em>«scrivi codice pulito»</em>. Dice cose che <strong>si possono controllare</strong>: o la rotta è in <code>routes.ts</code> o non c'è; o la data è in UTC o non lo è. Un'istruzione che non si può verificare non guida nessuno.</p>`},
+
+    {t:'p',html:`<h3>Come si spezza un file troppo lungo</h3>
+      <p>La tecnica è sempre la stessa: <strong>nel file principale resta un rimando di una riga, il contenuto va in un file a parte</strong>. L'agente legge il rimando, e se il compito lo riguarda apre il file. Se non lo riguarda, non lo apre e non lo paga.</p>`},
+    {t:'code',lang:'markdown',code:`## Approfondimenti (apri solo se il compito li riguarda)
+- Come funziona l'autenticazione ....... docs/auth.md
+- Regole delle migrazioni del DB ....... docs/db-migrations.md
+- Come si aggiunge un nuovo tenant ..... docs/tenant-onboarding.md
+- Convenzioni del frontend ............. frontend/AGENTS.md`},
+    {t:'callout',kind:'',title:'Perché funziona',html:`È lo stesso principio di un indice: <strong>una riga sempre visibile, il capitolo solo quando serve</strong>. Costi dieci token per sapere che quel documento esiste, invece di tremila per averlo sempre addosso. Il titolo del rimando deve dire chiaramente quando aprirlo, altrimenti l'agente non lo apre mai o lo apre sempre.`},
+
+    {t:'p',html:`<h3>Come si scrive (e come si mantiene)</h3>
+      <ul>
+        <li><strong>Non partire da zero.</strong> Chiedi all'agente stesso di guardare il progetto e proporti una bozza. Poi taglia: taglierai molto, ed è normale.</li>
+        <li><strong>Una riga per regola.</strong> Frasi corte, all'imperativo. Niente paragrafi.</li>
+        <li><strong>Scrivi il perché solo quando serve.</strong> "Le date in UTC" si segue di più se accanto c'è "è già costato due bug".</li>
+        <li><strong>Aggiornalo quando sbaglia.</strong> L'agente ha fatto due volte lo stesso errore? Non spiegarglielo di nuovo a voce: aggiungi la riga.</li>
+        <li><strong>Togli quello che non usi.</strong> Ogni tanto rileggilo e cancella. Un file che cresce e basta smette di funzionare.</li>
+        <li><strong>Mettilo in git.</strong> È del team, non tuo. Va rivisto come il codice.</li>
+      </ul>`},
+
+    {t:'ctxfiles'},
+    {t:'triage'},
+
+    {t:'quiz',id:'q2a',q:'Perché tenere corto il file di contesto è così importante?',
+      opts:[
+        {tx:'Perché i file lunghi sono difficili da leggere per le persone',ok:false,why:'Vero ma secondario. Il motivo forte riguarda come l\'agente usa quel file.'},
+        {tx:'Perché viene riletto per intero a ogni richiesta: costa sempre e annega le poche righe che contano',ok:true,why:'Esatto. È un peso fisso su ogni messaggio. Più righe di contorno ci sono, meno peso hanno le tre regole che davvero cambiano il comportamento.'},
+        {tx:'Perché gli agenti leggono solo le prime 100 righe',ok:false,why:'Non è vero: lo leggono tutto. Il problema non è che non lo leggono, è che l\'attenzione si distribuisce.'},
+        {tx:'Perché altrimenti non entra nella finestra di contesto',ok:false,why:'Una pagina in più non satura nulla. Il danno si vede molto prima del limite tecnico.'}
+      ]},
+    {t:'quiz',id:'q2b',q:'Quale di queste righe merita davvero di stare in AGENTS.md?',
+      opts:[
+        {tx:'«Scrivi sempre codice leggibile e ben strutturato.»',ok:false,why:'Non si può verificare e non cambia niente: è rumore che diluisce le righe utili.'},
+        {tx:'«Il progetto è nato nel 2019 ed è stato riscritto nel 2021.»',ok:false,why:'Storia. Non aiuta a fare nessun compito.'},
+        {tx:'«Usa pnpm, non npm: i due lockfile vanno in conflitto e la build salta.»',ok:true,why:'Perfetta: concreta, verificabile, e spiega la conseguenza. Senza questa riga l\'agente userebbe npm perché è il default del mondo.'},
+        {tx:'«La struttura completa delle cartelle, con tutti i file elencati.»',ok:false,why:'Invecchia in una settimana e l\'agente sa già cercare da solo. Bastano le 4 cartelle che contano.'}
+      ]},
+    {t:'exercise',id:'ex2',label:'Esercizio 2.1 — Scrivi il tuo AGENTS.md (6 minuti)',
+      prompt:'Per il progetto su cui lavorerai nella seconda parte, scrivi un AGENTS.md vero. Massimo 25 righe. Tre sezioni: Comandi, Mappa, Regole. Solo cose che sai per certo.',
+      placeholder:'# AGENTS.md\n\n## Comandi\n...\n\n## Mappa\n- Entry point: ...\n\n## Regole\n- ...',
+      solution:'Controlla il tuo file con queste tre domande: <strong>1)</strong> ogni riga si può verificare guardando il codice, o è un buon proposito? <strong>2)</strong> c\'è almeno una trappola che un collega nuovo non indovinerebbe mai da solo? <strong>3)</strong> sta in una pagina? Se una regola ti è costata un bug in passato, scrivi accanto quale: le regole con un perché vengono seguite di più.'},
+    {t:'checklist',id:'ck2',title:'Il file di contesto è fatto bene se...',
+      items:[
+        'Sta in una pagina (indicativamente sotto le 100 righe)',
+        'I comandi ci sono, esatti e copiabili',
+        'Dice da dove parte l\'applicazione e dove sta la logica vera',
+        'Contiene almeno una trappola che non si indovina dal codice',
+        'Ogni riga si può verificare: niente buoni propositi',
+        'I documenti lunghi sono richiamati con una riga, non copiati dentro',
+        'Non contiene chiavi, password o dati di clienti',
+        'È in git e il team lo sa'
+      ]}
+  ]
+});
+
+/* ---------- 3. Le skill ---------- */
+MODULES.push({
+  id:'m3', n:'03', title:'Le skill', min:14,
+  blocks:[
+    {t:'p',html:`<h3>Da dove nasce il problema</h3>
+      <p>Hai appena imparato che il file di contesto va tenuto corto. Ma ci sono cose lunghe che ogni tanto servono davvero: la procedura per fare una release, le dieci regole di stile per le nostre API, come si scrive un report di incidente da noi.</p>
+      <p>Se le metti in <code>AGENTS.md</code> le paghi sempre, anche i giorni in cui nessuno fa una release. Se non le metti da nessuna parte, l'agente le inventa.</p>
+      <p>Le <strong>skill</strong> risolvono proprio questo: sono istruzioni che stanno da parte e <strong>vengono caricate solo quando servono</strong>.</p>`},
+    {t:'cards',cards:[
+      {tag:'Sempre',h:'AGENTS.md / CLAUDE.md',p:'Poche righe, presenti a ogni messaggio. Il costo fisso.'},
+      {tag:'Su richiesta',h:'Skill',p:'Cartelle di istruzioni. Sempre visibile solo il nome e una riga di descrizione.'},
+      {tag:'Mai da sole',h:'docs/',p:'Documenti normali. Entrano solo se qualcuno (tu o l\'agente) li apre.'}
+    ]},
+
+    {t:'p',html:`<h3>Com'è fatta una skill</h3>
+      <p>Una cartella con dentro un file <code>SKILL.md</code>. Sopra al file ci sono due campi obbligatori: il <strong>nome</strong> e la <strong>descrizione</strong>. Sotto, le istruzioni vere.</p>`},
+    {t:'code',lang:'text',code:`.claude/skills/
+  release/
+    SKILL.md            <- nome, descrizione, istruzioni
+    checklist.md        <- file di appoggio, letti solo se servono
+    scripts/
+      bump-version.sh   <- l'agente puo' anche solo lanciarlo`},
+    {t:'code',lang:'markdown',code:`---
+name: release
+description: Procedura per pubblicare una nuova versione del pacchetto.
+  Usala quando l'utente chiede di fare una release, pubblicare una
+  versione, o preparare un changelog per il rilascio.
+---
+
+# Come si fa una release
+
+1. Controlla che il branch sia main e che git sia pulito.
+2. Lancia pnpm test e pnpm lint: devono passare entrambi.
+3. Aggiorna la versione con ./scripts/bump-version.sh <maggiore|minore|patch>.
+4. Genera il changelog dai commit dall'ultimo tag (vedi checklist.md
+   per il formato esatto delle voci).
+5. Crea il tag e fermati: la pubblicazione la fa la pipeline.
+
+## Non fare mai
+- Non pubblicare da un branch diverso da main.
+- Non modificare a mano il campo version in package.json.`},
+
+    {t:'callout',kind:'warn',title:'La descrizione è la parte più importante',html:`Di tutta la skill, l'unica cosa che l'agente ha davanti sempre è <strong>nome + descrizione</strong>. È su quella riga che decide se aprirla. Quindi la descrizione non deve dire <em>cos'è</em> la skill: deve dire <strong>quando usarla</strong>, con le parole che userebbe chi la chiede. Se scrivi «gestione release» non si attiverà quasi mai. Se scrivi «usala quando l'utente chiede di pubblicare una versione, fare una release, preparare un changelog», si attiva.`},
+
+    {t:'p',html:`<h3>Il meccanismo, in tre livelli</h3>
+      <p>È lo stesso principio dell'indice di un libro, portato all'estremo:</p>`},
+    {t:'table',head:['Livello','Cosa entra nel contesto','Quando'],rows:[
+      ['1','Nome + descrizione (una o due righe)','Sempre. Costa pochissimo.'],
+      ['2','Il corpo di <code>SKILL.md</code>','Solo quando l\'agente decide che quella skill serve.'],
+      ['3','I file di appoggio e gli script','Solo se il corpo dice di aprirli o lanciarli.']
+    ]},
+    {t:'p',html:`<p>Risultato: puoi avere venti skill da cinque pagine l'una e pagarne quaranta righe in tutto, finché non ne serve una.</p>`},
+
+    {t:'p',html:`<h3>Dove si mettono</h3>`},
+    {t:'code',lang:'text',code:`~/.claude/skills/<nome>/SKILL.md          tue, su tutti i progetti
+<progetto>/.claude/skills/<nome>/SKILL.md  del progetto, in git,
+                                           condivise con il team`},
+    {t:'p',html:`<p>Le skill del progetto sono la cosa interessante per un team: <strong>metti in git il modo in cui da voi si fanno le cose</strong>, e vale per tutti quelli che lavorano sulla repo.</p>`},
+
+    {t:'p',html:`<h3>Quando fare una skill e quando no</h3>`},
+    {t:'table',head:['Se...','Allora'],rows:[
+      ['È una regola breve che vale sempre','Una riga in <code>AGENTS.md</code>. Non serve una skill.'],
+      ['È una procedura lunga che serve ogni tanto','<strong>Skill.</strong> È esattamente il caso giusto.'],
+      ['È un compito che lanci tu, sempre uguale','Un comando personalizzato (slash command). Lo attivi tu, non l\'agente.'],
+      ['È solo documentazione da leggere per capire','Un file in <code>docs/</code>, richiamato da <code>AGENTS.md</code>.'],
+      ['Serve una connessione a un sistema esterno','Non è una skill: serve un server MCP (dà strumenti nuovi, non istruzioni).']
+    ]},
+    {t:'callout',kind:'',title:'Regola pratica',html:`Se ti accorgi che stai spiegando la stessa procedura all'agente per la terza volta, e la spiegazione è più lunga di dieci righe: <strong>quella è una skill</strong>. Scrivila una volta e non spiegarla mai più.`},
+
+    {t:'p',html:`<h3>Come si scrive una skill buona</h3>
+      <ul>
+        <li><strong>Un compito, una skill.</strong> Se la descrizione ha una "e" in mezzo, probabilmente sono due skill.</li>
+        <li><strong>Passi numerati, verbi all'imperativo.</strong> Non spiegare la teoria: dì cosa fare.</li>
+        <li><strong>Metti la sezione "non fare mai".</strong> È quella che salva più spesso.</li>
+        <li><strong>Se c'è uno script, chiama lo script.</strong> Un comando deterministico batte dieci righe di istruzioni.</li>
+        <li><strong>Provala.</strong> Apri una sessione nuova, chiedi la cosa con parole normali e guarda se la skill si attiva da sola. Se non si attiva, il problema è la descrizione.</li>
+      </ul>`},
+    {t:'quiz',id:'q3a',q:'Qual è la differenza vera fra una riga in AGENTS.md e una skill?',
+      opts:[
+        {tx:'La skill può contenere più testo',ok:false,why:'Vero, ma è una conseguenza, non la differenza di fondo.'},
+        {tx:'AGENTS.md è sempre nel contesto; della skill è sempre visibile solo la descrizione, il resto entra quando serve',ok:true,why:'Esatto. È una scelta su cosa paghi sempre e cosa paghi ogni tanto. Per questo le procedure lunghe e rare stanno bene nelle skill.'},
+        {tx:'Le skill valgono per tutti i progetti, AGENTS.md solo per uno',ok:false,why:'Tutte e due possono stare sia nel progetto sia nella tua cartella personale.'},
+        {tx:'Le skill possono lanciare comandi, AGENTS.md no',ok:false,why:'I comandi li lancia l\'agente in entrambi i casi. Una skill può però portarsi dietro degli script pronti.'}
+      ]},
+    {t:'quiz',id:'q3b',q:'Una tua skill non si attiva mai da sola. Da dove parti?',
+      opts:[
+        {tx:'Riscrivo le istruzioni dentro al corpo',ok:false,why:'Il corpo non c\'entra: se la skill non si apre, quel testo non è mai stato letto.'},
+        {tx:'Riscrivo la descrizione dicendo quando usarla, con le parole che userebbe chi la chiede',ok:true,why:'Esatto. La descrizione è l\'unica cosa su cui l\'agente decide. Deve contenere i termini reali della richiesta, non il nome interno della procedura.'},
+        {tx:'Sposto la skill nella cartella personale',ok:false,why:'Cambia solo dove vale, non se si attiva.'},
+        {tx:'Aggiungo più file di appoggio',ok:false,why:'Peggiora e basta: quei file si leggono solo dopo che la skill si è aperta.'}
+      ]},
+    {t:'exercise',id:'ex3',label:'Esercizio 3.1 — Una skill del tuo lavoro (5 minuti)',
+      prompt:'Pensa a una procedura che nel tuo team spieghi sempre a voce. Scrivi il nome, la descrizione (quando usarla) e i primi 5 passi.',
+      placeholder:'name: ...\ndescription: Usala quando l\'utente chiede di ...\n\n1. ...\n2. ...\n3. ...\n\n## Non fare mai\n- ...',
+      solution:'Prova la descrizione così: leggila e chiediti «se un collega mi chiedesse questa cosa, userebbe queste parole?». Se la tua descrizione dice «gestione del processo di onboarding tenant» ma il collega direbbe «devo aggiungere un cliente nuovo», la skill non si attiverà. Metti dentro tutte e due le formulazioni.'}
+  ]
+});
+
+/* ---------- 4. Task 1: installare Pi ---------- */
+MODULES.push({
+  id:'m4', n:'04', title:'Task 1 — Installare Pi', min:12,
+  blocks:[
+    {t:'p',html:`<p>Nei laboratori usiamo <strong>Pi</strong>: è un agente da terminale leggero e si configura in pochi minuti. Chi ha già <strong>Claude Code</strong> può usare quello: i compiti sono identici, cambiano solo i nomi dei comandi. Nelle schede che seguono trovi sempre tutte e due le versioni.</p>`},
+    {t:'callout',kind:'warn',title:'Prima di partire, controlla questi tre',html:`<code>node --version</code> deve dire <strong>18 o più</strong>. <code>git --version</code> deve rispondere qualcosa. E devi avere la <strong>chiave API</strong> (te la dà il docente). Se manca uno dei tre, fermati qui e sistemalo: senza, i moduli dopo non funzionano.`},
+
+    {t:'p',html:`<h3>Passo 1 — Installare</h3>
+      <p>Pi si installa come un qualsiasi pacchetto globale di Node:</p>`},
+    {t:'code',lang:'bash',code:`# Pi
+npm install -g <nome-pacchetto-pi>
+
+# In alternativa, Claude Code
+npm install -g @anthropic-ai/claude-code`},
+    {t:'callout',kind:'',title:'Il nome esatto del pacchetto',html:`Il nome del pacchetto npm di Pi te lo dà il docente a inizio esercitazione (oppure lo trovi sul README ufficiale del progetto). La <strong>forma</strong> del comando è quella qui sopra e non cambia. Se l'installazione globale ti dà un errore di permessi, non usare <code>sudo</code>: configura una cartella npm tua, oppure lancia lo strumento con <code>npx</code> senza installarlo.`},
+
+    {t:'p',html:`<h3>Passo 2 — Controllare che ci sia</h3>`},
+    {t:'code',lang:'bash',code:`pi --version
+# oppure
+claude --version
+
+# Se dice "command not found", la cartella dei pacchetti globali
+# non e' nel PATH. Controlla dove sono finiti:
+npm prefix -g`},
+
+    {t:'p',html:`<h3>Passo 3 — La chiave API</h3>
+      <p>Due modi. Il primo è una variabile d'ambiente: comoda, ma se la metti nel file di configurazione della shell resta scritta in chiaro sul disco.</p>`},
+    {t:'code',lang:'bash',code:`# Solo per questa finestra di terminale (la piu' sicura in aula)
+export ANTHROPIC_API_KEY="la-tua-chiave"
+
+# Per renderla permanente (attenzione: resta scritta in chiaro)
+echo 'export ANTHROPIC_API_KEY="la-tua-chiave"' >> ~/.zshrc
+source ~/.zshrc`},
+    {t:'p',html:`<p>Il secondo modo è l'accesso guidato al primo avvio: lanci lo strumento senza chiave e ti apre una pagina per fare login. Se la tua azienda usa un account aziendale, di solito è questa la strada giusta.</p>`},
+    {t:'callout',kind:'bad',title:'Tre cose da non fare mai con la chiave',html:`Non metterla in un file dentro la repo. Non incollarla in una chat o in una issue. Non usare la chiave di produzione per esercitarti. Se ti scappa, <strong>revocala subito</strong> dal pannello: una chiave revocata è un fastidio, una chiave in giro è un problema.`},
+
+    {t:'p',html:`<h3>Passo 4 — Primo avvio</h3>`},
+    {t:'code',lang:'bash',code:`mkdir ~/prova-agente && cd ~/prova-agente
+git init
+
+pi          # oppure: claude
+
+# Si apre la sessione. Scrivi:
+> ciao, dimmi in che cartella sei e cosa vedi`},
+    {t:'p',html:`<p>Se ti risponde citando la cartella giusta, hai finito: funziona. Se risponde in inglese e vuoi l'italiano, aggiungilo al tuo file personale (<code>~/.claude/CLAUDE.md</code>): <em>«Rispondi sempre in italiano.»</em></p>`},
+
+    {t:'p',html:`<h3>I comandi della sessione che userai davvero</h3>
+      <p>Cambiano un po' da strumento a strumento, ma questi cinque ci sono sempre. Vale la pena impararli ora, perché li userai tutto il giorno.</p>`},
+    {t:'table',head:['Cosa vuoi fare','Come'],rows:[
+      ['Fermarlo mentre lavora','<code>Esc</code> (o <code>Ctrl+C</code>). Serve più spesso di quanto pensi: se ha preso la strada sbagliata, fermalo subito.'],
+      ['Ripulire e ricominciare','<code>/clear</code>. Fra un compito e l\'altro: il contesto vecchio confonde.'],
+      ['Vedere quanto contesto hai usato','<code>/context</code> o <code>/status</code>, a seconda dello strumento.'],
+      ['Uscire','<code>/exit</code> o <code>Ctrl+D</code>.'],
+      ['Vedere i comandi disponibili','<code>/help</code>. Il primo da provare.']
+    ]},
+    {t:'callout',kind:'ok',title:'Abitudine da prendere subito',html:`<strong>Un compito, una sessione.</strong> Finito un compito, <code>/clear</code>. Il contesto sporco del compito precedente è una delle cause più frequenti di risposte strane: l'agente continua a ragionare su file che non c'entrano più.`},
+
+    {t:'checklist',id:'ck4',title:'Task 1 completato quando...',
+      items:[
+        'node --version dice 18 o più',
+        'Il comando dell\'agente risponde a --version',
+        'La chiave API è configurata e non è dentro nessuna repo',
+        'Ho aperto una sessione in una cartella di prova e mi ha risposto',
+        'Ho provato /help e so come fermarlo (Esc) e come uscire',
+        'So dove sta il mio file personale di contesto'
+      ]},
+    {t:'tablewrap',head:['Problema','Cosa succede','Cosa fare'],rows:[
+      ['<code>command not found</code>','Installato ma non trovato','La cartella dei binari globali non è nel PATH. Guarda <code>npm prefix -g</code> e aggiungi <code>/bin</code> al PATH.'],
+      ['<code>EACCES</code> in installazione','Permessi negati','Non usare <code>sudo</code>. Configura una cartella npm personale, oppure usa <code>npx</code>.'],
+      ['<code>401</code> / <code>invalid api key</code>','Chiave sbagliata o non letta','Controlla con <code>echo $ANTHROPIC_API_KEY</code>. Spesso è uno spazio o un a capo copiato insieme alla chiave.'],
+      ['<code>429</code>','Troppe richieste','Limite raggiunto. Aspetta, o usa un modello più piccolo per gli esercizi.'],
+      ['Risponde in inglese','Nessuna preferenza impostata','Metti «Rispondi in italiano» nel tuo file personale di contesto.']
+    ]}
+  ]
+});
+
+/* ---------- 5. Task 2: script semplici ---------- */
+MODULES.push({
+  id:'m5', n:'05', title:'Task 2 — Creare e modificare script', min:28,
+  blocks:[
+    {t:'p',html:`<p>Mezz'ora su cose piccole, in una cartella di prova, dove non c'è niente da rompere. L'obiettivo non è lo script: è <strong>prendere le misure allo strumento</strong>. Capire come chiede i permessi, cosa fa quando il compito è vago, cosa fa quando è preciso, e che differenza c'è fra parlarci e dargli un comando secco.</p>`},
+    {t:'code',lang:'bash',code:`mkdir ~/lab-agente && cd ~/lab-agente
+git init
+echo "# Lab" > README.md
+git add -A && git commit -m "inizio"
+# Da adesso, dopo ogni esercizio: git diff  ->  vedi esattamente cosa ha fatto`},
+
+    {t:'p',html:`<h3>2A — Il primo script (10 min)</h3>
+      <p>Apri la sessione e dai questo compito. Poi <strong>guarda mentre lavora</strong>: quali file apre, cosa lancia, quando ti chiede il permesso.</p>`},
+    {t:'code',lang:'text',code:`Scrivi uno script Python chiamato csv2json.py che:
+- prende in ingresso il percorso di un file CSV e scrive un file JSON
+  con lo stesso nome ma estensione .json
+- usa solo la libreria standard
+- se il file non esiste, stampa un messaggio chiaro ed esce con codice 1
+- ha un --help che si capisce
+
+Poi crea un file di esempio con 3 righe, provalo davvero, e mostrami
+l'output del comando.`},
+    {t:'p',html:`<p>Nota tre cose di questo compito, perché sono lo schema di tutti i compiti buoni:</p>
+      <ul>
+        <li><strong>Dice cosa deve fare, non come scriverlo.</strong> Il "come" è il suo mestiere.</li>
+        <li><strong>Mette i limiti</strong> ("solo libreria standard"). Senza limiti, si installa tre pacchetti.</li>
+        <li><strong>Chiede la prova.</strong> "Provalo davvero e mostrami l'output" cambia tutto: lo costringe a lanciare il codice invece di consegnartelo e basta.</li>
+      </ul>`},
+    {t:'callout',kind:'warn',title:'Da guardare mentre lavora',html:`Se scrive lo script e <strong>non lo lancia</strong>, fermalo e chiediglielo. Codice mai eseguito è codice non verificato — ed è il modo più comune in cui un agente ti consegna qualcosa che non funziona con la massima sicurezza.`},
+
+    {t:'p',html:`<h3>2B — Modificarlo (10 min)</h3>
+      <p>Adesso la parte interessante. Cambiare codice esistente è più difficile che scriverlo da zero, perché deve capire cosa c'è già. Dai queste tre modifiche <strong>una alla volta</strong>, e fai <code>git diff</code> dopo ognuna.</p>`},
+    {t:'table',head:['#','Compito','Cosa stai osservando'],rows:[
+      ['1','«Aggiungi l\'opzione <code>--delimiter</code> per scegliere il separatore, con default la virgola.»','Modifica piccola e chiara: il diff dovrebbe essere di 5-6 righe. Se ne tocca trenta, ha "sistemato" cose che non avevi chiesto.'],
+      ['2','«Aggiungi <code>--dry-run</code>: stampa a video cosa scriverebbe, senza scrivere il file.»','Deve cambiare il flusso, non solo aggiungere un parametro. Guarda se il controllo lo mette nel punto giusto.'],
+      ['3','«Le righe con un numero di colonne diverso dall\'intestazione vanno saltate, con un avviso su stderr. Aggiungi un test che lo dimostra.»','Caso limite + prova. Il test deve <em>fallire</em> se togli la gestione: chiediglielo.']
+    ]},
+    {t:'exercise',id:'ex5a',label:'Esercizio 5.1 — Cos\'è successo nei diff (3 minuti)',
+      prompt:'Guarda i tre git diff. Quante righe ha toccato ogni volta? Ha cambiato qualcosa che non avevi chiesto? Scrivi cosa hai notato.',
+      placeholder:'Modifica 1: ... righe. Ha toccato anche ...\nModifica 2: ...\nModifica 3: ...\nCosa ho notato: ...',
+      solution:'Il segnale da cercare si chiama <strong>modifica che deborda</strong>: hai chiesto un parametro e ti ritrovi anche i commenti riscritti, le import riordinate, un refactoring "già che c\'ero". Non è un disastro su uno script di venti righe, ma sulla repo vera rende il diff illeggibile e il code review impossibile. Si cura con una riga nel compito: <em>«tocca solo il minimo necessario, non riformattare il resto»</em>. Mettila in AGENTS.md e vale sempre.'},
+
+    {t:'p',html:`<h3>2C — Lo stesso lavoro, con un solo comando (8 min)</h3>
+      <p>Fin qui hai parlato con l'agente. Adesso lo usi come un normale comando del terminale: gli passi il compito, lui lavora e stampa il risultato, poi esce. Senza sessione.</p>`},
+    {t:'cmdlab'},
+    {t:'p',html:`<p>È lo stesso motore, ma il modo di lavorare cambia parecchio:</p>`},
+    {t:'table',head:['','In sessione','Un solo comando'],rows:[
+      ['Ti dice cosa sta facendo','Sì, passo per passo','Solo il risultato finale'],
+      ['Puoi correggerlo a metà','Sì','No: se il compito è scritto male, te ne accorgi alla fine'],
+      ['Chiede i permessi','Sì','Dipende: o glieli dai prima, o si blocca'],
+      ['Si può mettere in uno script','No','Sì — è tutto il punto'],
+      ['Si può mettere in pipe','No','Sì: prende da stdin e scrive su stdout'],
+      ['Quando usarlo','Compiti poco chiari, lavoro esplorativo','Compiti chiari e ripetuti, tanti file, CI']
+    ]},
+    {t:'p',html:`<p>Il caso in cui vale davvero la pena è questo: <strong>lo stesso compito su tante cose</strong>. Un ciclo del terminale e l'agente diventa un comando come tutti gli altri.</p>`},
+    {t:'code',lang:'bash',code:`# Un riassunto di testa per ogni script della cartella
+for f in *.py; do
+  echo "== $f"
+  pi -p "Leggi $f e scrivi 2 righe: a cosa serve, e un problema che vedi."
+done
+
+# In pipe: l'agente legge da stdin
+git diff | pi -p "Riassumi queste modifiche in 5 punti per il changelog."
+
+# Dentro uno script, con il risultato salvato
+pi -p "Elenca le funzioni pubbliche di src/, una per riga" > funzioni.txt`},
+    {t:'callout',kind:'warn',title:'Attenzione ai permessi',html:`Se il comando secco deve anche <strong>scrivere</strong> file o lanciare comandi, deve poterlo fare senza chiedere: altrimenti resta lì fermo ad aspettare una risposta che nessuno gli darà. Le opzioni per dargli questi permessi esistono in tutti gli strumenti — e sono anche il modo più rapido per farsi male. <strong>Usale solo dentro una copia usa e getta o in un contenitore isolato</strong>, mai sulla repo vera.`},
+    {t:'exercise',id:'ex5b',label:'Esercizio 5.2 — Un comando riutilizzabile (5 minuti)',
+      prompt:'Scrivi il comando secco (una riga di terminale) di un lavoro che ripeti spesso nel tuo lavoro. Poi provalo e scrivi se il risultato era usabile così com\'era o no.',
+      placeholder:'Comando: pi -p "..."\nRisultato usabile? ...\nCosa ho dovuto aggiungere al compito per farlo funzionare: ...',
+      solution:'Quasi sempre serve un secondo giro, e quasi sempre per lo stesso motivo: <strong>il formato dell\'output</strong>. In sessione un output sciolto va benissimo, tanto lo leggi tu. In uno script no: se il testo ti serve per un altro comando devi chiederlo esplicitamente («solo le righe, senza introduzione», «rispondi solo con JSON valido, niente altro»). È la differenza fra un giocattolo e una cosa che metti in pipeline.'},
+    {t:'checklist',id:'ck5',title:'Task 2 completato quando...',
+      items:[
+        'Ho creato uno script da zero e l\'agente l\'ha davvero eseguito',
+        'Ho fatto tre modifiche e guardato il git diff di ognuna',
+        'Ho notato almeno una volta una modifica più grande del necessario',
+        'Ho rifatto un compito con un solo comando, senza sessione',
+        'Ho provato l\'agente in pipe (qualcosa | pi -p "...")',
+        'So dire in che casi userei l\'uno e in che casi l\'altro'
+      ]}
+  ]
+});
+
+/* ---------- Pausa ---------- */
+MODULES.push({
+  id:'brk', n:'—', title:'Pausa', min:10,
+  blocks:[
+    {t:'p',html:`<h1 style="font-size:26px;margin-top:10px">Pausa — 10 minuti</h1>
+      <p class="lede">Al ritorno si smette di giocare: si lavora su una repo vera.</p>`},
+    {t:'callout',kind:'warn',title:'Prima di tornare, prepara la repo',html:`Apri il progetto su cui lavorerai e lancia <code>git status</code>. Deve essere <strong>pulito</strong>: niente file modificati, niente file nuovi. Se hai lavoro in sospeso, mettilo da parte con <code>git stash</code> oppure fai un branch nuovo. Serve anche che il progetto <strong>si costruisca e i test girino</strong> prima di iniziare: se non funziona già prima, non saprai mai se è colpa tua o dell'agente.`},
+    {t:'callout',kind:'',title:'Domanda su cui pensare durante la pausa',html:`Fin qui hai controllato il lavoro dell'agente con <code>git diff</code>, su script di venti righe. Su una repo da centomila righe che non conosci del tutto: <strong>come farai a sapere se quello che ti consegna è giusto?</strong> È la domanda vera della seconda parte.`}
+  ]
+});
+
+/* ---------- 6. Capire un progetto vero ---------- */
+MODULES.push({
+  id:'m6', n:'06', title:'Task 3 — Capire un progetto vero', min:28,
+  blocks:[
+    {t:'p',html:`<p>Questo è il primo uso di un coding agent che conviene davvero a tutti, anche a chi è scettico: <strong>farsi spiegare un progetto che non si conosce</strong>. È veloce, non tocca niente, e il risultato lo puoi verificare.</p>
+      <p>È anche il momento in cui impari il gesto più importante della giornata: <strong>non fidarti della spiegazione, chiedi le prove</strong>.</p>`},
+    {t:'callout',kind:'warn',title:'Controllo prima di iniziare',html:`<code>git status</code> pulito. Il progetto si costruisce e i test passano. Se una di queste due cose non è vera, sistemala adesso: altrimenti per tutta la seconda parte non saprai distinguere i problemi tuoi da quelli dell'agente.`},
+
+    {t:'p',html:`<h3>3A — La prima domanda (8 min)</h3>
+      <p>Apri la sessione nella radice del progetto e parti con una domanda larga. Non chiedere subito il dettaglio: prima la mappa.</p>`},
+    {t:'promptkit',id:'pk6',title:'Compito: capire il progetto',
+      sub:'Compila i campi con i dati del tuo progetto. Sotto ti si compone il compito da copiare nella sessione.',
+      fields:[
+        {k:'nome',lb:'Nome e tipo del progetto',ph:'Es. gestionale ordini, API REST in Node + Postgres',rows:2},
+        {k:'so',lb:'Cosa già sai (anche poco)',ph:'Es. so che c\'è un frontend React e che il DB è Postgres. Non so come sono divisi i moduli.',rows:2},
+        {k:'serve',lb:'Perché ti serve capirlo',ph:'Es. devo aggiungere un campo a un ordine e non so quanti punti tocca.',rows:2}
+      ],
+      build:(v)=>
+`Sei appena entrato in questo progetto e non lo conosci.
+Progetto: `+(v.nome||'[nome e tipo]')+`
+Quello che so gia': `+(v.so||'[cosa sai]')+`
+Mi serve per: `+(v.serve||'[obiettivo]')+`
+
+Leggi il codice e rispondimi in modo strutturato:
+
+1. A cosa serve questo progetto, in 3 righe.
+2. L'entry point: da quale file parte l'applicazione, e cosa succede
+   nei primi passi dell'avvio.
+3. L'architettura: quali sono i 4-6 blocchi principali e come si parlano.
+   Indica per ognuno la cartella o il file.
+4. Dove sta la logica vera (le regole del dominio) e dove sta invece
+   solo il contorno (validazione, trasporto, configurazione).
+5. Come si costruisce, come si lancia in locale, come si lanciano i test.
+   Comandi esatti presi dai file del progetto, non inventati.
+6. Le 5 cose che uno nuovo deve sapere per non fare danni.
+
+REGOLE:
+- Per ogni affermazione cita il file e la riga da cui la ricavi.
+- Se una cosa non riesci a dedurla dal codice, scrivi "NON SO"
+  invece di ipotizzare.
+- Non modificare nessun file.`},
+    {t:'callout',kind:'ok',title:'Le due righe che fanno la differenza',html:`«<strong>Cita il file e la riga</strong>» e «<strong>scrivi NON SO</strong>». La prima ti dà un modo per controllare in dieci secondi: apri il file, guardi. La seconda gli dà il permesso di ammettere un buco — senza, riempirà il buco con una risposta plausibile, detta con la stessa sicurezza del resto.`},
+
+    {t:'p',html:`<h3>3B — Verificare (7 min)</h3>
+      <p>Adesso la parte che quasi nessuno fa, ed è quella che conta. Prendi la risposta e controllala.</p>`},
+    {t:'table',head:['Cosa','Come si controlla','Quanto ci vuole'],rows:[
+      ['L\'entry point','Aprilo. C\'è davvero? Fa quello che ha detto?','30 secondi'],
+      ['I comandi','Lanciane uno. Funziona?','1 minuto'],
+      ['Tre citazioni a caso','Apri i file alle righe indicate. Dicono quella cosa?','2 minuti'],
+      ['Una cosa che sai già','Cercala nella risposta. L\'ha detta giusta?','30 secondi']
+    ]},
+    {t:'callout',kind:'bad',title:'Il tipo di errore da cercare',html:`Gli errori grossi si vedono. Quelli pericolosi no: sono le <strong>righe plausibili e sbagliate</strong>. «La validazione avviene in <code>middleware/validate.ts</code>» — il file esiste, il nome torna, ma la validazione vera la fa un altro pezzo e quel middleware è morto da un anno. Se non apri il file non te ne accorgi mai, e ci costruisci sopra tutto il resto del corso.`},
+    {t:'exercise',id:'ex6a',label:'Esercizio 6.1 — Il controllo (3 minuti)',
+      prompt:'Hai controllato quattro cose. Quante erano giuste? Scrivi l\'errore più insidioso che hai trovato (o scrivi che non ne hai trovati).',
+      placeholder:'Controllate: 4. Giuste: ...\nErrore trovato: ...\nPerché era insidioso: ...'},
+
+    {t:'p',html:`<h3>3C — Scavare dove serve (8 min)</h3>
+      <p>Adesso che hai la mappa, chiedi il dettaglio sul punto che ti interessa. Qui il tipo di domanda che rende di più è quella che <strong>segue un percorso</strong>, non quella che chiede una spiegazione.</p>`},
+    {t:'split2',a:{h:'Domande deboli',items:[
+      ['«Spiegami come funziona l\'autenticazione.»','Troppo larga: ti scrive un tema, e metà è generica.'],
+      ['«Il codice è ben scritto?»','Non si può verificare. Ti dirà di sì con dei distinguo.'],
+      ['«Ci sono problemi?»','Senza un criterio, ti elenca cose a caso.']
+    ]},b:{h:'Domande che rendono',items:[
+      ['«Segui una richiesta POST /ordini dal primo file che la riceve fino alla scrittura sul DB. Elenca i file in ordine.»','Un percorso concreto. Verificabile riga per riga.'],
+      ['«Dove viene deciso lo stato di una spedizione? Elenca TUTTI i punti che lo scrivono.»','Risposta chiusa e controllabile con una ricerca.'],
+      ['«Cosa succede se il pagamento va a buon fine ma la scrittura sull\'ordine fallisce?»','Un caso limite: scopre in due minuti se c\'è un buco.']
+    ]}},
+    {t:'exercise',id:'ex6b',label:'Esercizio 6.2 — La domanda che ti porti dietro da mesi (5 minuti)',
+      prompt:'Riprendi la cosa che nel modulo 00 hai scritto di non aver mai capito del tuo progetto. Trasformala in una domanda "che segue un percorso" e falla all\'agente. Incolla qui la domanda e le due righe più utili della risposta.',
+      placeholder:'Domanda: Segui ... dal ... fino a ...\nRisposta utile: ...\nL\'ho verificata aprendo: ...',
+      solution:'Se la risposta ti ha svelato qualcosa, hai appena visto il caso d\'uso che conviene sempre: <strong>l\'agente come mappa di un territorio grande</strong>. Fa in due minuti la ricerca incrociata che a te costa mezza giornata. Ma resta una mappa: prima di prendere una decisione su quello che ti ha detto, il file lo apri tu.'},
+
+    {t:'p',html:`<h3>3D — Trasformare il lavoro in un file (5 min)</h3>
+      <p>Quello che hai capito adesso, fra una settimana lo hai dimenticato — e l'agente lo ha già dimenticato. Mettilo per iscritto, ora che ce l'hai davanti.</p>`},
+    {t:'code',lang:'text',code:`Dalla nostra conversazione, scrivi un file AGENTS.md per questo progetto.
+
+Vincoli:
+- Massimo 40 righe.
+- Tre sezioni: Comandi, Mappa, Regole.
+- Solo cose che hai verificato leggendo i file: niente supposizioni.
+- Ogni riga deve essere verificabile. Niente frasi come
+  "scrivi codice pulito".
+- Metti le trappole: le cose che uno nuovo sbaglierebbe.
+- I documenti lunghi richiamali con una riga, non copiarli dentro.`},
+    {t:'callout',kind:'warn',title:'Prima di salvarlo, leggilo tutto',html:`Questo file guiderà l'agente per settimane. Se contiene una riga sbagliata, la sbaglierà sistematicamente, ogni volta. <strong>Correggi a mano</strong> quello che sai essere impreciso, e togli tutto quello che non ti sembra necessario: in genere si può tagliare un terzo.`},
+    {t:'checklist',id:'ck6',title:'Task 3 completato quando...',
+      items:[
+        'Ho ottenuto una descrizione del progetto con citazioni di file e righe',
+        'Ho aperto almeno tre citazioni per controllarle',
+        'Ho lanciato almeno un comando che mi ha indicato',
+        'Ho trovato almeno una cosa detta in modo impreciso',
+        'Ho fatto una domanda "che segue un percorso" sul mio dubbio vero',
+        'Ho un AGENTS.md salvato, riletto e corretto a mano'
+      ]}
+  ]
+});
+
+/* ---------- 7. Sicurezza e concorrenza ---------- */
+MODULES.push({
+  id:'m7', n:'07', title:'Task 4 — Sicurezza e concorrenza', min:22,
+  blocks:[
+    {t:'p',html:`<p>Adesso si passa dall'esplorare al giudicare: prendi un pezzo di codice — una API, un servizio, un modulo — e chiedi all'agente di cercarci problemi.</p>
+      <p>Qui l'agente è forte su una cosa e debole su un'altra, ed è bene saperlo prima. È <strong>bravo</strong> a trovare gli errori di sicurezza che hanno una forma riconoscibile. È <strong>molto meno bravo</strong> sui problemi di concorrenza, perché richiedono di immaginare due cose che succedono insieme — e i modelli leggono il codice come una storia che va in ordine.</p>`},
+    {t:'callout',kind:'warn',title:'Serve un pezzo, non tutto',html:`Non chiedere «controlla la sicurezza del progetto». Su una repo intera ottieni una lista lunga e generica, dove il 90% sono cose che non ti riguardano. <strong>Scegli un file o un gruppo di file</strong> — un gruppo di endpoint, un servizio — e lavora lì. Meno superficie, più profondità.</p><p style="margin:8px 0 0">Nota: qui si <strong>guarda</strong>, non si corregge. Le correzioni arrivano dopo, una alla volta.`},
+
+    {t:'p',html:`<h3>4A — Analisi di sicurezza (12 min)</h3>`},
+    {t:'promptkit',id:'pk7a',title:'Compito: analisi di sicurezza',
+      sub:'Indica il pezzo di codice e il contesto. Più il contesto è preciso, meno risposte generiche ottieni.',
+      fields:[
+        {k:'file',lb:'File o cartella da analizzare',ph:'Es. src/api/ordini/ (4 endpoint) oppure src/services/pagamenti.ts',rows:2},
+        {k:'chi',lb:'Chi può chiamare questo codice',ph:'Es. utenti autenticati con ruolo "operatore"; un endpoint è pubblico senza login',rows:2},
+        {k:'dati',lb:'Che dati tocca',ph:'Es. dati anagrafici clienti, importi, IBAN. Scrive su Postgres e manda email.',rows:2}
+      ],
+      build:(v)=>
+`Analisi di sicurezza, solo lettura: non modificare niente.
+
+Codice da analizzare: `+(v.file||'[file o cartella]')+`
+Chi puo' chiamarlo: `+(v.chi||'[utenti e ruoli]')+`
+Dati toccati: `+(v.dati||'[tipo di dati]')+`
+
+Cerca in particolare:
+1. Controlli di accesso: c'e' un punto in cui si puo' arrivare al dato
+   di un altro utente cambiando un id nella richiesta?
+2. Validazione dell'input: cosa arriva da fuori e non viene controllato
+   prima di essere usato?
+3. Query al database costruite concatenando stringhe.
+4. Dati sensibili che finiscono nei log o nei messaggi di errore.
+5. Segreti scritti nel codice.
+6. Se il codice genera HTML o esegue comandi: input non trattato che
+   ci finisce dentro.
+
+Per ogni problema scrivi ESATTAMENTE in questo formato:
+  FILE:RIGA
+  Problema: (una riga)
+  Come si sfrutta: (uno scenario concreto, con una richiesta di esempio)
+  Gravita': alta / media / bassa
+  Perche' quella gravita': (una riga)
+
+REGOLE:
+- Se non riesci a costruire uno scenario concreto, NON elencarlo.
+- Non elencare buone pratiche generiche: solo problemi presenti
+  in questo codice, con il punto esatto.
+- Ordina dal piu' grave al meno grave.`},
+    {t:'p',html:`<p>Il campo <em>«Come si sfrutta»</em> non è decorativo: è il <strong>filtro</strong>. Un modello sa elencare categorie di vulnerabilità a memoria, e lo fa volentieri anche quando nel tuo codice non ci sono. Costringerlo a scrivere lo scenario concreto fa cadere da solo metà dell'elenco.</p>`},
+    {t:'callout',kind:'bad',title:'Due errori opposti, tutti e due costosi',html:`<strong>Falsi allarmi:</strong> segnala come grave una cosa che nel tuo contesto non lo è (un endpoint "senza autenticazione" che sta dietro un gateway che autentica). Costano tempo. <strong>Cose non viste:</strong> tutto quello che dipende da come il sistema è messo in piedi fuori dal codice — permessi sul database, configurazione della rete, chi può arrivare dove. L'agente vede il codice, non il mondo intorno. <strong>Questa analisi non sostituisce un controllo di sicurezza vero.</strong>`},
+    {t:'exercise',id:'ex7a',label:'Esercizio 7.1 — Verifica due segnalazioni (4 minuti)',
+      prompt:'Prendi le due segnalazioni più gravi. Apri i file e prova a rifare mentalmente lo scenario descritto. Sono vere?',
+      placeholder:'Segnalazione 1: ... → vera / falsa perché ...\nSegnalazione 2: ... → vera / falsa perché ...',
+      solution:'Il rapporto normale è circa <strong>una segnalazione vera e utile ogni tre</strong>. Non è un fallimento: trovare una cosa vera in cinque minuti di lettura automatica è un buon affare. Il fallimento sarebbe <em>crederci senza controllare</em> — e aprire tre ticket per problemi che non esistono.'},
+
+    {t:'p',html:`<h3>4B — Analisi di concorrenza (10 min)</h3>
+      <p>Qui serve un compito diverso. Chiedere «ci sono problemi di concorrenza?» non funziona quasi mai. Quello che funziona è <strong>fargli seguire una risorsa alla volta</strong>: prendi un dato condiviso e chiedi chi lo legge e chi lo scrive.</p>`},
+    {t:'promptkit',id:'pk7b',title:'Compito: analisi di concorrenza',
+      sub:'Indica cosa gira in parallelo e quale dato è condiviso. Senza questi due dati l\'analisi resta generica.',
+      fields:[
+        {k:'par',lb:'Cosa gira in parallelo',ph:'Es. 4 processi Node dietro un bilanciatore; ogni processo ha un pool di 10 connessioni',rows:2},
+        {k:'ris',lb:'Il dato condiviso da seguire',ph:'Es. la riga ordini.stato; oppure il contatore di scorte; oppure un file su disco',rows:2},
+        {k:'file',lb:'Dove sta il codice che lo tocca',ph:'Es. src/services/ordini.ts e src/jobs/riconciliazione.ts',rows:2}
+      ],
+      build:(v)=>
+`Analisi di concorrenza, solo lettura: non modificare niente.
+
+Come gira il sistema: `+(v.par||'[processi/thread in parallelo]')+`
+Dato condiviso da seguire: `+(v.ris||'[la risorsa condivisa]')+`
+Codice che lo tocca: `+(v.file||'[file]')+`
+
+Fai questo lavoro, nell'ordine:
+
+1. Elenca TUTTI i punti del codice che leggono quel dato e tutti quelli
+   che lo scrivono. File e riga per ognuno.
+2. Per ogni scrittura, dimmi se c'e' qualcosa che la protegge
+   (transazione, lock, vincolo unico sul database, operazione atomica)
+   oppure se non c'e' niente.
+3. Trova le sequenze "leggo, decido, scrivo": sono il punto tipico
+   in cui due esecuzioni in parallelo si pestano i piedi.
+4. Per ognuna scrivi uno scenario a due colonne, cosi':
+
+   Tempo | Esecuzione A          | Esecuzione B
+   t1    | legge stato = "nuovo" |
+   t2    |                       | legge stato = "nuovo"
+   t3    | scrive "in corso"     |
+   t4    |                       | scrive "in corso"   <- doppia lavorazione
+
+5. Dimmi cosa vedrebbe l'utente quando succede, e ogni quanto
+   puo' succedere.
+
+REGOLE:
+- Se non riesci a scrivere lo scenario a due colonne, NON elencarlo:
+  vuol dire che non e' un problema di concorrenza vero.
+- Distingui i problemi reali dai casi impossibili perche' qualcosa a monte
+  garantisce l'ordine (una coda, una chiave unica, un lock esterno).
+- Non proporre correzioni adesso: prima l'elenco.`},
+    {t:'callout',kind:'',title:'Perché lo schema a due colonne',html:`È il trucco del modulo. Un modello legge il codice come un racconto in ordine, e in un racconto in ordine le gare fra processi non si vedono. <strong>Costringendolo a scrivere la tabella dei tempi lo obblighi a immaginare due storie che si intrecciano</strong> — ed è lì che i problemi saltano fuori. Lo stesso trucco funziona sui deadlock: fagli scrivere l'ordine in cui ogni percorso prende i lock.`},
+    {t:'quiz',id:'q7a',q:'Su cosa è meno affidabile l\'analisi di un agente?',
+      opts:[
+        {tx:'Query costruite concatenando stringhe',ok:false,why:'È il caso in cui è più bravo: ha una forma riconoscibile nel codice.'},
+        {tx:'Segreti scritti nel codice',ok:false,why:'Li trova facilmente, anche solo cercando per forma.'},
+        {tx:'Gare fra processi in parallelo e problemi che dipendono da come il sistema è configurato fuori dal codice',ok:true,why:'Esatto. Le prime richiedono di immaginare più esecuzioni insieme; le seconde dipendono da informazioni che nel codice non ci sono. In tutti e due i casi devi essere tu a dargli il contesto e a verificare.'},
+        {tx:'Dati sensibili nei log',ok:false,why:'Cerca le chiamate di log e guarda cosa ci finisce dentro: se lo cava bene.'}
+      ]},
+    {t:'exercise',id:'ex7b',label:'Esercizio 7.2 — Il ticket (4 minuti)',
+      prompt:'Prendi il problema più credibile che hai trovato (di sicurezza o di concorrenza) e scrivi il ticket che apriresti davvero: dove sta, cosa succede, cosa vede l\'utente, quanto è urgente.',
+      placeholder:'File:riga: ...\nCosa succede: ...\nCosa vede l\'utente: ...\nUrgenza e perché: ...'},
+    {t:'checklist',id:'ck7',title:'Task 4 completato quando...',
+      items:[
+        'Ho analizzato un pezzo circoscritto, non tutta la repo',
+        'Ho ottenuto segnalazioni con file, riga e scenario concreto',
+        'Ho verificato a mano almeno due segnalazioni',
+        'Ho trovato almeno un falso allarme e capito perché lo era',
+        'Ho ottenuto almeno uno scenario di concorrenza a due colonne',
+        'Ho scritto un ticket vero per il problema più credibile'
+      ]}
+  ]
+});
+
+/* ---------- 8. Aggiungere una funzione ---------- */
+MODULES.push({
+  id:'m8', n:'08', title:'Task 5 — Aggiungere una piccola funzione', min:22,
+  blocks:[
+    {t:'p',html:`<p>Fin qui l'agente ha solo letto. Adesso scrive. Il compito di esempio è utile davvero: <strong>tracciare le chiamate al database</strong> — per ogni query, sapere quale, quanto ci ha messo, e da dove è partita.</p>
+      <p>Se nel tuo progetto esiste già, scegli un'altra funzione piccola: un endpoint di stato che dice se il servizio è vivo, un contatore di quante volte viene usata una funzione, un log strutturato su un punto che oggi non ne ha.</p>`},
+    {t:'callout',kind:'warn',title:'Branch nuovo, adesso',html:`<code>git checkout -b lab/tracing</code>. Da qui in poi si scrive sul serio. Un branch a parte vuol dire che se il risultato non va bene lo butti via con un comando e non resta niente.`},
+
+    {t:'p',html:`<h3>5A — Prima il piano, poi il codice (7 min)</h3>
+      <p>È la regola che fa più differenza di tutte quelle di oggi: <strong>su un cambiamento che tocca più file, chiedi prima il piano</strong>. Leggi il piano, correggilo, e solo dopo lascia scrivere.</p>
+      <p>Costa due minuti e ti evita il caso peggiore: venti minuti di lavoro sulla strada sbagliata, con un diff così grande che non hai voglia di leggerlo.</p>`},
+    {t:'promptkit',id:'pk8',title:'Compito: il piano (non ancora il codice)',
+      sub:'Chiedi il piano. Il codice arriva dopo, quando il piano ti convince.',
+      fields:[
+        {k:'cosa',lb:'Cosa vuoi aggiungere',ph:'Es. un tracciamento di tutte le query al DB: testo della query, durata in ms, endpoint chiamante',rows:2},
+        {k:'dove',lb:'Dove passano oggi le chiamate al DB',ph:'Es. tutte da src/db/client.ts, tranne i job in src/jobs/ che aprono una connessione loro',rows:2},
+        {k:'vinc',lb:'Vincoli che deve rispettare',ph:'Es. si deve poter spegnere da configurazione; niente pacchetti nuovi; non deve loggare i valori dei parametri',rows:3}
+      ],
+      build:(v)=>
+`NON SCRIVERE CODICE ADESSO. Voglio prima un piano.
+
+Cosa devo aggiungere: `+(v.cosa||'[la funzione]')+`
+Dove passa oggi: `+(v.dove||'[punti del codice]')+`
+Vincoli: `+(v.vinc||'[vincoli]')+`
+
+Prima leggi il codice che c'e', poi rispondimi con:
+
+1. Il punto giusto in cui mettere la cosa, e perche' li'.
+   Se esiste gia' un punto di passaggio comune, usa quello.
+2. Se esiste gia' qualcosa di simile nel progetto (un log, un timer,
+   un middleware): dimmelo, e aggancia la nuova cosa a quello
+   invece di inventare un modo nuovo.
+3. L'elenco dei file da toccare, con una riga su cosa cambia in ognuno.
+4. Cosa NON tocchiamo, e perche'.
+5. Come faremo a vedere che funziona (un comando, un test, una riga di log
+   attesa).
+6. I due modi in cui questa modifica puo' rompere qualcosa.
+
+Poi fermati e aspetta il mio ok.`},
+    {t:'callout',kind:'ok',title:'Il punto 2 è quello che salva il codice',html:`«Se esiste già qualcosa di simile, aggancia a quello». Senza questa riga, un agente aggiunge volentieri <strong>un secondo modo di fare una cosa che il progetto già faceva</strong>: un altro logger, un altro wrapper, un'altra configurazione. Funziona, passa i test, e intanto il progetto ha due sistemi paralleli da mantenere.`},
+    {t:'exercise',id:'ex8a',label:'Esercizio 8.1 — Correggi il piano (4 minuti)',
+      prompt:'Leggi il piano. Cosa hai dovuto correggere prima di dargli l\'ok?',
+      placeholder:'Il piano proponeva: ...\nHo corretto: ...\nPerché: ...',
+      solution:'Le correzioni più frequenti sono tre: <strong>1)</strong> il punto scelto è sbagliato — funziona ma non è il punto di passaggio giusto; <strong>2)</strong> tocca più file del necessario; <strong>3)</strong> ignora una cosa che il progetto ha già. Tutte e tre, sul codice fatto, costano dieci volte tanto a sistemarle.'},
+
+    {t:'p',html:`<h3>5B — L'implementazione (7 min)</h3>
+      <p>Piano approvato. Adesso puoi lasciarlo scrivere — ma con dei limiti chiari.</p>`},
+    {t:'code',lang:'text',code:`Ok, procedi con il piano, con questi vincoli:
+
+- Tocca solo i file che abbiamo elencato.
+- Fai la modifica piu' piccola che funziona. Non riordinare le import,
+  non riformattare, non "sistemare" altro codice.
+- Segui lo stile che vedi nei file vicini: stessi nomi, stesso modo
+  di gestire gli errori, stesso modo di configurare.
+- Nessuna dipendenza nuova senza chiedermelo prima.
+- Alla fine lancia i test esistenti e mostrami l'output vero,
+  non un riassunto.
+- Poi mostrami git diff --stat e spiegami in 3 righe cosa hai cambiato.`},
+    {t:'callout',kind:'bad',title:'Il tracciamento ha due trappole sue',html:`<strong>Non deve rompere niente se si guasta lui.</strong> Se il tracciamento solleva un errore, la query non deve fallire: il codice che traccia va protetto. Chiediglielo. <strong>Non deve finire nei log quello che non deve starci.</strong> I parametri di una query contengono email, codici fiscali, IBAN. Registra il testo della query e la durata, non i valori — a meno che tu non sappia esattamente cosa stai scrivendo e dove finisce.`},
+
+    {t:'p',html:`<h3>5C — Il controllo (8 min)</h3>
+      <p>Il momento vero. Il codice esiste, i test passano, e adesso tocca a te. In ordine:</p>`},
+    {t:'table',head:['#','Cosa fai','Cosa cerchi'],rows:[
+      ['1','<code>git diff --stat</code>','Quanti file? Quante righe? Se sono più di quelle previste dal piano, guarda subito perché.'],
+      ['2','<code>git diff</code>, tutto, riga per riga','Nessuna riga che non sai spiegare. Se non la capisci, chiedi: «perché questa riga?».'],
+      ['3','Lancia l\'applicazione','Funziona ancora? Il tracciamento produce davvero le righe attese?'],
+      ['4','Spegni la funzione da configurazione','Il vincolo diceva che si doveva poter spegnere. Provalo davvero.'],
+      ['5','Guarda cosa finisce nei log','Ci sono dati che non devono starci?'],
+      ['6','Rompi qualcosa apposta','Fai fallire il tracciamento. La query deve continuare a funzionare.']
+    ]},
+    {t:'callout',kind:'warn',title:'La domanda da fare quando qualcosa non torna',html:`Non «sistemalo». Prima: <strong>«perché hai fatto così invece che così?»</strong>. Metà delle volte c'è un motivo che non avevi visto — e impari qualcosa sul tuo progetto. L'altra metà non c'è, e allora glielo dici.`},
+    {t:'exercise',id:'ex8b',label:'Esercizio 8.2 — Il diff (5 minuti)',
+      prompt:'Quanti file e quante righe ha toccato? Il diff era leggibile? Hai trovato righe che non sapevi spiegare? Lo faresti passare in code review così com\'è?',
+      placeholder:'File: ... Righe: ...\nRighe non chiare: ...\nLo farei passare in review? ... perché ...',
+      solution:'Il criterio è uno solo, e vale anche per il codice scritto dalle persone: <strong>lo firmeresti?</strong> Se il tuo nome finisce su quel commit, quel codice è tuo — chi lo ha materialmente scritto non interessa a nessuno fra sei mesi quando si romperà. Se non lo firmeresti, non è finito.'},
+    {t:'checklist',id:'ck8',title:'Task 5 completato quando...',
+      items:[
+        'Ho lavorato su un branch a parte',
+        'Ho chiesto il piano prima del codice e l\'ho corretto',
+        'La modifica tocca solo i file previsti',
+        'Ho letto il diff riga per riga e so spiegare tutto',
+        'Ho lanciato l\'applicazione e visto la funzione funzionare davvero',
+        'Ho provato a spegnerla e a farla fallire: non rompe niente',
+        'Nei log non finiscono dati che non devono starci'
+      ]}
+  ]
+});
+
+/* ---------- 9. Test con concorrenza ---------- */
+MODULES.push({
+  id:'m9', n:'09', title:'Task 6 — Uno script di test con concorrenza', min:14,
+  blocks:[
+    {t:'p',html:`<p>Nel modulo 07 hai <em>ipotizzato</em> dei problemi di concorrenza. Adesso li <strong>provi</strong>. È il modo migliore di chiudere il cerchio: uno script che lancia tante richieste insieme e guarda se il sistema si comporta come dovrebbe.</p>
+      <p>Attenzione: non stiamo misurando la velocità. Ci interessa un'altra cosa — <strong>quando due richieste arrivano insieme, il risultato è ancora giusto?</strong></p>`},
+    {t:'callout',kind:'bad',title:'Dove si lancia',html:`<strong>Solo su ambiente locale o di sviluppo.</strong> Mai contro un ambiente condiviso, mai contro produzione. Uno script del genere, puntato sul posto sbagliato, è indistinguibile da un attacco: riempie i log, satura le connessioni, e può bloccare il lavoro di altri. Prima di lanciarlo, guarda due volte l'indirizzo che c'è dentro.`},
+
+    {t:'p',html:`<h3>6A — Lo script (8 min)</h3>`},
+    {t:'promptkit',id:'pk9',title:'Compito: script di prova in parallelo',
+      sub:'Descrivi cosa deve succedere e, soprattutto, qual è la regola che non deve mai essere violata.',
+      fields:[
+        {k:'end',lb:'Cosa chiamare',ph:'Es. POST http://localhost:3000/ordini/{id}/conferma con header Authorization',rows:2},
+        {k:'inv',lb:'La regola che non deve mai rompersi',ph:'Es. un ordine può essere confermato una volta sola: su 50 richieste insieme, 1 sola deve andare a buon fine e 49 devono dare 409',rows:3},
+        {k:'come',lb:'Come misurare che la regola ha tenuto',ph:'Es. contando le risposte per codice, e poi leggendo la riga sul DB: ordini.confermato_il deve essere valorizzato una volta sola',rows:2}
+      ],
+      build:(v)=>
+`Scrivimi uno script per provare il comportamento sotto richieste
+simultanee. Serve a verificare la correttezza, non la velocita'.
+
+Cosa chiamare: `+(v.end||'[endpoint o funzione]')+`
+Regola che non deve mai rompersi: `+(v.inv||'[la regola]')+`
+Come verificarla: `+(v.come||'[come si controlla]')+`
+
+Lo script deve:
+1. Lanciare N richieste il piu' possibile nello stesso istante
+   (N configurabile, default 50). Partire davvero insieme, non in fila.
+2. Contare le risposte per codice di stato.
+3. Controllare la regola e stampare alla fine, chiaro:
+   REGOLA RISPETTATA  oppure  REGOLA VIOLATA: <cosa e' successo>
+4. Uscire con codice 1 se la regola e' violata, cosi' si puo' mettere
+   in una pipeline.
+5. Ripetere il giro M volte (default 10): questi problemi non
+   succedono tutte le volte.
+6. Avere l'indirizzo di destinazione in una variabile in cima al file,
+   con scritto in un commento che va usato SOLO in locale.
+
+Vincoli:
+- Linguaggio e librerie: quelli gia' usati in questo progetto.
+- Stampa alla fine un riassunto leggibile in 5 righe.
+- Aggiungi una nota su come pulire i dati creati dallo script.`},
+    {t:'p',html:`<p>I punti 1 e 5 sono quelli che la gente dimentica sempre. <strong>Partire davvero insieme</strong>: se lo script manda le richieste in fila, non stai provando niente. <strong>Ripetere</strong>: una gara fra processi si vede magari una volta su venti, quindi un giro solo che va bene non dimostra nulla.</p>`},
+
+    {t:'p',html:`<h3>6B — Lanciarlo e leggere il risultato (6 min)</h3>`},
+    {t:'table',head:['Cosa vedi','Cosa vuol dire','Cosa fai'],rows:[
+      ['Regola rispettata tutte le volte','Il punto è protetto — oppure lo script non parte davvero insieme','Controlla lo script: rompi apposta la protezione e vedi se lo script se ne accorge'],
+      ['Regola violata ogni tanto','Hai trovato una gara vera','Ticket, con lo script allegato: è la riprova'],
+      ['Regola violata sempre','Non è concorrenza: manca proprio il controllo','Guarda il codice, probabilmente non c\'è nessun vincolo'],
+      ['Errori di connessione','Hai saturato qualcosa','Abbassa N. Non è il problema che stavi cercando']
+    ]},
+    {t:'callout',kind:'ok',title:'Il controllo dello script stesso',html:`Il rischio più insidioso è uno script che <strong>non sa fallire</strong>. Prima di credere a un "regola rispettata", togli la protezione nel codice (commenta la transazione, il lock, il vincolo unico) e rilancia: se adesso dice VIOLATA, lo script funziona. Se dice ancora RISPETTATA, stavi guardando un test che non guarda niente. Questo vale per ogni test scritto da un agente: <strong>un test che non fallisce mai non è un test</strong>.`},
+    {t:'exercise',id:'ex9',label:'Esercizio 9.1 — La controprova (4 minuti)',
+      prompt:'Rompi apposta la protezione e rilancia lo script. Si accorge della differenza? Scrivi cosa hai tolto e cosa è cambiato nel risultato.',
+      placeholder:'Ho tolto: ...\nPrima: ...\nDopo: ...\nLo script se ne accorge? ...'},
+    {t:'checklist',id:'ck9',title:'Task 6 completato quando...',
+      items:[
+        'Lo script punta a un ambiente locale e sta scritto nel file',
+        'Le richieste partono davvero insieme, non in fila',
+        'Lo script ripete il giro più volte',
+        'Dice chiaramente se la regola ha tenuto o no, ed esce con codice 1 se no',
+        'Ho fatto la controprova: rotta la protezione, lo script se ne accorge',
+        'So come pulire i dati creati dallo script'
+      ]}
+  ]
+});
+
+/* ---------- 10. Test BDD ---------- */
+MODULES.push({
+  id:'m10', n:'10', title:'Task 7 — Un test BDD', min:14,
+  blocks:[
+    {t:'p',html:`<h3>Cos'è un test BDD, in breve</h3>
+      <p>Un test BDD descrive il comportamento con <strong>parole che capisce anche chi non programma</strong>, in tre parti fisse:</p>`},
+    {t:'code',lang:'gherkin',code:`Funzionalita': Conferma di un ordine
+
+  Scenario: un ordine gia' confermato non si conferma due volte
+    Dato che esiste un ordine 4471 in stato "confermato"
+    Quando un operatore chiede di confermare l'ordine 4471
+    Allora la richiesta viene rifiutata con codice 409
+    E lo stato dell'ordine resta "confermato"`},
+    {t:'p',html:`<p><strong>Dato che</strong> = la situazione di partenza. <strong>Quando</strong> = l'azione. <strong>Allora</strong> = cosa deve succedere. Sotto, del codice normale collega ogni riga a quello che fa davvero (si chiamano <em>step definition</em>).</p>
+      <p>Perché è utile con un agente? Perché lo scenario <strong>è già il compito</strong>. Invece di spiegare a parole cosa deve fare il test, glielo scrivi in una forma precisa e lui lo traduce in codice. E resta leggibile da chi ha chiesto la funzionalità.</p>`},
+    {t:'callout',kind:'',title:'Se nel tuo progetto il BDD non c\'è',html:`Va benissimo lo stesso. Scrivi lo scenario in forma <em>Dato / Quando / Allora</em> e chiedi all'agente di implementarlo <strong>con la libreria di test che il progetto usa già</strong>. Il valore sta nel modo di pensare al test, non nello strumento. Non introdurre un framework nuovo in un progetto solo per un esercizio.`},
+
+    {t:'p',html:`<h3>7A — Scrivere lo scenario (5 min)</h3>
+      <p>Questa parte falla <strong>tu</strong>, a mano. È l'unico pezzo che l'agente non può fare al posto tuo, perché richiede di sapere cosa deve fare il sistema — e quello sta nella tua testa, non nel codice.</p>`},
+    {t:'exercise',id:'ex10a',label:'Esercizio 10.1 — Il tuo scenario (5 minuti)',
+      prompt:'Scegli una funzionalità del tuo progetto e scrivi due scenari: uno che va a buon fine e uno che deve essere rifiutato. Usa Dato che / Quando / Allora. Niente termini tecnici: solo cosa succede.',
+      placeholder:'Funzionalità: ...\n\nScenario: (caso buono)\n  Dato che ...\n  Quando ...\n  Allora ...\n\nScenario: (caso rifiutato)\n  Dato che ...\n  Quando ...\n  Allora ...',
+      solution:'Due errori tipici. <strong>Primo:</strong> mettere la tecnica nello scenario («Quando faccio una POST su /api/v2/ordini con header X»). Lo scenario dice <em>cosa</em> succede, non <em>come</em> si chiama. Il come sta nel codice sotto. <strong>Secondo:</strong> un "Allora" vago («Allora l\'ordine viene gestito correttamente»). Se non si può controllare con un confronto, non è un Allora: scrivi il valore atteso.'},
+
+    {t:'p',html:`<h3>7B — Farlo implementare (9 min)</h3>`},
+    {t:'promptkit',id:'pk10',title:'Compito: implementa lo scenario',
+      sub:'Incolla lo scenario che hai scritto e digli che strumenti usare.',
+      fields:[
+        {k:'scen',lb:'I tuoi scenari (Dato / Quando / Allora)',ph:'Incolla qui i due scenari scritti sopra',rows:8},
+        {k:'stack',lb:'Con cosa si scrivono i test qui',ph:'Es. vitest + supertest; oppure pytest + pytest-bdd; oppure Cucumber + JUnit',rows:2},
+        {k:'dati',lb:'Come si preparano i dati di partenza',ph:'Es. c\'è già una factory in test/helpers/factory.ts; il DB di test si azzera fra un test e l\'altro',rows:2}
+      ],
+      build:(v)=>
+`Implementa questi scenari come test automatici.
+
+SCENARI:
+`+(v.scen||'[incolla qui gli scenari]')+`
+
+Strumenti da usare: `+(v.stack||'[framework di test del progetto]')+`
+Dati di partenza: `+(v.dati||'[come si preparano i dati]')+`
+
+REGOLE:
+- Usa SOLO quello che il progetto usa gia'. Nessuna libreria nuova.
+- Prima guarda i test che esistono e copiane lo stile: stessa struttura,
+  stesso modo di preparare i dati, stesso modo di pulire.
+- Ogni riga "Allora" deve diventare un confronto vero con un valore
+  atteso. Niente controlli generici tipo "non e' nullo" o "non lancia
+  eccezioni".
+- Il test deve poter girare da solo e piu' volte di fila,
+  senza lasciare sporcizia dietro.
+- Niente attese a tempo fisso (sleep): se serve aspettare, aspetta
+  una condizione.
+
+Poi:
+1. Lancia i test e mostrami l'output vero.
+2. IMPORTANTE: rompi apposta il codice di produzione in un punto che
+   questo test dovrebbe coprire, rilancia, e mostrami il test che
+   FALLISCE. Poi rimetti a posto il codice.`},
+    {t:'callout',kind:'ok',title:'Quell\'ultimo punto è il cuore del modulo',html:`Un agente sa scrivere test verdi. È bravissimo: se serve, adatta il test finché non passa — anche quando il codice è sbagliato. <strong>L'unica prova che un test serve a qualcosa è vederlo fallire quando deve.</strong> Fallo fare a lui, davanti a te, e guarda l'output. Prendi l'abitudine: vale per tutti i test che ti consegnerà da qui in avanti.`},
+    {t:'p',html:`<h3>Come si riconosce un test che non serve</h3>`},
+    {t:'split2',a:{h:'Segnali di allarme',items:[
+      ['Controlla solo che "non sia nullo"','Passa anche se il valore è completamente sbagliato.'],
+      ['Verifica solo che non esploda','Un codice che non fa niente passa questo test.'],
+      ['Ha una sleep dentro','Fallirà a caso sulla macchina della pipeline. E rallenta tutto.'],
+      ['Ricalcola il valore atteso con la stessa formula del codice','Se la formula è sbagliata, il test conferma l\'errore.'],
+      ['Ha bisogno degli altri test','Girato da solo fallisce. Girato due volte fallisce.']
+    ]},b:{h:'Segnali buoni',items:[
+      ['Confronta con valori scritti a mano','Il valore atteso viene da te, non dal codice.'],
+      ['Fallisce se rompi il codice','L\'hai visto con i tuoi occhi.'],
+      ['Gira da solo e più volte','Nessuna dipendenza dall\'ordine o da dati rimasti in giro.'],
+      ['Il nome dice cosa verifica','Quando fallisce in pipeline capisci subito cos\'è.'],
+      ['Copre anche il caso rifiutato','I bug stanno quasi sempre lì, non nel caso buono.']
+    ]}},
+    {t:'quiz',id:'q10',q:'L\'agente ti consegna cinque test e passano tutti. Qual è la prima cosa da fare?',
+      opts:[
+        {tx:'Controllare la copertura del codice',ok:false,why:'Serve, ma dopo. La copertura dice quali righe sono state eseguite, non se il test controlla qualcosa di sensato.'},
+        {tx:'Rompere apposta il codice e controllare che i test falliscano',ok:true,why:'Esatto. È l\'unica prova diretta che quei test guardano davvero qualcosa. Cinque test verdi su un codice rotto sono peggio di nessun test: ti danno una sicurezza falsa.'},
+        {tx:'Leggere i nomi dei test',ok:false,why:'Aiuta a capire l\'intenzione, ma un nome giusto può stare sopra a un controllo inutile.'},
+        {tx:'Chiedergli di aggiungerne altri',ok:false,why:'Se non sai se i cinque che hai servono, aggiungerne altri cinque non migliora niente.'}
+      ]},
+    {t:'checklist',id:'ck10',title:'Task 7 completato quando...',
+      items:[
+        'Ho scritto io gli scenari, a parole, senza termini tecnici',
+        'C\'è anche uno scenario di caso rifiutato, non solo quello buono',
+        'Il test usa solo gli strumenti già presenti nel progetto',
+        'Ogni Allora è un confronto con un valore atteso',
+        'Ho visto il test fallire quando ho rotto il codice apposta',
+        'Il test gira da solo e due volte di fila senza problemi'
+      ]}
+  ]
+});
+
+/* ---------- 11. Debug ---------- */
+MODULES.push({
+  id:'m11', n:'11', title:'Task 8 — Debug da log e payload', min:20,
+  blocks:[
+    {t:'p',html:`<p>L'ultimo compito è quello per cui, secondo molti, un agente rende di più: <strong>hai un errore, hai dei log, non hai idea di dove guardare</strong>.</p>
+      <p>Il motivo è semplice. Un log di duemila righe tu lo leggi in venti minuti e a metà ti si offusca la vista. Lui lo legge tutto, e sa anche cercare nel codice il punto che produce una certa riga. È un incrocio fra due cose grandi, ed è esattamente quello che fa meglio.</p>`},
+    {t:'callout',kind:'bad',title:'Prima di incollare qualsiasi log',html:`I log veri contengono <strong>dati di persone vere</strong>: email, codici fiscali, indirizzi, token, numeri di carta. Prima di darli a un agente, <strong>sostituiscili</strong>. Tieni la forma (stessa lunghezza, stesso tipo) e cambia il contenuto: <code>mario.rossi@example.com</code> diventa <code>utente1@example.com</code>. La forma serve a capire il problema, il contenuto no. Se non puoi ripulirlo, non incollarlo.`},
+
+    {t:'p',html:`<h3>8A — Preparare il materiale (6 min)</h3>
+      <p>La qualità della risposta dipende quasi tutta da cosa gli dai. Quattro cose, in ordine di importanza:</p>`},
+    {t:'table',head:['Cosa','Perché serve','Se manca'],rows:[
+      ['<strong>Cosa doveva succedere</strong>','È il metro di paragone','Non sa cosa sta cercando: ti segnala righe strane a caso'],
+      ['<strong>Cosa è successo invece</strong>','Il sintomo esatto, con il messaggio preciso','Cerca il problema sbagliato'],
+      ['<strong>Il log intorno al momento</strong>','Il fatto vero','Tira a indovinare sul codice'],
+      ['<strong>Il payload della richiesta</strong>','I dati in ingresso: spesso il problema è lì','Non può vedere che mancava un campo']
+    ]},
+    {t:'p',html:`<p>Una cosa in più che vale molto: <strong>dire se succede sempre o ogni tanto</strong>. È la prima cosa che divide il campo in due — «sempre» punta a un errore nella logica, «ogni tanto» punta a dati particolari, concorrenza, o qualcosa che dipende dal tempo.</p>`},
+    {t:'promptkit',id:'pk11',title:'Compito: trova la causa',
+      sub:'Dai il contesto, non chiedere la soluzione. La soluzione arriva dopo, quando la causa è chiara.',
+      fields:[
+        {k:'att',lb:'Cosa doveva succedere',ph:'Es. la conferma dell\'ordine doveva salvare lo stato e mandare l\'email',rows:2},
+        {k:'suc',lb:'Cosa succede invece (messaggio esatto)',ph:'Es. 500 con "Cannot read properties of undefined (reading id)". Lo stato resta "nuovo", nessuna email.',rows:3},
+        {k:'freq',lb:'Sempre o ogni tanto?',ph:'Es. circa 1 volta su 30, solo su ordini con più di 5 righe, solo di mattina',rows:2},
+        {k:'log',lb:'Log e payload (già ripuliti dai dati personali)',ph:'Incolla qui le righe di log intorno all\'errore e il payload della richiesta',rows:8}
+      ],
+      build:(v)=>
+`Ho un errore e ti do il contesto. Non correggere niente per adesso:
+voglio prima capire la causa.
+
+Cosa doveva succedere: `+(v.att||'[comportamento atteso]')+`
+Cosa succede invece: `+(v.suc||'[sintomo esatto]')+`
+Quanto spesso: `+(v.freq||'[sempre / ogni tanto, in che condizioni]')+`
+
+LOG E PAYLOAD:
+--- inizio ---
+`+(v.log||'[incolla qui]')+`
+--- fine ---
+
+Fai questo, nell'ordine:
+
+1. Ricostruisci cosa e' successo, passo per passo, basandoti SOLO
+   sul log. Dove il log non dice niente, scrivi "il log non lo dice".
+2. Trova nel codice il punto esatto che ha prodotto l'errore.
+   File e riga. Fammi vedere le righe.
+3. Elenca 2 o 3 possibili cause, dalla piu' probabile alla meno.
+   Per ognuna: cosa dovrei trovare nel codice o nei dati se fosse quella.
+4. Per la causa piu' probabile, dimmi UN modo per confermarla o
+   escluderla in meno di 5 minuti (un comando, una query, una riga
+   di log da aggiungere).
+5. Fermati qui. Non proporre ancora la correzione.
+
+REGOLE:
+- Non inventare righe di log che non ti ho dato.
+- Se ti serve un altro pezzo di log o un altro file, chiedimelo
+  invece di tirare a indovinare.`},
+    {t:'callout',kind:'ok',title:'Perché «fermati prima della correzione»',html:`Lasciato libero, un agente <strong>salta alla correzione</strong>: legge l'errore, riconosce una forma nota, e mette una toppa. Spesso la toppa funziona — nasconde il sintomo — e la causa vera resta lì, pronta a tornare fuori in un altro punto. Separare «trova la causa» da «correggi» è la cosa che fa la differenza fra un debug e un cerotto.</p><p style="margin:8px 0 0">Il punto 4 è altrettanto importante: ti dà <strong>qualcosa da fare tu</strong>, in cinque minuti, per sapere se la strada è giusta prima di spenderci mezz'ora.`},
+
+    {t:'p',html:`<h3>8B — Confermare, poi correggere (9 min)</h3>
+      <ol>
+        <li><strong>Fai la verifica</strong> che ti ha suggerito. Lancia il comando, fai la query, aggiungi la riga di log.</li>
+        <li><strong>Riporta il risultato</strong>, anche se contraddice la sua ipotesi. Anzi: soprattutto se la contraddice. «Ho fatto X, ho ottenuto Y» è l'informazione più preziosa che gli puoi dare.</li>
+        <li><strong>Se la causa è confermata</strong>, chiedi la correzione — e chiedi anche il test che la dimostra.</li>
+        <li><strong>Se non è confermata</strong>, si passa alla seconda ipotesi. È normale: la prima ipotesi è giusta forse la metà delle volte.</li>
+      </ol>`},
+    {t:'code',lang:'text',code:`Causa confermata: [cosa hai verificato e cosa hai trovato].
+
+Adesso:
+1. Scrivi PRIMA un test che riproduce il problema. Lancialo e mostrami
+   che fallisce con l'errore giusto.
+2. Poi la correzione piu' piccola che fa passare quel test.
+3. Rilancia tutti i test del progetto e mostrami l'output vero.
+4. Dimmi se questa stessa causa puo' esserci in altri punti del codice,
+   e dove.`},
+    {t:'p',html:`<p>L'ordine "prima il test che fallisce, poi la correzione" non è pedanteria: è l'unico modo per essere sicuri che la correzione corregga davvero <em>questo</em> problema. Un test scritto dopo passa sempre, e non dimostra niente.</p>`},
+    {t:'p',html:`<h3>8C — Quando non ne esce (5 min)</h3>
+      <p>Capita: due o tre giri e siete ancora fermi. I segnali sono chiari — ripete la stessa ipotesi con parole diverse, o comincia a proporre cambiamenti a caso "proviamo così". Cosa fare:</p>`},
+    {t:'table',head:['Segnale','Mossa'],rows:[
+      ['Ripete la stessa ipotesi','<code>/clear</code> e ricomincia con un contesto nuovo. Si è incastrato nel suo ragionamento precedente.'],
+      ['Propone modifiche a caso','Fermalo. Torna al punto 1: cosa dice esattamente il log?'],
+      ['Chiede dati che non hai','Daglieli davvero, o dì chiaro che non ci sono. Un buco riempito da lui è un\'ipotesi travestita da fatto.'],
+      ['Dà una risposta diversa ogni volta','Vuol dire che il materiale non basta. Servono più log, non più domande.'],
+      ['Tre giri senza progresso','Cambia strada: chiedigli di scrivere <em>come si riproduce a comando</em> il problema. Un caso che si riproduce vale più di dieci ipotesi.']
+    ]},
+    {t:'exercise',id:'ex11',label:'Esercizio 11.1 — Com\'è andata (5 minuti)',
+      prompt:'Scrivi come è andato il debug: la causa proposta, come l\'hai verificata, se era giusta, quanto ci hai messo. E cosa avresti fatto senza agente.',
+      placeholder:'Causa proposta: ...\nVerifica: ...\nEra giusta? ...\nTempo: ...\nSenza agente avrei: ...',
+      solution:'Il guadagno vero quasi mai è "ha trovato il bug". È che <strong>ha tolto dal tavolo le strade sbagliate in due minuti</strong>: ti ha detto dove non è il problema. Il restringimento del campo è il lavoro che costa più tempo a una persona, ed è quello che lui fa meglio. La decisione finale resta tua, ma parti da un campo dieci volte più piccolo.'},
+    {t:'checklist',id:'ck11',title:'Task 8 completato quando...',
+      items:[
+        'Ho ripulito i log dai dati personali prima di incollarli',
+        'Ho dato attesa, sintomo, frequenza, log e payload',
+        'L\'ho fermato prima della correzione e ho avuto un elenco di cause',
+        'Ho fatto io la verifica rapida che mi ha suggerito',
+        'Gli ho riportato il risultato vero, anche quando lo smentiva',
+        'La correzione è arrivata dopo un test che falliva'
+      ]}
+  ]
+});
+
+/* ---------- 12. Chiusura ---------- */
+MODULES.push({
+  id:'m12', n:'12', title:'Chiusura', min:11,
+  blocks:[
+    {t:'p',html:`<h3>Le otto cose da portarsi a casa</h3>`},
+    {t:'table',head:['#','Regola','Da dove viene'],rows:[
+      ['1','<strong>Git pulito prima, diff dopo.</strong> È la rete di protezione. Senza, non hai controllo.','Modulo 01'],
+      ['2','<strong>Il file di contesto va tenuto corto.</strong> Una pagina. I documenti lunghi si richiamano, non si copiano dentro.','Modulo 02'],
+      ['3','<strong>Le procedure lunghe e rare diventano skill</strong>, e la descrizione dice <em>quando</em> usarle.','Modulo 03'],
+      ['4','<strong>Chiedi sempre le prove:</strong> file, riga, output vero. E lascia la porta aperta al «NON SO».','Modulo 06'],
+      ['5','<strong>Prima il piano, poi il codice</strong>, su tutto ciò che tocca più di un file.','Modulo 08'],
+      ['6','<strong>Un test che non fallisce mai non è un test.</strong> Rompi il codice apposta e guarda.','Moduli 09 e 10'],
+      ['7','<strong>Trova la causa e correggi sono due compiti diversi.</strong> Non farli fare insieme.','Modulo 11'],
+      ['8','<strong>Quello che firmi è tuo.</strong> Chi ha scritto materialmente il codice non interessa a nessuno fra sei mesi.','Modulo 08']
+    ]},
+    {t:'p',html:`<h3>Dove conviene e dove no</h3>`},
+    {t:'split2',a:{h:'Conviene quasi sempre',items:[
+      ['Capire codice che non conosci','Il caso con il rapporto migliore fra tempo speso e valore.'],
+      ['Primo giro di debug su log lunghi','Restringe il campo in due minuti.'],
+      ['Scrivere test su codice che esiste','Soprattutto i casi limite che a mano non scrivi mai.'],
+      ['Lavori ripetitivi su molti file','Qui il comando secco in un ciclo vale oro.'],
+      ['Script e utilità di contorno','Codice usa e getta, verificabile subito.']
+    ]},b:{h:'Conviene poco o niente',items:[
+      ['Decisioni di architettura','Ti risponde con sicurezza anche quando la risposta dipende da cose che non sa.'],
+      ['Regole di business non scritte','Se la regola sta solo nella testa di un collega, l\'agente la inventa.'],
+      ['Codice che nessuno rileggerà','Se non lo controlli, stai accumulando debito più in fretta di prima.'],
+      ['Problemi di concorrenza delicati','Vanno guidati passo per passo, e comunque verificati con uno script.'],
+      ['Quando non sai giudicare il risultato','Se non sai dire se è giusto, non stai delegando: stai sperando.']
+    ]}},
+    {t:'callout',kind:'warn',title:'L\'unica cosa che davvero non delega',html:`Il giudizio. Un agente non sa quando una cosa è <em>abbastanza</em> buona, non sa cosa succede in produzione fra tre mesi, e non sa che in quella cartella c'è un pezzo che sembra morto ma lo usa il gestionale della logistica. <strong>Il lavoro che passa a te è più difficile di prima, non più facile:</strong> scrivere bene i compiti, e leggere bene i risultati.`},
+    {t:'plan'},
+    {t:'exercise',id:'ex12',label:'Chiusura (2 minuti)',
+      prompt:'Due righe: la cosa più utile di oggi, e la prima cosa che farai entro venerdì.',
+      placeholder:'Più utile: ...\nEntro venerdì: ...'},
+    {t:'checklist',id:'ck12',title:'Prima di chiudere la giornata',
+      items:[
+        'Ho un AGENTS.md nel mio progetto, riletto e corretto a mano',
+        'So usare l\'agente sia in sessione sia con un solo comando',
+        'Ho almeno un ticket vero nato dalle analisi di oggi',
+        'Ho scritto il piano di adozione qui sopra',
+        'Ho esportato le mie risposte in Markdown'
+      ]},
+    {t:'callout',kind:'',title:'Prima di chiudere',html:`Usa <strong>&#8681; Esporta</strong> in alto a destra: scarichi in Markdown tutte le risposte, le checklist e il piano di adozione. Quel file è il tuo materiale di lavoro per la settimana prossima.`}
+  ]
+});
+
+/* ============================================================
+   RENDERER
+   ============================================================ */
+const mounts = [];
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderBlock(b, mid, i){
+  const id = mid+'_'+i;
+  switch(b.t){
+    case 'p': return '<div class="prose">'+b.html+'</div>';
+    case 'code': return '<pre><code>'+esc(b.code)+'</code></pre>';
+    case 'callout':
+      return '<div class="callout '+(b.kind||'')+'"><span class="ct">'+b.title+'</span><div>'+b.html+'</div></div>';
+    case 'cards':
+      return '<div class="grid c3">'+b.cards.map(c=>
+        '<div class="card"><div class="tag">'+c.tag+'</div><h5>'+c.h+'</h5><p>'+c.p+'</p></div>').join('')+'</div>';
+    case 'table':
+    case 'tablewrap':
+      return '<div class="tablewrap"><table><thead><tr>'+b.head.map(h=>'<th>'+h+'</th>').join('')+
+        '</tr></thead><tbody>'+b.rows.map(r=>'<tr>'+r.map(c=>'<td>'+c+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
+    case 'compare':
+      return '<h3>'+b.title+'</h3><div class="split">'+
+        '<div class="pane bad"><div class="pane-h">'+b.bad.h+'</div><pre><code>'+esc(b.bad.code)+'</code></pre></div>'+
+        '<div class="pane ok"><div class="pane-h">'+b.good.h+'</div><pre><code>'+esc(b.good.code)+'</code></pre></div></div>';
+    case 'split2':
+      return '<div class="split">'+[b.a,b.b].map(col=>
+        '<div class="widget" style="margin:0"><div class="widget-t">'+col.h+'</div><div style="margin-top:10px">'+
+        col.items.map(it=>'<div style="padding:8px 0;border-top:1px solid var(--line)"><strong style="font-size:13.5px">'+it[0]+
+        '</strong><div style="font-size:13px;color:var(--muted)">'+it[1]+'</div></div>').join('')+'</div></div>').join('')+'</div>';
+    case 'quiz':      mounts.push(()=>mountQuiz(id,b));      return '<div id="'+id+'"></div>';
+    case 'exercise':  mounts.push(()=>mountExercise(id,b));  return '<div id="'+id+'"></div>';
+    case 'checklist': mounts.push(()=>mountChecklist(id,b)); return '<div id="'+id+'"></div>';
+    case 'agentloop': mounts.push(()=>mountAgentLoop(id));   return '<div id="'+id+'"></div>';
+    case 'ctxfiles':  mounts.push(()=>mountCtxFiles(id));    return '<div id="'+id+'"></div>';
+    case 'triage':    mounts.push(()=>mountTriage(id));      return '<div id="'+id+'"></div>';
+    case 'cmdlab':    mounts.push(()=>mountCmdLab(id));      return '<div id="'+id+'"></div>';
+    case 'promptkit': mounts.push(()=>mountPromptKit(id,b)); return '<div id="'+id+'"></div>';
+    case 'plan':      mounts.push(()=>mountPlan(id));        return '<div id="'+id+'"></div>';
+    default: return '';
+  }
+}
+
+function widgetShell(kind,title,sub,body){
+  return '<div class="widget"><div class="widget-h"><span class="widget-k">'+kind+'</span><span class="widget-t">'+title+'</span></div>'+
+    (sub?'<div class="widget-s">'+sub+'</div>':'')+body+'</div>';
+}
+
+/* ---------- quiz ---------- */
+function mountQuiz(id, b){
+  const el = document.getElementById(id);
+  const marks = ['A','B','C','D','E'];
+  const body = '<div id="'+id+'_opts">'+b.opts.map((o,k)=>
+    '<button class="opt" data-k="'+k+'"><span class="mk">'+marks[k]+'</span>'+o.tx+
+    '<div class="why">'+o.why+'</div></button>').join('')+'</div>'+
+    '<div class="hint" id="'+id+'_fb" style="margin-top:8px"></div>';
+  el.innerHTML = widgetShell('Quiz', b.q, '', body);
+  const opts = el.querySelectorAll('.opt');
+  const fb = document.getElementById(id+'_fb');
+  function apply(k){
+    opts.forEach((btn,j)=>{
+      btn.disabled = true; btn.classList.add('shown');
+      if(j===k) btn.classList.add(b.opts[j].ok?'sel-ok':'sel-bad');
+      else if(b.opts[j].ok) btn.classList.add('reveal-ok');
+    });
+    fb.textContent = b.opts[k].ok ? '✓ Risposta corretta.' : '✗ Non corretta — la risposta giusta è evidenziata in verde.';
+    fb.style.color = b.opts[k].ok ? 'var(--ok)' : 'var(--bad)';
+  }
+  opts.forEach(btn=>btn.addEventListener('click',()=>{
+    const k = +btn.dataset.k; quizState[b.id]=k; saveAll(); apply(k); refreshStats();
+  }));
+  if(quizState[b.id]!==undefined) apply(quizState[b.id]);
+}
+
+/* ---------- esercizio ---------- */
+function mountExercise(id, b){
+  const el = document.getElementById(id);
+  const body = '<textarea id="'+id+'_ta" rows="9" placeholder="'+esc(b.placeholder||'')+'"></textarea>'+
+    '<div class="btnrow"><span class="saved" id="'+id+'_sv">salvato</span><span style="flex:1"></span>'+
+    (b.solution?'<button class="btn" id="'+id+'_sol">Mostra nota del docente</button>':'')+'</div>'+
+    (b.solution?'<div id="'+id+'_solbox" class="callout ok" style="display:none"><span class="ct">Nota del docente</span><div class="prose" style="font-size:14px">'+b.solution+'</div></div>':'');
+  el.innerHTML = widgetShell('Esercizio', b.label, b.prompt, body);
+  const ta = document.getElementById(id+'_ta');
+  const sv = document.getElementById(id+'_sv');
+  ta.value = answers[b.id] || '';
+  let t;
+  ta.addEventListener('input',()=>{
+    answers[b.id]=ta.value; clearTimeout(t);
+    t=setTimeout(()=>{ saveAll(); sv.classList.add('on'); setTimeout(()=>sv.classList.remove('on'),1200); refreshStats(); },400);
+  });
+  if(b.solution){
+    const btn=document.getElementById(id+'_sol'), box=document.getElementById(id+'_solbox');
+    btn.addEventListener('click',()=>{
+      const open = box.style.display!=='none';
+      box.style.display = open?'none':'block';
+      btn.textContent = open?'Mostra nota del docente':'Nascondi nota';
+    });
+  }
+}
+
+/* ---------- checklist ---------- */
+function mountChecklist(id, b){
+  const el = document.getElementById(id);
+  const saved = store.get('ck.'+b.id, []);
+  const body = b.items.map((it,k)=>
+    '<label class="chk'+(saved[k]?' on':'')+'" data-k="'+k+'"><input type="checkbox" '+(saved[k]?'checked':'')+
+    '><span class="lb" style="font-weight:500">'+it+'</span></label>').join('')+
+    '<div class="scoreline" style="margin-top:8px"><span id="'+id+'_c"></span><span></span></div>';
+  el.innerHTML = widgetShell('Checklist', b.title, 'Le spunte si salvano nel browser e finiscono nell’export.', body);
+  const rows = el.querySelectorAll('.chk');
+  const cnt = document.getElementById(id+'_c');
+  function upd(){
+    let n=0; rows.forEach((r,k)=>{ const c=r.querySelector('input').checked; saved[k]=c; if(c)n++; r.classList.toggle('on',c); });
+    cnt.textContent = n+'/'+b.items.length+' completati';
+    store.set('ck.'+b.id, saved); refreshStats();
+  }
+  rows.forEach(r=>r.querySelector('input').addEventListener('change',upd));
+  upd();
+}
+
+/* ---------- il ciclo dell'agente ---------- */
+const LOOP = [
+  {b:'Il compito', t:'Tu scrivi cosa serve',
+   d:'«Aggiungi l\'opzione --dry-run a csv2json.py»',
+   log:'[tu] Aggiungi l\'opzione --dry-run a csv2json.py'},
+  {b:'Decide', t:'Il modello sceglie il primo passo',
+   d:'Non conosce il file. La prima mossa è sempre guardare.',
+   log:'[modello] Devo prima leggere il file. Uso lo strumento "leggi".'},
+  {b:'Strumento', t:'Il programma esegue davvero',
+   d:'Legge il file dal disco. Questo lo fa il programma, non il modello.',
+   log:'[strumento] leggi("csv2json.py") -> 41 righe di codice'},
+  {b:'Risultato', t:'Il contenuto torna nel contesto',
+   d:'Adesso il modello ha davanti il codice vero. Prima non ce l\'aveva.',
+   log:'[contesto] ora contiene: compito + le 41 righe del file'},
+  {b:'Decide', t:'Secondo giro: adesso può scrivere',
+   d:'Sa dove stanno gli argomenti e dove si scrive il file.',
+   log:'[modello] Aggiungo il parametro e il controllo prima della scrittura.'},
+  {b:'Strumento', t:'Modifica il file',
+   d:'Scrive sul disco. Da qui in poi git diff ti mostra tutto.',
+   log:'[strumento] modifica("csv2json.py") -> +6 righe, -1 riga'},
+  {b:'Verifica', t:'Lancia il comando e guarda',
+   d:'È il passo che distingue un agente da una chat: controlla il proprio lavoro.',
+   log:'[strumento] shell("python csv2json.py dati.csv --dry-run")\n-> scriverebbe dati.json (3 righe). Nessun file creato.'},
+  {b:'Fine', t:'Ha finito e te lo dice',
+   d:'Se il comando avesse dato errore, sarebbe tornato al passo «decide». Da solo.',
+   log:'[modello] Fatto: --dry-run aggiunta e provata. Diff: 6 righe.'}
+];
+function mountAgentLoop(id){
+  const el = document.getElementById(id);
+  let i = 0, timer = null;
+  const body =
+    '<div class="loopgrid" id="'+id+'_g"></div>'+
+    '<div class="preview" id="'+id+'_lg"></div>'+
+    '<div class="btnrow">'+
+      '<button class="btn primary" id="'+id+'_nx">Passo successivo</button>'+
+      '<button class="btn" id="'+id+'_au">▶ Automatico</button>'+
+      '<button class="btn" id="'+id+'_rs">Riavvia</button>'+
+      '<span class="hint" id="'+id+'_c" style="margin-left:auto"></span>'+
+    '</div>';
+  el.innerHTML = widgetShell('Lab 1.1','Il ciclo di un agente, passo per passo',
+    'Un compito piccolo, seguito dall\'inizio alla fine. Guarda cosa entra nel contesto a ogni giro: è quello che cambia tutto.', body);
+  const g = document.getElementById(id+'_g'), lg = document.getElementById(id+'_lg');
+  function draw(){
+    g.innerHTML = LOOP.map((s,k)=>
+      '<div class="lstep'+(k===i?' on':(k<i?' past':''))+'"><b>'+s.b+'</b>'+s.t+'<span>'+s.d+'</span></div>').join('');
+    lg.textContent = LOOP.slice(0,i+1).map(s=>s.log).join('\n');
+    lg.scrollTop = lg.scrollHeight;
+    document.getElementById(id+'_c').textContent = 'passo '+(i+1)+' di '+LOOP.length;
+  }
+  function next(){ if(i<LOOP.length-1){ i++; draw(); } else stop(); }
+  function stop(){ if(timer){ clearInterval(timer); timer=null; document.getElementById(id+'_au').textContent='▶ Automatico'; } }
+  document.getElementById(id+'_nx').addEventListener('click',()=>{ stop(); next(); });
+  document.getElementById(id+'_rs').addEventListener('click',()=>{ stop(); i=0; draw(); });
+  document.getElementById(id+'_au').addEventListener('click',()=>{
+    if(timer){ stop(); return; }
+    if(i>=LOOP.length-1) i=0;
+    document.getElementById(id+'_au').textContent='⏸ Pausa';
+    timer = setInterval(next, 1600); draw();
+  });
+  draw();
+}
+
+/* ---------- builder del file di contesto ---------- */
+const CTX_ITEMS = [
+  {k:'cmd',  s:'Comandi',  tx:'I comandi esatti per installare, costruire, testare, lint', w:8,  c:'core', why:'È la cosa che serve di più e che l\'agente non può indovinare senza aprire mezza repo.'},
+  {k:'gotcha',s:'Comandi', tx:'La trappola dei comandi ("usa pnpm, non npm: i lockfile vanno in conflitto")', w:3, c:'core', why:'Una riga che evita un errore sistematico. Il rapporto valore/costo migliore di tutti.'},
+  {k:'entry',s:'Mappa',    tx:'Entry point e le 4 cartelle che contano', w:8, c:'core', why:'Gli dà l\'orientamento in 8 righe invece che in venti letture di file.'},
+  {k:'tree', s:'Mappa',    tx:'L\'albero completo delle cartelle, file per file', w:60, c:'bad', why:'Invecchia in una settimana e l\'agente sa cercare da solo. Costo alto, valore quasi zero.'},
+  {k:'conv', s:'Regole',   tx:'2-3 convenzioni non ovvie ("ogni rotta va aggiunta anche a routes.ts")', w:6, c:'core', why:'Sono le cose che non si deducono dal codice: esattamente quello che serve scrivere.'},
+  {k:'bug',  s:'Regole',   tx:'Una regola nata da un bug vero, con scritto il perché', w:4, c:'core', why:'Le regole con un motivo vengono seguite di più. E tu ti ricordi perché c\'è.'},
+  {k:'nice', s:'Regole',   tx:'"Scrivi codice pulito, usa nomi chiari, segui i principi SOLID"', w:6, c:'bad', why:'Non si può verificare e non cambia il comportamento. Rumore che diluisce le righe utili.'},
+  {k:'style',s:'Regole',   tx:'Le 40 regole di stile del codice, una per riga', w:45, c:'bad', why:'Questo è lavoro del linter, non del file di contesto. Una riga: "lancia pnpm lint --fix".'},
+  {k:'hist', s:'Contorno', tx:'La storia del progetto e chi l\'ha scritto', w:15, c:'bad', why:'Non serve a nessun compito. Costa a ogni messaggio, per sempre.'},
+  {k:'arch', s:'Contorno', tx:'Il documento di architettura completo, copiato dentro', w:120, c:'bad', why:'Va in docs/ con un rimando di una riga. Così si legge solo quando serve.'},
+  {k:'link', s:'Contorno', tx:'Rimandi di una riga ai documenti lunghi ("Autenticazione: docs/auth.md")', w:5, c:'core', why:'Il modo giusto di avere i documenti lunghi: costo minimo, apertura quando serve.'},
+  {k:'sec',  s:'Contorno', tx:'Le credenziali del database di sviluppo, "così le ha sottomano"', w:4, c:'never', why:'Mai. Questo file sta in git e viene letto ad alta voce dal modello.'}
+];
+function mountCtxFiles(id){
+  const el = document.getElementById(id);
+  const saved = store.get('ctxfiles', {cmd:1,gotcha:1,entry:1,conv:1,tree:0,bug:0,nice:0,style:0,hist:0,arch:0,link:0,sec:0});
+  let secs = [], out = '';
+  CTX_ITEMS.forEach(it=>{ if(secs.indexOf(it.s)<0) secs.push(it.s); });
+  secs.forEach(s=>{
+    out += '<div class="fl-sec">'+s+'</div>';
+    CTX_ITEMS.filter(i=>i.s===s).forEach(it=>{
+      out += '<label class="fl-row'+(saved[it.k]?' on':'')+'" data-k="'+it.k+'">'+
+        '<input type="checkbox" '+(saved[it.k]?'checked':'')+'><span>'+it.tx+'</span>'+
+        '<span class="w">~'+it.w+' righe</span></label>';
+    });
+  });
+  const body = '<div class="split"><div>'+out+'</div><div>'+
+    '<div class="meter"><i id="'+id+'_m"></i></div>'+
+    '<div class="scoreline"><span id="'+id+'_n"></span><span>obiettivo: 100 righe</span></div>'+
+    '<div class="diag" id="'+id+'_d"></div></div></div>';
+  el.innerHTML = widgetShell('Lab 2.1','Componi il tuo AGENTS.md',
+    'Spunta cosa ci metteresti. A destra vedi quanto pesa e cosa ne pensa il revisore.', body);
+  const rows = el.querySelectorAll('.fl-row');
+  function upd(){
+    let tot=0, core=0, bad=[], never=false;
+    rows.forEach(r=>{
+      const k=r.dataset.k, it=CTX_ITEMS.find(x=>x.k===k), on=r.querySelector('input').checked;
+      saved[k]=on?1:0; r.classList.toggle('on',on);
+      if(on){ tot+=it.w; if(it.c==='core') core++; if(it.c==='bad') bad.push(it); if(it.c==='never') never=true; }
+    });
+    store.set('ctxfiles',saved);
+    document.getElementById(id+'_m').style.width = Math.min(100, tot/2)+'%';
+    document.getElementById(id+'_m').style.background = tot>160?'var(--bad)': tot>110?'var(--warn)':'var(--ok)';
+    document.getElementById(id+'_n').textContent = '≈ '+tot+' righe';
+    const d=[];
+    if(never) d.push(['bad','Hai messo dei segreti in un file che sta in git e che il modello legge per intero. Toglili subito: questo è l\'unico errore della lista che non si recupera.']);
+    if(tot>160) d.push(['bad','Oltre 160 righe: questo file lo paghi a ogni singolo messaggio, tutto il giorno. E le tre righe che contano davvero sono annegate in mezzo.']);
+    else if(tot>110) d.push(['warn','Sopra le 110 righe. Si può ancora tenere, ma guarda se c\'è qualcosa da spostare in docs/ con un rimando.']);
+    bad.forEach(it=>d.push(['warn','«'+it.tx.slice(0,48)+'…» — '+it.why]));
+    if(core<4) d.push(['warn','Mancano le basi. Senza comandi, entry point e convenzioni non ovvie, l\'agente deve dedurre tutto da capo ogni volta.']);
+    if(!saved.link && (saved.arch||saved.style)) d.push(['warn','Hai copiato dentro un documento lungo invece di richiamarlo con una riga. È il taglio che fa risparmiare di più.']);
+    if(!d.length && tot<=110 && core>=4) d.push(['ok','File difendibile: sta in una pagina, ha i comandi, la mappa, le convenzioni non ovvie e nessun riempitivo. Adesso l\'unica cosa che conta è tenerlo aggiornato quando l\'agente sbaglia.']);
+    document.getElementById(id+'_d').innerHTML = d.map(x=>'<div style="color:'+(x[0]==='bad'?'var(--bad)':x[0]==='warn'?'var(--warn)':'var(--ok)')+'">'+
+      (x[0]==='bad'?'✗ ':x[0]==='warn'?'⚠ ':'✓ ')+x[1]+'</div>').join('');
+    refreshStats();
+  }
+  rows.forEach(r=>r.querySelector('input').addEventListener('change',upd));
+  upd();
+}
+
+/* ---------- triage: dove lo metti? ---------- */
+const TRIAGE = [
+  {tx:'«I test si lanciano con pnpm test; un file solo con pnpm test <percorso>»', a:'a',
+   why:'AGENTS.md: serve praticamente a ogni compito ed è una riga sola.'},
+  {tx:'La procedura di release in 12 passi, che si usa una volta al mese', a:'f',
+   why:'File a parte (una skill, o docs/ con un rimando): lunga e rara. In AGENTS.md la pagheresti tutti i giorni per usarla una volta al mese.'},
+  {tx:'«Le date si salvano sempre in UTC: è già costato due bug»', a:'a',
+   why:'AGENTS.md: una riga, vale sempre, e il perché la rende più efficace.'},
+  {tx:'Il documento di 15 pagine su come funziona l\'autenticazione', a:'f',
+   why:'File a parte, richiamato con una riga. Si apre solo quando il compito riguarda l\'autenticazione.'},
+  {tx:'«Il progetto è nato nel 2019 ed è stato riscritto nel 2021»', a:'x',
+   why:'Da nessuna parte: non aiuta a fare nessun compito. Se proprio ti serve, sta nel README per le persone.'},
+  {tx:'«Non modificare src/generated/: è prodotto da pnpm codegen»', a:'a',
+   why:'AGENTS.md: è una trappola classica. Senza questa riga l\'agente modifica quei file e il lavoro sparisce alla prossima generazione.'},
+  {tx:'La password del database di sviluppo', a:'x',
+   why:'Da nessuna parte. Mai in un file di contesto: sta in git e viene letto dal modello. Va in un gestore di segreti o in un .env non tracciato.'},
+  {tx:'«Scrivi sempre codice leggibile e ben documentato»', a:'x',
+   why:'Da nessuna parte: non si può verificare e non cambia il comportamento. Occupa spazio e diluisce le righe utili.'},
+  {tx:'Le convenzioni specifiche del frontend, che valgono solo dentro frontend/', a:'f',
+   why:'Un AGENTS.md dentro frontend/. Più il file è vicino al codice, più è specifico — e non pesa su chi lavora sul backend.'},
+  {tx:'«Ogni endpoint nuovo va aggiunto anche a src/api/routes.ts»', a:'a',
+   why:'AGENTS.md: una riga, non si deduce dal codice, e senza il risultato è un 404 difficile da capire.'}
+];
+const TR_LB = {a:'AGENTS.md', f:'File a parte', x:'Da nessuna parte'};
+function mountTriage(id){
+  const el = document.getElementById(id);
+  const saved = store.get('triage', {});
+  const body = TRIAGE.map((it,k)=>
+    '<div class="sorter-row" data-k="'+k+'"><span class="it">'+it.tx+'</span><span class="bs">'+
+    ['a','f','x'].map(c=>'<button class="bbtn" data-c="'+c+'">'+TR_LB[c]+'</button>').join('')+
+    '</span><span class="fb"></span></div>').join('')+
+    '<div class="scoreline" style="margin-top:10px"><span id="'+id+'_s"></span><button class="btn" id="'+id+'_rs" style="padding:3px 10px;font-size:12px">Azzera</button></div>';
+  el.innerHTML = widgetShell('Lab 2.2','Dove lo metti?',
+    'Tre destinazioni: sempre in contesto, in un file che si apre quando serve, o da nessuna parte.', body);
+  const rows = el.querySelectorAll('.sorter-row');
+  function paint(){
+    let ok=0, tot=0;
+    rows.forEach((r,k)=>{
+      const ch = saved[k];
+      r.querySelectorAll('.bbtn').forEach(b=>b.classList.toggle('on', b.dataset.c===ch));
+      r.classList.remove('ok','bad','done');
+      if(ch){ tot++; const good = ch===TRIAGE[k].a; if(good) ok++;
+        r.classList.add('done', good?'ok':'bad');
+        r.querySelector('.fb').textContent = (good?'✓ ':'✗ ')+TRIAGE[k].why;
+      } else r.querySelector('.fb').textContent='';
+    });
+    document.getElementById(id+'_s').textContent = tot? ok+'/'+tot+' corrette ('+TRIAGE.length+' in tutto)' : 'nessuna risposta';
+    refreshStats();
+  }
+  rows.forEach(r=>r.querySelectorAll('.bbtn').forEach(b=>b.addEventListener('click',()=>{
+    saved[r.dataset.k]=b.dataset.c; store.set('triage',saved); paint();
+  })));
+  document.getElementById(id+'_rs').addEventListener('click',()=>{
+    Object.keys(saved).forEach(k=>delete saved[k]); store.set('triage',saved); paint();
+  });
+  paint();
+}
+
+/* ---------- comando secco vs sessione ---------- */
+function mountCmdLab(id){
+  const el = document.getElementById(id);
+  const st = store.get('cmdlab', {task:'Riassumi in 5 punti cosa fa questo script', fmt:0, wr:0, pipe:0, loop:0, tool:'pi'});
+  const body =
+    '<div class="split"><div>'+
+      '<label class="fl">Il compito</label>'+
+      '<input type="text" id="'+id+'_t" placeholder="Es. Elenca le funzioni pubbliche, una per riga">'+
+      '<label class="chk" style="margin-top:10px"><input type="checkbox" id="'+id+'_fmt"><span>'+
+        '<span class="lb">Output in formato stretto</span>'+
+        '<span class="ds">Serve quando il risultato lo legge un altro comando, non una persona.</span></span></label>'+
+      '<label class="chk"><input type="checkbox" id="'+id+'_wr"><span>'+
+        '<span class="lb">Può scrivere file e lanciare comandi</span>'+
+        '<span class="ds">Senza permessi resta fermo ad aspettare. Con i permessi, fa sul serio.</span></span></label>'+
+      '<label class="chk"><input type="checkbox" id="'+id+'_pipe"><span>'+
+        '<span class="lb">Riceve il testo da un altro comando (pipe)</span>'+
+        '<span class="ds">Es. git diff | ... — il contenuto arriva da stdin.</span></span></label>'+
+      '<label class="chk"><input type="checkbox" id="'+id+'_loop"><span>'+
+        '<span class="lb">Ripetuto su tanti file</span>'+
+        '<span class="ds">Il caso in cui il comando secco vale davvero la pena.</span></span></label>'+
+    '</div><div>'+
+      '<div class="tabs">'+
+        '<button class="tab" data-f="pi">Pi</button>'+
+        '<button class="tab" data-f="claude">Claude Code</button>'+
+      '</div>'+
+      '<div class="preview" id="'+id+'_pv"></div>'+
+      '<div class="btnrow"><button class="btn" id="'+id+'_cp">Copia</button>'+
+      '<span class="saved" id="'+id+'_sv">copiato</span></div>'+
+      '<div class="diag" id="'+id+'_d"></div>'+
+    '</div></div>';
+  el.innerHTML = widgetShell('Lab 5.1','Costruisci il comando secco',
+    'Stesso compito, senza sessione. Spunta cosa ti serve e guarda come cambia il comando — e cosa devi stare attento a non fare.', body);
+  const t=document.getElementById(id+'_t'), pv=document.getElementById(id+'_pv'), dg=document.getElementById(id+'_d');
+  t.value = st.task;
+  ['fmt','wr','pipe','loop'].forEach(k=>{ document.getElementById(id+'_'+k).checked = !!st[k]; });
+  let last='';
+  function upd(){
+    st.task=t.value; ['fmt','wr','pipe','loop'].forEach(k=>{ st[k]=document.getElementById(id+'_'+k).checked?1:0; });
+    store.set('cmdlab',st);
+    const task = (st.task||'IL TUO COMPITO').replace(/"/g,"'");
+    const isPi = st.tool==='pi';
+    const bin = isPi?'pi':'claude';
+    let opts = '';
+    if(st.fmt) opts += isPi ? ' --formato json' : ' --output-format json';
+    if(st.wr)  opts += isPi ? ' --consenti-scrittura' : ' --allowedTools "Read,Write,Bash"';
+    let full = '';
+    const prompt = st.pipe ? (task+'. Il testo da analizzare arriva da stdin.') : task;
+    const core = bin+' -p "'+prompt+'"'+opts;
+    if(st.pipe) full = 'git diff | '+core;
+    else full = core;
+    if(st.loop){
+      full = 'for f in src/*.ts; do\n'+
+             '  echo "== $f"\n'+
+             '  '+(st.pipe? 'cat "$f" | '+core : bin+' -p "'+prompt+' File: $f"'+opts)+'\n'+
+             'done';
+    }
+    last = full;
+    pv.textContent = full;
+    el.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on', x.dataset.f===st.tool));
+    const d=[];
+    if(isPi) d.push(['ok','I nomi esatti delle opzioni di Pi li vedi con <code>pi --help</code>: la <strong>forma</strong> del comando è questa, i nomi possono cambiare da versione a versione.']);
+    if(st.wr) d.push(['bad','Con i permessi di scrittura il comando fa modifiche senza chiederti niente. Usalo <strong>solo</strong> su una copia usa e getta o dentro un contenitore isolato — mai sulla repo vera.']);
+    if(!st.wr && st.loop) d.push(['ok','Senza permessi di scrittura: legge e risponde, non tocca niente. È il modo giusto per i giri di analisi su tanti file.']);
+    if(st.fmt) d.push(['ok','Con l\'output in formato stretto puoi passare il risultato a un altro comando. Ricordati di chiedere il formato <strong>anche dentro il compito</strong>: «rispondi solo con JSON valido, niente altro».']);
+    if(!st.fmt && st.loop) d.push(['warn','Su tanti file senza un formato fisso, l\'output di ogni giro è diverso: difficile da rileggere e impossibile da elaborare. Chiedi un formato.']);
+    if(st.pipe) d.push(['ok','In pipe il contenuto arriva da stdin: comodo per diff, log, output di altri comandi. Attenzione a cosa ci passi dentro: se il log ha dati personali, ripuliscilo prima.']);
+    if(!st.task.trim()) d.push(['warn','Compito vuoto: nel comando secco non c\'è nessuno che possa chiarire dopo. Più il compito è preciso, meno giri buttati.']);
+    dg.innerHTML = d.map(x=>'<div style="color:'+(x[0]==='bad'?'var(--bad)':x[0]==='warn'?'var(--warn)':'var(--ok)')+'">'+
+      (x[0]==='bad'?'✗ ':x[0]==='warn'?'⚠ ':'✓ ')+x[1]+'</div>').join('');
+  }
+  el.querySelectorAll('.tab').forEach(x=>x.addEventListener('click',()=>{ st.tool=x.dataset.f; upd(); }));
+  t.addEventListener('input',upd);
+  ['fmt','wr','pipe','loop'].forEach(k=>document.getElementById(id+'_'+k).addEventListener('change',upd));
+  document.getElementById(id+'_cp').addEventListener('click',()=>{
+    navigator.clipboard && navigator.clipboard.writeText(last);
+    const sv=document.getElementById(id+'_sv'); sv.classList.add('on'); setTimeout(()=>sv.classList.remove('on'),1400);
+  });
+  upd();
+}
+
+/* ---------- compositore di compiti ---------- */
+const PKS = [];
+function mountPromptKit(id, b){
+  PKS.push(b);
+  const el = document.getElementById(id);
+  const body = '<div class="split"><div>'+
+    b.fields.map(f=>'<label class="fl">'+f.lb+'</label><textarea data-k="'+f.k+'" rows="'+f.rows+'" placeholder="'+esc(f.ph)+'"></textarea>').join('')+
+    '</div><div><label class="fl">Compito pronto da copiare</label>'+
+    '<div class="preview" id="'+id+'_pv" style="max-height:560px"></div>'+
+    '<div class="btnrow"><button class="btn primary" id="'+id+'_cp">Copia il compito</button>'+
+    '<span class="saved" id="'+id+'_sv">copiato</span></div></div></div>';
+  el.innerHTML = widgetShell('Compito', b.title, b.sub, body);
+  const tas = el.querySelectorAll('textarea');
+  const pv = document.getElementById(id+'_pv');
+  let last='';
+  function upd(save){
+    const v = {};
+    tas.forEach(ta=>{ v[ta.dataset.k]=ta.value.trim(); answers[b.id+'.'+ta.dataset.k]=ta.value; });
+    last = b.build(v);
+    pv.textContent = last;
+    if(save){ saveAll(); refreshStats(); }
+  }
+  tas.forEach(ta=>{
+    ta.value = answers[b.id+'.'+ta.dataset.k] || '';
+    let t; ta.addEventListener('input',()=>{ upd(false); clearTimeout(t); t=setTimeout(()=>upd(true),400); });
+  });
+  document.getElementById(id+'_cp').addEventListener('click',()=>{
+    navigator.clipboard && navigator.clipboard.writeText(last);
+    const sv=document.getElementById(id+'_sv'); sv.classList.add('on'); setTimeout(()=>sv.classList.remove('on'),1400);
+  });
+  upd(false);
+}
+
+/* ---------- piano di adozione ---------- */
+const PLAN = [
+  {k:'uno', lb:'1 · Il primo uso, quello che parte lunedì', ph:'Un compito solo, concreto, che fai già oggi a mano. Es. «primo giro di analisi sui log degli errori della notte».', rows:3},
+  {k:'file', lb:'2 · Il file di contesto: chi lo scrive, dove sta, chi lo rivede', ph:'Es. lo scrivo io entro venerdì, sta in AGENTS.md alla radice, lo rivediamo in retrospettiva ogni due settimane.', rows:3},
+  {k:'skill', lb:'3 · La prima skill: quale procedura smettete di spiegare a voce', ph:'Es. la procedura di release. Oggi la spiego a ogni persona nuova.', rows:3},
+  {k:'reg', lb:'4 · Le regole della squadra: cosa si può dare all\'agente e cosa no', ph:'Es. mai su dati veri; sempre su branch a parte; il diff si legge sempre prima del commit; niente log non ripuliti.', rows:4},
+  {k:'ver', lb:'5 · Come verificate il lavoro prima che entri in main', ph:'Es. code review normale + il test deve fallire se si rompe il codice apposta.', rows:3},
+  {k:'mis', lb:'6 · Come saprete fra un mese se è andata bene', ph:'Es. quante ore di lettura codice risparmiate; quanti bug trovati dall\'analisi; quante volte abbiamo dovuto buttare il lavoro dell\'agente.', rows:3}
+];
+function mountPlan(id){
+  const el=document.getElementById(id);
+  const body=PLAN.map(f=>'<label class="fl">'+f.lb+'</label><textarea data-k="'+f.k+'" rows="'+f.rows+'" placeholder="'+esc(f.ph)+'"></textarea>').join('')+
+    '<div class="btnrow"><button class="btn primary" id="'+id+'_ex">Esporta il piano</button><span class="saved" id="'+id+'_sv">salvato</span></div>';
+  el.innerHTML=widgetShell('Piano','Piano di adozione',
+    'Sei domande. Compila la 6 per prima: se non sai come misurerai il risultato, il primo uso non è ancora scelto bene.',body);
+  const sv=document.getElementById(id+'_sv');
+  el.querySelectorAll('textarea').forEach(ta=>{
+    const k='plan.'+ta.dataset.k;
+    ta.value=answers[k]||'';
+    let t; ta.addEventListener('input',()=>{ answers[k]=ta.value; clearTimeout(t);
+      t=setTimeout(()=>{saveAll(); sv.classList.add('on'); setTimeout(()=>sv.classList.remove('on'),1200); refreshStats();},400); });
+  });
+  document.getElementById(id+'_ex').addEventListener('click',()=>doExport(true));
+}
+
+/* ============================================================
+   NAVIGAZIONE
+   ============================================================ */
+function renderNav(){
+  const nav=document.getElementById('nav');
+  nav.innerHTML=MODULES.map((m,i)=>
+    '<button class="navitem'+(i===current?' active':'')+'" data-i="'+i+'">'+
+    '<span class="idx">'+m.n+'</span><span><span class="nt">'+m.title+'</span><span class="nm">'+m.min+' minuti</span></span>'+
+    (done[m.id]?'<span class="tick">●</span>':'')+'</button>').join('');
+  nav.querySelectorAll('.navitem').forEach(b=>b.addEventListener('click',()=>go(+b.dataset.i)));
+}
+
+function renderModule(){
+  const m=MODULES[current];
+  mounts.length=0;
+  const main=document.getElementById('main');
+  const isBreak = m.id==='brk';
+  let html='';
+  if(!isBreak){
+    html+='<div class="eyebrow">Modulo '+m.n+' · '+m.min+' minuti</div><h1>'+m.title+'</h1>';
+    html+='<div class="mod-meta"><span class="badge">'+(current+1)+' di '+MODULES.length+'</span>'+
+      '<span class="badge" id="modTimer">⏱ --:--</span>'+
+      '<label class="chk" style="margin:0;padding:6px 11px"><input type="checkbox" id="modDone" '+(done[m.id]?'checked':'')+'><span class="lb" style="font-weight:600;font-size:13px">Modulo completato</span></label></div>';
+  }
+  html+=m.blocks.map((b,i)=>renderBlock(b,m.id,i)).join('');
+  html+='<div class="footnav">'+
+    (current>0?'<button class="btn" id="prevBtn">← '+MODULES[current-1].title+'</button>':'<span></span>')+
+    (current<MODULES.length-1?'<button class="btn primary" id="nextBtn">'+MODULES[current+1].title+' →</button>':'<span></span>')+
+    '</div>';
+  main.innerHTML=html;
+  mounts.forEach(f=>f());
+  const pb=document.getElementById('prevBtn'); if(pb) pb.addEventListener('click',()=>go(current-1));
+  const nb=document.getElementById('nextBtn'); if(nb) nb.addEventListener('click',()=>go(current+1));
+  const md=document.getElementById('modDone');
+  if(md) md.addEventListener('change',()=>{ if(md.checked) done[m.id]=true; else delete done[m.id]; saveAll(); renderNav(); refreshStats(); });
+  window.scrollTo({top:0,behavior:'instant'});
+  updModTimer();
+}
+
+function go(i){
+  if(i<0||i>=MODULES.length) return;
+  current=i; store.set('current',i); renderNav(); renderModule(); refreshStats();
+}
+
+/* ============================================================
+   TIMER
+   ============================================================ */
+const TOTAL=4*3600;
+let elapsed=store.get('elapsed',0), running=false, tick=null;
+let modStart=null;
+function fmt(s){ s=Math.max(0,Math.floor(s)); const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(x).padStart(2,'0'); }
+function paintClock(){
+  const c=document.getElementById('clock');
+  c.textContent=fmt(elapsed)+' / 4:00:00';
+  c.style.color = elapsed>TOTAL?'var(--bad)': elapsed>TOTAL*0.9?'var(--warn)':'';
+}
+function updModTimer(){
+  const e=document.getElementById('modTimer'); if(!e) return;
+  const m=MODULES[current];
+  const spent = modStart!==null? Math.floor((elapsed-modStart)) : 0;
+  e.textContent='⏱ '+Math.floor(spent/60)+' / '+m.min+' min';
+  e.style.color = spent/60>m.min?'var(--warn)':'';
+}
+function toggleTimer(){
+  running=!running;
+  const b=document.getElementById('timerBtn');
+  b.textContent = running?'⏸ Pausa timer':'▶ Avvia timer';
+  if(running){ if(modStart===null) modStart=elapsed;
+    tick=setInterval(()=>{ elapsed++; store.set('elapsed',elapsed); paintClock(); updModTimer(); },1000); }
+  else clearInterval(tick);
+}
+
+/* ============================================================
+   STATS / EXPORT / TEMA
+   ============================================================ */
+function allBlocks(t){ return MODULES.flatMap(m=>m.blocks.filter(b=>b.t===t).map(b=>({m:m,b:b}))); }
+
+function refreshStats(){
+  const quizzes = allBlocks('quiz');
+  const aQ=Object.keys(quizState).length;
+  const okQ=quizzes.filter(x=>quizState[x.b.id]!==undefined && x.b.opts[quizState[x.b.id]].ok).length;
+  const exIds=allBlocks('exercise').map(x=>x.b.id);
+  const aE=exIds.filter(k=>(answers[k]||'').trim().length>20).length;
+  const kits=allBlocks('promptkit');
+  const aK=kits.filter(x=>x.b.fields.some(f=>(answers[x.b.id+'.'+f.k]||'').trim().length>10)).length;
+  const planN=PLAN.filter(f=>(answers['plan.'+f.k]||'').trim().length>20).length;
+  const dM=Object.keys(done).length;
+  const nM=MODULES.filter(m=>m.id!=='brk').length;
+  document.getElementById('statsBox').innerHTML=
+    'Moduli completati <strong>'+dM+'/'+nM+'</strong><br>'+
+    'Quiz risposti <strong>'+aQ+'/'+quizzes.length+'</strong>'+(aQ?' · corretti <strong>'+okQ+'</strong>':'')+'<br>'+
+    'Esercizi svolti <strong>'+aE+'/'+exIds.length+'</strong><br>'+
+    'Compiti composti <strong>'+aK+'/'+kits.length+'</strong><br>'+
+    'Piano <strong>'+planN+'/'+PLAN.length+'</strong> sezioni';
+  const tot=nM+quizzes.length+exIds.length+kits.length+PLAN.length;
+  document.getElementById('pbar').style.width=((dM+aQ+aE+aK+planN)/tot*100)+'%';
+}
+
+function doExport(planOnly){
+  const L=[];
+  const d=new Date();
+  const stamp=d.toLocaleDateString('it-IT')+' '+d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+  L.push('# Coding Agents — 4 ore');
+  L.push('');
+  L.push('Esportato il '+stamp+'  ·  tempo d’aula registrato: '+fmt(elapsed));
+  L.push('');
+  if(!planOnly){
+    L.push('## Risposte agli esercizi');
+    allBlocks('exercise').forEach(x=>{
+      const v=(answers[x.b.id]||'').trim();
+      L.push(''); L.push('### '+x.m.n+' — '+x.b.label);
+      L.push(''); L.push('> '+x.b.prompt);
+      L.push(''); L.push(v||'_(non compilato)_');
+    });
+    L.push(''); L.push('## Compiti composti (da riusare)');
+    allBlocks('promptkit').forEach(x=>{
+      const v={}; let any=false;
+      x.b.fields.forEach(f=>{ v[f.k]=(answers[x.b.id+'.'+f.k]||'').trim(); if(v[f.k]) any=true; });
+      L.push(''); L.push('### '+x.m.n+' — '+x.b.title);
+      L.push('');
+      if(!any){ L.push('_(non compilato)_'); }
+      else { L.push('```'); L.push(x.b.build(v)); L.push('```'); }
+    });
+    L.push(''); L.push('## Quiz');
+    allBlocks('quiz').forEach(x=>{
+      const k=quizState[x.b.id];
+      L.push('- **'+x.b.q.replace(/<[^>]+>/g,'')+'**');
+      L.push('  - Risposta data: '+(k===undefined?'_nessuna_':x.b.opts[k].tx+(x.b.opts[k].ok?' ✅':' ❌')));
+      if(k!==undefined&&!x.b.opts[k].ok) L.push('  - Corretta: '+x.b.opts.find(o=>o.ok).tx);
+    });
+    L.push(''); L.push('## Checklist');
+    allBlocks('checklist').forEach(x=>{
+      const s=store.get('ck.'+x.b.id,[]);
+      L.push(''); L.push('### '+x.m.n+' — '+x.b.title);
+      x.b.items.forEach((it,i)=>L.push('- ['+(s[i]?'x':' ')+'] '+it));
+    });
+    const tr=store.get('triage',null);
+    if(tr && Object.keys(tr).length){
+      L.push(''); L.push('## Esercizio «Dove lo metti?»');
+      let ok=0, tot=0;
+      TRIAGE.forEach((it,k)=>{ if(tr[k]!==undefined){ tot++; if(tr[k]===it.a) ok++;
+        L.push('- '+(tr[k]===it.a?'✅':'❌')+' '+it.tx+' → hai scelto **'+TR_LB[tr[k]]+'**'+(tr[k]===it.a?'':', corretta: **'+TR_LB[it.a]+'**')); } });
+      L.push('');
+      L.push('**'+ok+'/'+tot+' corrette.**');
+    }
+    const cf=store.get('ctxfiles',null);
+    if(cf){
+      L.push(''); L.push('## Il tuo AGENTS.md composto in aula');
+      let tot=0;
+      CTX_ITEMS.forEach(it=>{ if(cf[it.k]){ tot+=it.w; L.push('- '+it.tx+' (~'+it.w+' righe)'); } });
+      L.push(''); L.push('**Totale stimato: '+tot+' righe** (obiettivo: sotto le 100).');
+    }
+  }
+  L.push(''); L.push('## Piano di adozione');
+  PLAN.forEach(f=>{ L.push(''); L.push('### '+f.lb); L.push(''); L.push((answers['plan.'+f.k]||'').trim()||'_(non compilato)_'); });
+  const blob=new Blob([L.join('\n')],{type:'text/markdown;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=(planOnly?'piano-adozione-coding-agents':'corso-agents-coding')+'.md';
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+document.getElementById('timerBtn').addEventListener('click',toggleTimer);
+document.getElementById('exportBtn').addEventListener('click',()=>doExport(false));
+document.getElementById('themeBtn').addEventListener('click',()=>{
+  const t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',t); store.set('theme',t);
+});
+document.getElementById('resetBtn').addEventListener('click',()=>{
+  if(!confirm('Azzerare tutte le risposte, le checklist e il timer? Non si torna indietro.')) return;
+  store.clearAll(); location.reload();
+});
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return;
+  if(e.key==='ArrowRight') go(current+1);
+  if(e.key==='ArrowLeft') go(current-1);
+});
+if(!store.get('theme',null) && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+  document.documentElement.setAttribute('data-theme','dark');
+else document.documentElement.setAttribute('data-theme', store.get('theme','light'));
+
+renderNav(); renderModule(); paintClock(); refreshStats();
+</script>
+</body>
+</html>
