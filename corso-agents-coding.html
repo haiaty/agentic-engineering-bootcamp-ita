@@ -329,9 +329,16 @@ MODULES.push({
       ['Vantaggio','Lo puoi automatizzare, mettere in pipe, far girare su cento cartelle.'],
       ['Svantaggio','Se il compito è scritto male te ne accorgi alla fine. Serve un compito preciso.']
     ]}},
+    {t:'code',lang:'bash',code:`# In sessione: lanci il comando senza compito, si apre la sessione e scrivi li'
+claude
+pi
+
+# Con un solo comando: il compito va nel comando, lui lavora, stampa e esce
+claude -p "Spiega in 5 righe cosa fa main.py"
+pi -p "Spiega in 5 righe cosa fa main.py"`},
     {t:'p',html:`<p>Nel modulo 05 li proviamo tutti e due sullo stesso compito, così la differenza si vede con gli occhi.</p>`},
 
-    {t:'p',html:`<h3>Cosa fanno bene e cosa fanno male</h3>
+    {t:'p',html:`<h3>Cosa fanno bene e cose che fanno su cui bisogna stare attenti</h3>
       <p>Dirlo chiaro all'inizio evita due errori opposti: aspettarsi troppo, e non usarlo dove serve.</p>`},
     {t:'split2',a:{h:'Fanno bene',items:[
       ['Girare per il codice','Trovano dove sta una cosa in un progetto grande molto più in fretta di te.'],
@@ -339,7 +346,7 @@ MODULES.push({
       ['Scrivere test','Soprattutto se hanno già degli esempi di test da cui copiare lo stile.'],
       ['Primo giro di debug','Leggono log lunghi e ci trovano il punto strano prima di te.'],
       ['Codice di contorno','Script, parser, comandi CLI, conversioni di formato.']
-    ]},b:{h:'Fanno male',items:[
+    ]},b:{h:'Cose che fanno su cui bisogna stare attenti',items:[
       ['Decisioni di architettura','Ti danno una risposta sicura anche quando la scelta giusta dipende da cose che non sanno.'],
       ['Regole di business non scritte','Se una regola sta solo nella testa di un collega, l\'agente la inventa.'],
       ['Concorrenza e tempi','Le gare fra thread e i problemi di ordine sono la cosa in cui sbagliano di più.'],
