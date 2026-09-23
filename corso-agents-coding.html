@@ -303,17 +303,7 @@ MODULES.push({
     {t:'agentloop'},
     {t:'callout',kind:'',title:'Una cosa importante da capire',html:`L'agente <strong>non ricorda niente</strong> fra una sessione e l'altra. Ogni volta che lo avvii riparte da zero e non sa nulla del tuo progetto. Tutto quello che sa arriva da: le tue parole, i file che legge in quel momento, e i file di contesto (modulo 02)`},
 
-    {t:'p',html:`<h3>I modi diversi di usare AI per il codice</h3>
-      <p>In giro ci sono tre cose diverse che vengono tutte chiamate "AI per il codice". Conviene tenerle separate:</p>`},
-    {t:'table',head:['Tipo','Cosa fa','Chi decide','Esempi'],rows:[
-      ['<strong>AutoCompletamento (inline)</strong>','Suggerisce la riga o il blocco che stai scrivendo','Tu, riga per riga','Copilot nell\'editor, Tabnine'],
-      ['<strong>Chat sul codice</strong>','Risponde a domande, propone un pezzo di codice da copiare','Tu: copi e incolli','ChatGPT/OpenwebUI'],
-      ['<strong>Agente</strong>','Legge, scrive, lancia comandi, va avanti da solo per più passi','Lui, dentro i limiti che gli dai','Claude Code, Pi, Codex CLI, Cursor Agent, Aider']
-    ]},
-    {t:'p',html:`<p>Il salto vero è fra la seconda e la terza riga. Con la chat il lavoro di applicare le modifiche resta tuo. Con l'agente il lavoro passa a lui, e il tuo lavoro diventa un altro: <strong>dare il compito bene e controllare il risultato</strong>.</p>`},
-
-    {t:'p',html:`<h3>Quali sono</h3>
-      <p>Il campo si muove in fretta e i nomi cambiano. Quello che non cambia è la divisione per <em>dove girano</em>:</p>`},
+    {t:'p',html:`<h3>Quali sono</h3>`},
     {t:'table',head:['Strumento','Dove gira','Note'],rows:[
       ['<strong>Claude Code</strong> (Anthropic)','Terminale, estensione IDE, web','Molto usato su codebase grandi. Legge <code>CLAUDE.md</code>. Ha skill, sub-agenti, hook.'],
       ['<strong>Pi</strong>','Terminale','Leggero e veloce da configurare. È quello che usiamo oggi nei laboratori.'],
@@ -365,6 +355,15 @@ MODULES.push({
         <li><strong>Leggi prima di approvare.</strong> Quando ti chiede il permesso di lanciare un comando, guardalo davvero. Il momento in cui smetti di leggere è il momento in cui ti fai male.</li>
       </ul>`},
     {t:'callout',kind:'bad',title:'La modalità "approva tutto"',html:`Tutti gli agenti hanno un'opzione per non chiedere mai il permesso. Serve, ma <strong>solo dentro un contenitore isolato o su una copia usa e getta</strong> del progetto. Usarla sul tuo computer di lavoro, sulla repo vera, è il modo più rapido per perdere un pomeriggio.`},
+
+    {t:'p',html:`<h3>I modi diversi di usare AI per il codice</h3>
+      <p>In giro ci sono tre cose diverse che vengono tutte chiamate "AI per il codice". Conviene tenerle separate:</p>`},
+    {t:'table',head:['Tipo','Cosa fa','Chi decide','Esempi'],rows:[
+      ['<strong>AutoCompletamento (inline)</strong>','Suggerisce la riga o il blocco che stai scrivendo','Tu, riga per riga','Copilot nell\'editor, Tabnine'],
+      ['<strong>Chat sul codice</strong>','Risponde a domande, propone un pezzo di codice da copiare','Tu: copi e incolli','ChatGPT/OpenwebUI'],
+      ['<strong>Agente</strong>','Legge, scrive, lancia comandi, va avanti da solo per più passi','Lui, dentro i limiti che gli dai','Claude Code, Pi, Codex CLI, Cursor Agent, Aider']
+    ]},
+    {t:'p',html:`<p>Il salto vero è fra la seconda e la terza riga. Con la chat il lavoro di applicare le modifiche resta tuo. Con l'agente il lavoro passa a lui, e il tuo lavoro diventa un altro: <strong>dare il compito bene e controllare il risultato</strong>.</p>`},
 
     {t:'quiz',id:'q1a',q:'Qual è la differenza vera fra una chat sul codice e un coding agent?',
       opts:[
