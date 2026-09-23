@@ -291,7 +291,7 @@ MODULES.push({
 MODULES.push({
   id:'m1', n:'01', title:'Cosa sono i coding agent', min:18,
   blocks:[
-    {t:'p',html:`<h3>Una definizione in una riga</h3>
+    {t:'p',html:`
       <p>Un <strong>coding agent</strong> è un programma che riceve un compito scritto a parole, <strong>legge i file del tuo progetto, lancia comandi sul tuo computer, scrive o modifica codice, guarda cosa è successo e riprova</strong> finché il compito è finito o finché si ferma a chiederti qualcosa.</p>
       <p>Dentro c'è un modello linguistico, ma il modello da solo non basta. Servono tre pezzi:</p>`},
     {t:'cards',cards:[
@@ -299,15 +299,15 @@ MODULES.push({
       {tag:'2',h:'Gli strumenti',p:'Leggi file, scrivi file, cerca nel codice, lancia un comando di shell, apri una pagina web.'},
       {tag:'3',h:'Il ciclo',p:'Il programma esegue lo strumento, rimanda il risultato al modello e riparte. Finché non ha finito.'}
     ]},
-    {t:'p',html:`<p>Il terzo pezzo è quello che cambia tutto. Una chat risponde una volta e si ferma. Un agente <strong>va avanti da solo</strong>: se un test fallisce lo legge, capisce perché e riprova. Se un file non esiste lo cerca altrove. Ogni giro costa tempo e token, ma il lavoro lo porta avanti lui.</p>`},
+    {t:'p',html:`<p>Una chat risponde una volta e si ferma. Un agente <strong>va avanti da solo</strong>: se un test fallisce lo legge, capisce perché e riprova. Se un file non esiste lo cerca altrove. Ogni giro costa tempo e token, ma il lavoro lo porta avanti lui.</p>`},
     {t:'agentloop'},
-    {t:'callout',kind:'',title:'La cosa più importante da capire',html:`L'agente <strong>non ricorda niente</strong> fra una sessione e l'altra. Ogni volta che lo avvii riparte da zero e non sa nulla del tuo progetto. Tutto quello che sa arriva da: le tue parole, i file che legge in quel momento, e i file di contesto (modulo 02). Non è pigrizia: è come funziona.`},
+    {t:'callout',kind:'',title:'Una cosa importante da capire',html:`L'agente <strong>non ricorda niente</strong> fra una sessione e l'altra. Ogni volta che lo avvii riparte da zero e non sa nulla del tuo progetto. Tutto quello che sa arriva da: le tue parole, i file che legge in quel momento, e i file di contesto (modulo 02)`},
 
-    {t:'p',html:`<h3>Non è la stessa cosa dell'autocompletamento</h3>
+    {t:'p',html:`<h3>I modi diversi di usare AI per il codice</h3>
       <p>In giro ci sono tre cose diverse che vengono tutte chiamate "AI per il codice". Conviene tenerle separate:</p>`},
     {t:'table',head:['Tipo','Cosa fa','Chi decide','Esempi'],rows:[
-      ['<strong>Completamento</strong>','Suggerisce la riga o il blocco che stai scrivendo','Tu, riga per riga','Copilot nell\'editor, Tabnine'],
-      ['<strong>Chat sul codice</strong>','Risponde a domande, propone un pezzo di codice da copiare','Tu: copi e incolli','La chat dell\'IDE, ChatGPT'],
+      ['<strong>AutoCompletamento (inline)</strong>','Suggerisce la riga o il blocco che stai scrivendo','Tu, riga per riga','Copilot nell\'editor, Tabnine'],
+      ['<strong>Chat sul codice</strong>','Risponde a domande, propone un pezzo di codice da copiare','Tu: copi e incolli','ChatGPT/OpenwebUI'],
       ['<strong>Agente</strong>','Legge, scrive, lancia comandi, va avanti da solo per più passi','Lui, dentro i limiti che gli dai','Claude Code, Pi, Codex CLI, Cursor Agent, Aider']
     ]},
     {t:'p',html:`<p>Il salto vero è fra la seconda e la terza riga. Con la chat il lavoro di applicare le modifiche resta tuo. Con l'agente il lavoro passa a lui, e il tuo lavoro diventa un altro: <strong>dare il compito bene e controllare il risultato</strong>.</p>`},
@@ -1894,7 +1894,10 @@ function renderModule(){
   main.innerHTML=html;
   mounts.forEach(f=>f());
   const pb=document.getElementById('prevBtn'); if(pb) pb.addEventListener('click',()=>go(current-1));
-  const nb=document.getElementById('nextBtn'); if(nb) nb.addEventListener('click',()=>go(current+1));
+  const nb=document.getElementById('nextBtn'); if(nb) nb.addEventListener('click',()=>{
+    if(!isBreak && !done[m.id]){ done[m.id]=true; saveAll(); }
+    go(current+1);
+  });
   const md=document.getElementById('modDone');
   if(md) md.addEventListener('change',()=>{ if(md.checked) done[m.id]=true; else delete done[m.id]; saveAll(); renderNav(); refreshStats(); });
   window.scrollTo({top:0,behavior:'instant'});
