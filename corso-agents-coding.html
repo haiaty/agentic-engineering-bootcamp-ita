@@ -301,7 +301,7 @@ MODULES.push({
 
 /* ---------- 1. Cosa sono i coding agent ---------- */
 MODULES.push({
-  id:'m1', n:'01', title:'Cosa sono i coding agent', min:18,
+  id:'m1', n:'01', title:'Cosa sono i coding agent', min:24,
   blocks:[
     {t:'p',html:`
       <p>Un <strong>coding agent</strong> è un programma che riceve un compito scritto a parole, <strong>legge i file del tuo progetto, lancia comandi sul tuo computer, scrive o modifica codice, guarda cosa è successo e riprova</strong> finché il compito è finito o finché si ferma a chiederti qualcosa.</p>
@@ -408,6 +408,52 @@ pi -p "Spiega in 5 righe cosa fa main.py"`},
         <li><strong>Leggi prima di approvare.</strong> Quando ti chiede il permesso di lanciare un comando, guardalo davvero. Il momento in cui smetti di leggere è il momento in cui ti fai male.</li>
       </ul>`},
     {t:'callout',kind:'bad',title:'La modalità "approva tutto"',html:`Tutti gli agenti hanno un'opzione per non chiedere mai il permesso. Serve, ma <strong>solo dentro un contenitore isolato o su una copia usa e getta</strong> del progetto. Usarla sul tuo computer di lavoro, sulla repo vera, è il modo più rapido per perdere un pomeriggio.`},
+
+    {t:'p',html:`<h3>Sicurezza: quanto danno può fare, al massimo</h3>
+      <p>L'agente lancia i comandi <strong>con i tuoi permessi</strong>: vede i file che vedi tu, legge le variabili d'ambiente della tua shell, usa le credenziali salvate sul tuo computer. E può sbagliare in due modi: per errore suo, oppure perché è stato <strong>manipolato da un testo che ha letto</strong> (un README, una issue, una pagina web, il commento in un file) con dentro istruzioni nascoste. Si chiama <em>prompt injection</em>, e non esiste ancora un modo per evitarla del tutto.</p>
+      <p>Quindi la domanda giusta non è «si comporterà bene?», ma: <strong>se va storto, quanto danno può fare?</strong> Il danno massimo che può fare si chiama <em>blast radius</em>, e lo decidi tu prima di iniziare, con tre leve.</p>`},
+    {t:'cards',cards:[
+      {tag:'Sandbox',h:'Dove gira',p:'Un contenitore, una VM o la sandbox integrata nell\'agente. Vede solo la cartella del progetto, non il resto del disco, e la rete è limitata. Quello che succede lì dentro resta lì dentro.'},
+      {tag:'Permessi',h:'Cosa può fare senza chiedere',p:'Leggere e lanciare i test sì. Push, installazioni, cancellazioni e comandi sul database solo con la tua conferma. Alcune cose mai, neanche su richiesta.'},
+      {tag:'Credenziali',h:'A cosa può arrivare',p:'Solo chiavi di sviluppo, con dati finti e permessi minimi. Una chiave che l\'agente non ha non la può usare male, né per errore né perché qualcuno lo ha manipolato.'}
+    ]},
+    {t:'table',head:['Azione','Livello consigliato','Perché'],rows:[
+      ['Leggere file del progetto, cercare nel codice','<strong>Libero</strong>','È il lavoro normale. L\'eccezione sono <code>.env</code> e i file con i secret: vanno esclusi.'],
+      ['Lanciare test, lint, typecheck, build','<strong>Libero</strong>','È il feedback che gli serve per correggersi da solo.'],
+      ['Modificare file nella repo','<strong>Libero o con conferma</strong>','Con git pulito ogni modifica si vede nel diff e si annulla.'],
+      ['Installare pacchetti, chiamare la rete','<strong>Con conferma</strong>','Un pacchetto con il nome sbagliato o una richiesta verso fuori sono il modo più facile per portare fuori dati.'],
+      ['<code>git push</code>, aprire PR, deploy','<strong>Con conferma</strong>','Da qui in poi la modifica esce dal tuo computer.'],
+      ['<code>rm -rf</code>, <code>git push --force</code>, <code>DROP</code>, migrazioni','<strong>Sempre a mano, o vietato</strong>','Non si annullano.'],
+      ['Produzione: DB, SSH, console cloud, secret veri','<strong>Mai</strong>','Nessun compito di sviluppo ne ha bisogno. Se serve, lo fai tu.']
+    ]},
+    {t:'p',html:`<p>Ogni agente ha il suo modo di configurare queste regole. In Claude Code, per esempio, si scrivono in <code>.claude/settings.json</code> e si possono committare, così valgono per tutto il team:</p>`},
+    {t:'code',lang:'json',code:`{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm test:*)",
+      "Bash(pnpm lint)",
+      "Bash(git diff:*)"
+    ],
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(pnpm add:*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./secrets/**)",
+      "Bash(rm -rf:*)",
+      "Bash(kubectl:*)"
+    ]
+  }
+}`},
+    {t:'p',html:`<p>Se non hai una sandbox integrata, un contenitore usa e getta fa lo stesso lavoro. L'agente vede solo la cartella montata, e quando esci il contenitore sparisce:</p>`},
+    {t:'code',lang:'bash',code:`# Solo la cartella del progetto e' visibile: niente ~/.ssh, ~/.aws, altri progetti
+docker run --rm -it \\
+  -v "$PWD":/work -w /work \\
+  -e ANTHROPIC_API_KEY \\
+  node:22 bash`},
+    {t:'callout',kind:'bad',title:'Mai credenziali di produzione a un agente',html:`Controlla cosa c'è <strong>nella shell da cui lo lanci</strong>: <code>env | grep -iE 'key|token|secret|password'</code>, e poi <code>~/.aws/credentials</code>, <code>~/.kube/config</code>, un <code>.env</code> con la stringa di connessione al DB vero. L'agente non ha bisogno di rubarle: se ci sono, le può usare con un comando qualunque. Regola semplice: <strong>se un compito sembra richiedere l'accesso alla produzione, quel compito non si dà all'agente.</strong> Lui prepara il comando o la migrazione, tu lo leggi e lo lanci.`},
 
     {t:'p',html:`<h3>Ora che conoscete anche i coding agents, un recap sui modi diversi di usare AI per il codice</h3>
       <p>In giro ci sono tre cose diverse che vengono tutte chiamate "AI per il codice". Conviene tenerle separate:</p>`},
