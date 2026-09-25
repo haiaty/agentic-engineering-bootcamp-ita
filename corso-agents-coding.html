@@ -301,6 +301,40 @@ MODULES.push({
     ]},
     {t:'p',html:`<p>Una chat risponde una volta e si ferma. Un agente <strong>va avanti da solo</strong>: se un test fallisce lo legge, capisce perché e riprova. Se un file non esiste lo cerca altrove. Ogni giro costa tempo e token, ma il lavoro lo porta avanti lui.</p>`},
     {t:'agentloop'},
+    {t:'p',html:`<p>Lo stesso ciclo, scritto in codice. È una versione semplificata in Node.js, ma la struttura è davvero questa in tutti gli agenti:</p>`},
+    {t:'code',lang:'javascript',code:`// Gli strumenti: funzioni normali che il modello puo' chiedere di usare
+const tools = {
+  leggi_file: ({ path }) => fs.readFileSync(path, 'utf8'),
+  scrivi_file: ({ path, testo }) => fs.writeFileSync(path, testo),
+  shell: ({ comando }) => execSync(comando, { encoding: 'utf8' }),
+};
+
+async function agente(compito) {
+  const messaggi = [{ role: 'user', content: compito }];
+
+  while (true) {
+    // 1. Il modello legge tutta la conversazione e decide il passo dopo
+    const risposta = await modello.chiama({ messaggi, tools });
+    messaggi.push(risposta);
+
+    // 2. Nessuno strumento richiesto: ha finito, risponde e si ferma
+    if (!risposta.tool_call) return risposta.testo;
+
+    // 3. Il programma (non il modello) esegue lo strumento richiesto
+    const { nome, argomenti } = risposta.tool_call;
+    let risultato;
+    try {
+      risultato = tools[nome](argomenti);
+    } catch (err) {
+      risultato = 'ERRORE: ' + err.message; // anche l'errore torna al modello
+    }
+
+    // 4. Il risultato torna nella conversazione, e si ricomincia
+    messaggi.push({ role: 'tool', content: risultato });
+  }
+}
+
+agente('I test in test/ falliscono: trova il motivo e correggilo.');`},
     {t:'callout',kind:'',title:'Una cosa importante da capire',html:`L'agente <strong>non ricorda niente</strong> fra una sessione e l'altra. Ogni volta che lo avvii riparte da zero e non sa nulla del tuo progetto. Tutto quello che sa arriva da: le tue parole, i file che legge in quel momento, e i file di contesto (modulo 02)`},
 
     {t:'p',html:`<h3>Quali sono</h3>`},
@@ -357,20 +391,20 @@ pi -p "Spiega in 5 righe cosa fa main.py"`},
     {t:'p',html:`<h3>Il punto delicato: lancia comandi veri</h3>
       <p>Un agente può cancellare file, fare <code>git reset</code>, mandare richieste in rete, toccare un database. Non è teoria: succede. Tre regole che valgono sempre, da oggi in poi:</p>
       <ul>
-        <li><strong>Git pulito prima di iniziare.</strong> Se parti con <code>git status</code> pulito, qualunque cosa faccia l'agente la vedi nel diff e la butti via con un comando. Senza git sei senza rete.</li>
+        <li><strong>Git pulito prima di iniziare.</strong> Se parti con <code>git status</code> pulito, qualunque cosa faccia l'agente la vedi nel diff e la butti via con un comando.</li>
         <li><strong>Mai su dati veri.</strong> Database di sviluppo, chiavi di test, ambienti finti. Se l'agente deve toccare un database, che sia una copia.</li>
         <li><strong>Leggi prima di approvare.</strong> Quando ti chiede il permesso di lanciare un comando, guardalo davvero. Il momento in cui smetti di leggere è il momento in cui ti fai male.</li>
       </ul>`},
     {t:'callout',kind:'bad',title:'La modalità "approva tutto"',html:`Tutti gli agenti hanno un'opzione per non chiedere mai il permesso. Serve, ma <strong>solo dentro un contenitore isolato o su una copia usa e getta</strong> del progetto. Usarla sul tuo computer di lavoro, sulla repo vera, è il modo più rapido per perdere un pomeriggio.`},
 
-    {t:'p',html:`<h3>I modi diversi di usare AI per il codice</h3>
+    {t:'p',html:`<h3>Ora che conoscete anche i coding agents, un recap sui modi diversi di usare AI per il codice</h3>
       <p>In giro ci sono tre cose diverse che vengono tutte chiamate "AI per il codice". Conviene tenerle separate:</p>`},
     {t:'table',head:['Tipo','Cosa fa','Chi decide','Esempi'],rows:[
       ['<strong>AutoCompletamento (inline)</strong>','Suggerisce la riga o il blocco che stai scrivendo','Tu, riga per riga','Copilot nell\'editor, Tabnine'],
       ['<strong>Chat sul codice</strong>','Risponde a domande, propone un pezzo di codice da copiare','Tu: copi e incolli','ChatGPT/OpenwebUI'],
       ['<strong>Agente</strong>','Legge, scrive, lancia comandi, va avanti da solo per più passi','Lui, dentro i limiti che gli dai','Claude Code, Pi, Codex CLI, Cursor Agent, Aider']
     ]},
-    {t:'p',html:`<p>Il salto vero è fra la seconda e la terza riga. Con la chat il lavoro di applicare le modifiche resta tuo. Con l'agente il lavoro passa a lui, e il tuo lavoro diventa un altro: <strong>dare il compito bene e controllare il risultato</strong>.</p>`},
+    {t:'p',html:`<p>Con la chat il lavoro di applicare le modifiche resta tuo. Con l'agente il lavoro passa a lui, e il tuo lavoro diventa un altro: <strong>dare il compito bene e controllare il risultato</strong>.</p>`},
 
     {t:'quiz',id:'q1a',q:'Qual è la differenza vera fra una chat sul codice e un coding agent?',
       opts:[
@@ -379,17 +413,13 @@ pi -p "Spiega in 5 righe cosa fa main.py"`},
         {tx:'L\'agente ricorda le sessioni precedenti',ok:false,why:'No: riparte da zero ogni volta. Quello che sembra memoria sono i file di contesto riletti ogni volta.'},
         {tx:'L\'agente scrive codice migliore',ok:false,why:'Non per forza. Scrive codice che ha potuto verificare lanciando i test — che è un\'altra cosa, e dipende dai test che hai.'}
       ]},
-    {t:'quiz',id:'q1b',q:'Prima di far partire un agente su una repo, la cosa più importante è:',
+    {t:'quiz',id:'q1b',q:'Prima di far partire un agente su una repo, è importante:',
       opts:[
         {tx:'Chiudere l\'editor per non avere conflitti',ok:false,why:'Non serve. Gli editor si accorgono da soli dei file cambiati da fuori.'},
         {tx:'Avere git pulito, così ogni modifica è visibile nel diff e annullabile',ok:true,why:'Esatto. È la rete di protezione: qualunque cosa succeda, <code>git diff</code> te la mostra e <code>git checkout .</code> la cancella.'},
         {tx:'Spiegargli tutta la storia del progetto',ok:false,why:'La storia non gli serve quasi mai. Gli servono i comandi per costruire e testare, e le trappole del progetto.'},
         {tx:'Scegliere il modello più economico per contenere i costi',ok:false,why:'Il costo vero di un agente è il tuo tempo speso a correggere un lavoro fatto male, non i token.'}
-      ]},
-    {t:'exercise',id:'ex1',label:'Esercizio 1.1 — Dove lo useresti (3 minuti)',
-      prompt:'Scrivi due compiti del tuo lavoro: uno che daresti volentieri a un agente e uno che non gli daresti mai. Per ognuno una riga sul perché.',
-      placeholder:'Glielo darei: ...\nPerché: ...\n\nNon glielo darei: ...\nPerché: ...',
-      solution:'Non c\'è una risposta giusta, ma un buon segnale c\'è: i compiti adatti hanno <strong>un modo chiaro di sapere se sono andati bene</strong> (un test passa, un file si genera, un comando non dà errore). I compiti non adatti sono quelli in cui il "giusto" dipende da cose che stanno solo nella testa delle persone.'}
+      ]}
   ]
 });
 
@@ -1523,7 +1553,7 @@ function mountExercise(id, b){
   const body = '<textarea id="'+id+'_ta" rows="9" placeholder="'+esc(b.placeholder||'')+'"></textarea>'+
     '<div class="btnrow"><span class="saved" id="'+id+'_sv">salvato</span><span style="flex:1"></span>'+
     (b.solution?'<button class="btn" id="'+id+'_sol">Mostra nota del docente</button>':'')+'</div>'+
-    (b.solution?'<div id="'+id+'_solbox" class="callout ok" style="display:none"><span class="ct">Nota del docente</span><div class="prose" style="font-size:14px">'+b.solution+'</div></div>':'');
+    (b.solution?'<div id="'+id+'_solbox" class="callout ok" style="display:none"><span class="ct"></span><div class="prose" style="font-size:14px">'+b.solution+'</div></div>':'');
   el.innerHTML = widgetShell('Esercizio', b.label, b.prompt, body);
   const ta = document.getElementById(id+'_ta');
   const sv = document.getElementById(id+'_sv');
