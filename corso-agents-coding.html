@@ -431,6 +431,13 @@ pi -p "Spiega in 5 righe cosa fa main.py"`},
         {tx:'Avere git pulito, così ogni modifica è visibile nel diff e annullabile',ok:true,why:'Esatto. È la rete di protezione: qualunque cosa succeda, <code>git diff</code> te la mostra e <code>git checkout .</code> la cancella.'},
         {tx:'Spiegargli tutta la storia del progetto',ok:false,why:'La storia non gli serve quasi mai. Gli servono i comandi per costruire e testare, e le trappole del progetto.'},
         {tx:'Scegliere il modello più economico per contenere i costi',ok:false,why:'Il costo vero di un agente è il tuo tempo speso a correggere un lavoro fatto male, non i token.'}
+      ]},
+    {t:'quiz',id:'q1c',q:'Cosa sono i tool (strumenti) di un agente, e chi li esegue davvero?',
+      opts:[
+        {tx:'Sono capacità interne del modello: è il modello stesso a leggere i file e lanciare i comandi sui server del provider',ok:false,why:'No. Il modello produce solo testo: può <em>chiedere</em> di leggere un file, ma non tocca il tuo disco. Nessun file del tuo progetto viene letto «dentro» il modello.'},
+        {tx:'Sono funzioni normali del programma agente: il modello chiede quale usare e con quali argomenti, il programma la esegue sul tuo computer e gli rimanda il risultato',ok:true,why:'Esatto. È il passo 3 del codice visto sopra: <code>tools[nome](argomenti)</code> gira nel programma, con i tuoi permessi. Per questo i comandi che approvi sono veri, e il loro effetto è reale.'},
+        {tx:'Sono plugin dell\'editor, che l\'utente lancia a mano quando l\'agente glielo suggerisce',ok:false,why:'No: se li lanciassi tu a mano sarebbe una chat. Nell\'agente l\'esecuzione è automatica. Al massimo ti chiede il permesso prima di eseguire.'},
+        {tx:'Sono script che il modello scrive al momento e che girano in una sandbox del provider, isolata dal tuo progetto',ok:false,why:'No. Gli strumenti sono definiti in anticipo nel programma (leggi file, scrivi file, shell...) e girano dove gira l\'agente, di solito proprio sulla tua macchina e dentro la tua repo.'}
       ]}
   ]
 });
