@@ -126,6 +126,18 @@ th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute
 .pane.ok .pane-h{background:var(--ok-soft);color:var(--ok)}
 .pane pre{margin:0;border-radius:0;max-height:340px}
 
+.bp{border:1px solid var(--line);border-radius:10px;background:var(--panel-2);padding:14px 16px;margin-bottom:10px}
+.bp-h{display:flex;gap:10px;align-items:baseline;font-weight:700;font-size:15px}
+.bp-n{font-family:var(--mono);font-size:12px;color:var(--accent);flex:none}
+.bp-why{font-size:13.5px;color:var(--muted);margin:6px 0 10px}
+.bp-ex{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.bp-ex>div{border-radius:8px;padding:8px 11px;font-size:13px;line-height:1.5}
+.bp-ex .do{background:var(--ok-soft);border-left:3px solid var(--ok)}
+.bp-ex .dont{background:var(--bad-soft);border-left:3px solid var(--bad)}
+.bp-ex b{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
+.bp-ex .do b{color:var(--ok)}
+.bp-ex .dont b{color:var(--bad)}
+
 .preview{background:var(--code-bg);color:var(--code-text);border-radius:10px;padding:14px 16px;font-family:var(--mono);font-size:12px;line-height:1.6;white-space:pre-wrap;max-height:400px;overflow-y:auto;min-height:80px}
 .meter{height:7px;border-radius:99px;background:var(--panel-2);overflow:hidden;margin:12px 0 6px;border:1px solid var(--line)}
 .meter > i{display:block;height:100%;background:var(--accent);transition:width .3s}
@@ -1428,9 +1440,144 @@ Adesso:
   ]
 });
 
-/* ---------- 12. Chiusura ---------- */
+/* ---------- 12. Best practices ---------- */
 MODULES.push({
-  id:'m12', n:'12', title:'Chiusura', min:11,
+  id:'mbp', n:'12', title:'Best practices', min:15,
+  blocks:[
+    {t:'p',html:`<p class="lede">Il lavoro si sposta: scrivi meno codice a mano, ma devi diventare bravo a <strong>specificare, delegare, verificare e controllare</strong> un sistema che il codice lo scrive. Queste regole vengono tutte da lì. Per ognuna trovi il motivo e un esempio di cosa fare e cosa evitare.</p>`},
+
+    {t:'practices',title:'Specificare bene il compito',items:[
+      {n:'01',h:'Dai task piccoli, chiari e verificabili',
+        why:'Un compito piccolo ha un diff che riesci a leggere tutto e un modo chiaro per dire se è finito. Con un compito grande l\'agente deve indovinare molte decisioni, e ogni scelta sbagliata si porta dietro le successive.',
+        do:'«Aggiungi la validazione dell\'email in <code>signup.ts</code>: se è vuota o malformata rispondi 400. Aggiungi un test per ciascun caso.»',
+        dont:'«Sistema la registrazione degli utenti e già che ci sei rendila più robusta.»'},
+      {n:'02',h:'Specifica sempre l\'output atteso e quando il lavoro è finito',
+        why:'Se non dici quando il lavoro è finito, l\'agente si ferma quando <em>gli sembra</em> finito. Un criterio concreto (un test che passa, un comando che esce con 0, un file generato) diventa l\'obiettivo che l\'agente può controllare da solo.',
+        do:'«È finito quando <code>pnpm test auth</code> passa, <code>pnpm lint</code> è pulito e la risposta segue lo schema in <code>docs/api/login.md</code>.»',
+        dont:'«Fammi sapere quando funziona.»'},
+      {n:'03',h:'Fornisci il contesto necessario: architettura, convenzioni, file rilevanti, vincoli',
+        why:'L\'agente riparte da zero ogni volta. Quello che non gli dici lo ricostruisce leggendo il codice, e spesso sbaglia. Un riferimento preciso a file e componenti vale più di una spiegazione lunga.',
+        do:'«Il pattern da seguire è quello di <code>services/orders.ts</code>. Non toccare <code>legacy/</code>. Gli errori passano sempre da <code>AppError</code>.»',
+        dont:'Lanciarlo sulla repo con «aggiungi il servizio per le fatture» e lasciare che scelga da solo struttura e convenzioni.'},
+      {n:'04',h:'Preferisci convenzioni esplicite a comportamenti impliciti',
+        why:'Quello che «si fa sempre così» ma non è scritto da nessuna parte l\'agente non lo può sapere. Lo scopre solo se sta scritto in un file, in un tipo o in una regola di lint.',
+        do:'Scrivere in <code>AGENTS.md</code>: «Le date sono sempre in UTC e vengono formattate solo nel frontend». Meglio ancora: una regola di lint che lo impone.',
+        dont:'Correggere a mano, a ogni PR, lo stesso errore sulle date senza scriverlo mai da nessuna parte.'},
+      {n:'05',h:'Mantieni <code>AGENTS.md</code>, README e istruzioni operative brevi e aggiornate',
+        why:'Questi file vengono letti a ogni avvio. Se un\'istruzione è vecchia, l\'agente la segue lo stesso e sbaglia con convinzione. Se il file è troppo lungo, le regole importanti si perdono in mezzo alle altre.',
+        do:'Una pagina: comandi di build e test, struttura, convenzioni, cose da NON fare. La aggiorni nella stessa PR che cambia il comando.',
+        dont:'Un <code>AGENTS.md</code> di 800 righe che dice ancora di usare <code>npm</code> anche se il progetto è passato a <code>pnpm</code> da sei mesi.'}
+    ]},
+
+    {t:'practices',title:'Capire prima di scrivere',items:[
+      {n:'06',h:'Fai esplorare il codebase prima di modificare il codice',
+        why:'Se l\'agente comincia subito a scrivere, lavora con quello che si immagina del progetto. Se prima lo esplora, lavora con quello che c\'è davvero. E se ti riassume cosa ha trovato, vedi subito se ha capito male, prima che abbia scritto una sola riga.',
+        do:'«Prima di modificare qualcosa, trova dove viene calcolato lo sconto e dimmi file e righe. Non cambiare niente.»',
+        dont:'«Correggi il calcolo dello sconto.» su un progetto che l\'agente non ha mai visto.'},
+      {n:'07',h:'Chiedi prima un piano per le modifiche non banali',
+        why:'Correggere un piano di dieci righe richiede un minuto. Buttare un\'implementazione su cinque file partita nella direzione sbagliata costa molto di più. Tenere separati piano e implementazione riduce di molto questo rischio.',
+        do:'«Proponi un piano: file che tocchi, cosa cambi in ciascuno, come lo testi. Aspetta il mio ok prima di scrivere codice.»',
+        dont:'«Migra l\'autenticazione a JWT.» e guardare il risultato solo alla fine.'}
+    ]},
+
+    {t:'practices',title:'Feedback automatico',items:[
+      {n:'08',h:'Usa test, typecheck, lint e build come feedback automatico',
+        why:'L\'agente va avanti a tentativi: prova, guarda il risultato, corregge. Più segnali oggettivi gli dai, più errori corregge da solo prima di arrivare a te. Allo stesso modo, anche un ambiente configurato bene (script di avvio, variabili, strumenti disponibili) riduce gli errori.',
+        do:'Nel file di contesto: «Dopo ogni modifica lancia <code>pnpm typecheck && pnpm lint && pnpm test</code>».',
+        dont:'Un progetto in cui i test non partono in locale, e l\'agente deve fermarsi a «il codice dovrebbe funzionare».'},
+      {n:'09',h:'Chiedi di aggiungere o aggiornare i test insieme al codice',
+        why:'Un test scritto nella stessa modifica documenta cosa ti aspetti dal codice e lo protegge dalle regressioni. Se lo rimandi a dopo, di solito non lo scrive nessuno.',
+        do:'«Implementa il nuovo filtro e aggiungi i test: caso normale, lista vuota, parametro non valido.»',
+        dont:'Fare il merge della funzionalità con un TODO: «test da aggiungere».'},
+      {n:'10',h:'Fai eseguire i test all\'agente dopo ogni modifica importante',
+        why:'Un errore che salta fuori subito si corregge in pochi secondi. Se viene fuori dopo dieci modifiche, bisogna prima capire quale delle dieci lo ha causato.',
+        do:'«Lancia i test ora e mostrami l\'output vero prima di andare avanti.»',
+        dont:'Accettare «ho completato tutte le modifiche» senza un singolo output di test.'}
+    ]},
+
+    {t:'practices',title:'Review e verifica',items:[
+      {n:'11',h:'Separa implementazione e review quando possibile',
+        why:'Chi ha scritto il codice lo rilegge dando per buone le proprie scelte. Una sessione nuova, o un altro agente, lo guarda senza quei presupposti e trova cose che l\'autore non vede.',
+        do:'Aprire una sessione pulita: «Fai la review di questo diff. Cerca bug, casi limite e violazioni delle convenzioni in <code>AGENTS.md</code>».',
+        dont:'Chiedere alla stessa sessione che ha scritto il codice: «È tutto a posto?»'},
+      {n:'12',h:'Chiedi una review esplicita del diff prima del merge',
+        why:'Il diff è quello che entra davvero nel codice, al di là di quello che l\'agente dice di aver fatto. Rileggerlo è l\'unico modo per trovare modifiche che non avevi chiesto.',
+        do:'Leggere <code>git diff main...</code> riga per riga, e chiedere conto di ogni file che non ti aspettavi.',
+        dont:'Fare il merge fidandoti del riassunto finale dell\'agente.'},
+      {n:'13',h:'Controlla soprattutto auth, permessi, DB, migrazioni, concurrency, error handling e API contract',
+        why:'In queste aree un errore è costoso e spesso non si vede subito: i test passano, e il problema salta fuori in produzione, sotto carico o con dati veri.',
+        do:'Su una migrazione: controlla che sia reversibile, quanto blocca le tabelle, cosa succede ai dati esistenti. Sulle API: verifica che la risposta non cambi forma per chi già la usa.',
+        dont:'Dedicare lo stesso tempo di review al rename di una variabile e a un cambio nel middleware di autenticazione.'},
+      {n:'14',h:'Non accettare codice solo perché compila o passa i test. Controlla soprattutto il codice dei test',
+        why:'Pur di arrivare al verde, l\'agente può scrivere test che non verificano niente, oppure ammorbidire un test esistente. I test passano sempre, ma non ti proteggono da niente.',
+        do:'Rompere di proposito il codice e controllare che il test fallisca. Leggere le asserzioni: verificano il comportamento o solo che «non esploda»?',
+        dont:'Accettare un test con <code>expect(result).toBeDefined()</code>, o un <code>skip</code> aggiunto «temporaneamente».'},
+      {n:'15',h:'Verifica semplicità, correttezza, sicurezza e compatibilità',
+        why:'Codice che funziona non è per forza codice buono. Gli agenti tendono ad aggiungere astrazioni, dipendenze e casi che nessuno ha chiesto, e ogni riga in più va mantenuta.',
+        do:'Chiedersi: si poteva fare con metà del codice? Ha aggiunto una dipendenza? Rompe qualcosa per chi usa già questa funzione?',
+        dont:'Accettare una factory con tre interfacce per una funzione che viene chiamata in un posto solo.'},
+      {n:'16',h:'Chiedi all\'agente di identificare edge case e failure mode',
+        why:'L\'agente è bravo a elencare casi limite, se glielo chiedi. Da solo tende a coprire solo il caso felice. Chiederglielo esplicitamente costa una riga di prompt.',
+        do:'«Elenca gli edge case: input vuoto, valori enormi, chiamate concorrenti, rete che cade. Per ognuno dimmi come si comporta il codice.»',
+        dont:'Scoprire in produzione che la funzione esplode quando la lista è vuota.'},
+      {n:'17',h:'Chiedi all\'agente cosa non è riuscito a verificare',
+        why:'Un agente tende a presentare il lavoro come finito e sicuro. Se gli chiedi esplicitamente cosa non ha potuto provare, ti dice dove devi guardare tu.',
+        do:'«Cosa non hai potuto verificare? Rispondi anche NON SO, se è il caso.» Risposte tipiche: «Non ho accesso al DB di staging», «Non ho testato con Safari».',
+        dont:'Leggere «tutto funziona correttamente» e prenderlo per buono.'}
+    ]},
+
+    {t:'practices',title:'Isolamento e reversibilità',items:[
+      {n:'18',h:'Usa branch, worktree o ambienti isolati per task indipendenti',
+        why:'Se qualcosa va male, butti via il branch e non hai perso niente. Tenere isolati i task evita anche che le modifiche di uno si mescolino con quelle di un altro.',
+        do:'<code>git worktree add ../feat-export -b feat/export</code> e far lavorare l\'agente lì dentro.',
+        dont:'Far lavorare l\'agente su <code>main</code>, in mezzo alle tue modifiche non ancora committate.'},
+      {n:'19',h:'Parallelizza solo lavori davvero indipendenti',
+        why:'Due task che sembrano separati ma toccano lo stesso modulo producono conflitti, oppure soluzioni incompatibili fra loro. A quel punto il tempo guadagnato lavorando in parallelo lo perdi a sistemare.',
+        do:'In parallelo: «documenta il modulo A» e «aggiungi i test al modulo B».',
+        dont:'In parallelo: «rifattorizza il modello User» e «aggiungi un campo al modello User».'},
+      {n:'20',h:'Evita che più agenti modifichino contemporaneamente gli stessi file',
+        why:'Un agente non sa cosa ha cambiato l\'altro. Può sovrascrivere le sue modifiche, o prendere decisioni partendo da un file che nel frattempo è cambiato.',
+        do:'Assegnare a ogni agente un\'area precisa: «tu lavori solo in <code>src/billing/</code>».',
+        dont:'Tre agenti lanciati insieme, e tutti e tre toccano <code>config.ts</code>.'},
+      {n:'21',h:'Mantieni commit piccoli e facilmente reversibili',
+        why:'Un commit piccolo si legge, si capisce e si annulla con <code>git revert</code> senza toccare il resto. Un commit enorme o lo tieni tutto o lo butti tutto.',
+        do:'Un commit per passo: prima il refactoring senza cambi di comportamento, poi la nuova funzione, poi i test.',
+        dont:'Un unico commit «WIP agent changes» da 40 file.'},
+      {n:'22',h:'Usa Git e CI come rete di sicurezza',
+        why:'Git ti permette di tornare indietro, la CI ricontrolla tutto in un ambiente pulito. Insieme ti proteggono dagli errori che sfuggono a te e all\'agente.',
+        do:'<code>git status</code> pulito prima di iniziare, e merge solo dopo che la CI è verde sulla PR.',
+        dont:'Push diretto su <code>main</code> «tanto sono solo due righe».'}
+    ]},
+
+    {t:'practices',title:'Sicurezza e permessi',items:[
+      {n:'23',h:'Non dare accesso a production, secret o permessi amministrativi',
+        why:'Un agente può sbagliare, e può essere manipolato da contenuti che legge (un file, una issue, una pagina web). Il danno massimo che può fare dipende dai permessi che ha: DB di produzione, admin AWS, SSH, permessi di deploy, secret completi.',
+        do:'Credenziali di un ambiente di sviluppo, con dati finti e permessi limitati. Sulla produzione intervieni solo tu.',
+        dont:'Lanciare l\'agente in una shell dove sono caricate le credenziali AWS di amministratore.'},
+      {n:'24',h:'Applica il least privilege agli strumenti disponibili all\'agente',
+        why:'Ogni strumento abilitato è un\'azione in più che l\'agente può fare, anche per sbaglio. Sandbox, rete controllata e approvazioni per le operazioni sensibili sono gli elementi di base per usare i coding agent in sicurezza.',
+        do:'Permettere <code>read</code>, <code>edit</code> e i comandi di test; chiedere conferma per <code>git push</code> e installazione di pacchetti; rete limitata ai registry che servono.',
+        dont:'Modalità «approva tutto» con accesso libero alla rete, su un laptop dove c\'è tutto.'},
+      {n:'25',h:'Per operazioni distruttive, richiedi sempre approvazione umana',
+        why:'<code>rm -rf</code>, <code>DROP TABLE</code>, <code>git push --force</code> e simili non si annullano. Chiedere conferma costa pochi secondi, sbagliare può costare giorni.',
+        do:'Configurare l\'agente in modo che chieda conferma per cancellazioni, migrazioni, force-push e comandi su database.',
+        dont:'Lasciare che l\'agente «pulisca» da solo le tabelle di test su un database condiviso.'}
+    ]},
+
+    {t:'practices',title:'Il controllo resta a te',items:[
+      {n:'26',h:'Non delegare la decisione finale: delega l\'implementazione, tieni per te la verifica',
+        why:'L\'agente non risponde di quello che va in produzione, tu sì. Quello che firmi è tuo, chiunque l\'abbia scritto.',
+        do:'«Implementa tu, poi leggo il diff, lancio i test e decido io se fare il merge.»',
+        dont:'Pipeline in cui l\'output dell\'agente arriva in produzione senza che nessuno lo abbia letto.'}
+    ]},
+
+    {t:'callout',kind:'warn',title:'Quando non usare un agente',html:`È ottimo per refactoring, test, CRUD, migrazioni meccaniche, boilerplate, bug localizzati, integrazioni con API, documentazione ed esplorazione del codice. Va usato con molta più cautela per decisioni architetturali irreversibili, crittografia, sicurezza critica, logica finanziaria, cancellazione di dati, incidenti in produzione e requisiti ambigui. <strong>Non perché non possa aiutare, ma perché lì verificare il suo lavoro costa di più.</strong>`}
+  ]
+});
+
+/* ---------- 13. Chiusura ---------- */
+MODULES.push({
+  id:'m12', n:'13', title:'Chiusura', min:11,
   blocks:[
     {t:'p',html:`<h3>Le otto cose da portarsi a casa</h3>`},
     {t:'table',head:['#','Regola','Da dove viene'],rows:[
@@ -1498,6 +1645,11 @@ function renderBlock(b, mid, i){
       return '<h3>'+b.title+'</h3><div class="split">'+
         '<div class="pane bad"><div class="pane-h">'+b.bad.h+'</div><pre><code>'+esc(b.bad.code)+'</code></pre></div>'+
         '<div class="pane ok"><div class="pane-h">'+b.good.h+'</div><pre><code>'+esc(b.good.code)+'</code></pre></div></div>';
+    case 'practices':
+      return (b.title?'<h3>'+b.title+'</h3>':'')+b.items.map(it=>
+        '<div class="bp"><div class="bp-h"><span class="bp-n">'+it.n+'</span><span>'+it.h+'</span></div>'+
+        '<div class="bp-why"><strong>Perché:</strong> '+it.why+'</div>'+
+        '<div class="bp-ex"><div class="do"><b>Fai così</b>'+it.do+'</div><div class="dont"><b>Non così</b>'+it.dont+'</div></div></div>').join('');
     case 'split2':
       return '<div class="split">'+[b.a,b.b].map(col=>
         '<div class="widget" style="margin:0"><div class="widget-t">'+col.h+'</div><div style="margin-top:10px">'+
