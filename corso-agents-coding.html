@@ -493,7 +493,7 @@ MODULES.push({
   id:'m2', n:'02', title:'I file che l\'agente legge', min:22,
   blocks:[
     {t:'p',html:`<h3>Il problema</h3>
-      <p>Hai appena visto che l'agente riparte da zero ogni volta. Vuol dire che ogni mattina, su ogni nuovo compito, non sa: con che comando si lanciano i test, dove sta il codice che conta, che il file <code>legacy/pagamenti.py</code> non va toccato, che in questo progetto si usa <code>pnpm</code> e non <code>npm</code>.</p>
+      <p>Hai appena visto che l'agente riparte da zero ogni volta. Vuol dire che ogni mattina, su ogni nuovo compito, non sa: con che comando si lanciano i test, dove sta il codice che conta, che il file <code>legacy/pagamenti.py</code> non va toccato, etc...</p>
       <p>Puoi riscrivergli queste cose ogni volta. Oppure puoi metterle in un file che <strong>legge da solo all'avvio</strong>. È tutto qui.</p>`},
     {t:'p',html:`<h3>Due nomi, una cosa sola</h3>`},
     {t:'table',head:['File','Chi lo legge','Note'],rows:[
@@ -508,13 +508,7 @@ MODULES.push({
                                  "non aggiungere commenti inutili")
 
 progetto/AGENTS.md           -> il file principale del progetto,
-                                condiviso con il team, sta in git
-
-progetto/backend/AGENTS.md   -> regole solo del backend, letto quando
-                                l'agente lavora li dentro
-
-progetto/frontend/AGENTS.md  -> regole solo del frontend`},
-    {t:'p',html:`<p>La regola è semplice: <strong>più il file è vicino al codice, più è specifico</strong>. Le cose che valgono per tutto il progetto stanno in alto; le cose che valgono solo per una parte stanno dentro quella parte.</p>`},
+                                condiviso con il team, sta in git`},
 
     {t:'p',html:`<h3>Cosa metterci davvero</h3>
       <p>Il test è sempre lo stesso: <em>«se un collega nuovo arrivasse oggi, quali cinque cose gli direi prima di lasciarlo lavorare?»</em>. Quelle vanno nel file. Il resto no.</p>`},
