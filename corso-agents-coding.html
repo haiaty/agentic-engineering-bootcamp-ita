@@ -867,11 +867,8 @@ REGOLE:
       ['Una cosa che sai già','Cercala nella risposta. L\'ha detta giusta?','30 secondi']
     ]},
     {t:'callout',kind:'bad',title:'Il tipo di errore da cercare',html:`Gli errori grossi si vedono. Quelli pericolosi no: sono le <strong>righe plausibili e sbagliate</strong>. «La validazione avviene in <code>middleware/validate.ts</code>» — il file esiste, il nome torna, ma la validazione vera la fa un altro pezzo e quel middleware è morto da un anno. Se non apri il file non te ne accorgi mai, e ci costruisci sopra tutto il resto del corso.`},
-    {t:'exercise',id:'ex6a',label:'Esercizio 5.1 — Il controllo (3 minuti)',
-      prompt:'Hai controllato quattro cose. Quante erano giuste? Scrivi l\'errore più insidioso che hai trovato (o scrivi che non ne hai trovati).',
-      placeholder:'Controllate: 4. Giuste: ...\nErrore trovato: ...\nPerché era insidioso: ...'},
 
-    {t:'p',html:`<h3>3C — Scavare dove serve (8 min)</h3>
+    {t:'p',html:`<h3>Scavare dove serve</h3>
       <p>Adesso che hai la mappa, chiedi il dettaglio sul punto che ti interessa. Qui il tipo di domanda che rende di più è quella che <strong>segue un percorso</strong>, non quella che chiede una spiegazione.</p>`},
     {t:'split2',a:{h:'Domande deboli',items:[
       ['«Spiegami come funziona l\'autenticazione.»','Troppo larga: ti scrive un tema, e metà è generica.'],
@@ -882,10 +879,6 @@ REGOLE:
       ['«Dove viene deciso lo stato di una spedizione? Elenca TUTTI i punti che lo scrivono.»','Risposta chiusa e controllabile con una ricerca.'],
       ['«Cosa succede se il pagamento va a buon fine ma la scrittura sull\'ordine fallisce?»','Un caso limite: scopre in due minuti se c\'è un buco.']
     ]}},
-    {t:'exercise',id:'ex6b',label:'Esercizio 5.2 — La domanda che ti porti dietro da mesi (5 minuti)',
-      prompt:'Riprendi la cosa che nel modulo 00 hai scritto di non aver mai capito del tuo progetto. Trasformala in una domanda "che segue un percorso" e falla all\'agente. Incolla qui la domanda e le due righe più utili della risposta.',
-      placeholder:'Domanda: Segui ... dal ... fino a ...\nRisposta utile: ...\nL\'ho verificata aprendo: ...',
-      solution:'Se la risposta ti ha svelato qualcosa, hai appena visto il caso d\'uso che conviene sempre: <strong>l\'agente come mappa di un territorio grande</strong>. Fa in due minuti la ricerca incrociata che a te costa mezza giornata. Ma resta una mappa: prima di prendere una decisione su quello che ti ha detto, il file lo apri tu.'},
 
     {t:'p',html:`<h3>3D — Trasformare il lavoro in un file (5 min)</h3>
       <p>Quello che hai capito adesso, fra una settimana lo hai dimenticato — e l'agente lo ha già dimenticato. Mettilo per iscritto, ora che ce l'hai davanti.</p>`},
