@@ -263,7 +263,7 @@ MODULES.push({
       {tag:'Ora 1',h:'Teoria',p:'Cosa sono, quali sono, i file che leggono (AGENTS.md e CLAUDE.md), le skill.'},
       {tag:'Ora 2',h:'Primi task',p:'Installare Pi e fare le prime prove, in sessione e con un solo comando.'},
       {tag:'Ora 3',h:'Codice vero',p:'Capire un progetto sconosciuto, aggiungere una funzionalità nuova.'},
-      {tag:'Ora 4',h:'Lavoro vero',p:'Test di concorrenza, un test BDD, debug da log e payload.'}
+      {tag:'Ora 4',h:'Lavoro vero',p:'Un test BDD, debug da log e payload.'}
     ]},
     {t:'table',head:['Blocco','Durata'],rows:[
       ['00 · Apertura','5 min'],
@@ -274,10 +274,9 @@ MODULES.push({
       ['— Pausa','10 min'],
       ['05 · Task 2 — Capire un progetto vero','28 min'],
       ['06 · Task 3 — Aggiungere funzionalità: Salvare il tracing di esecuzione','22 min'],
-      ['07 · Task 4 — Script di test con concorrenza','14 min'],
-      ['08 · Task 5 — Un test BDD','14 min'],
-      ['09 · Task 6 — Debug da log e payload','20 min'],
-      ['11 · Chiusura','11 min']
+      ['07 · Task 4 — Un test BDD','14 min'],
+      ['08 · Task 5 — Debug da log e payload','20 min'],
+      ['10 · Chiusura','11 min']
     ]},
     {t:'callout',kind:'ok',title:'Come si usa questo materiale',html:`Naviga con la barra a sinistra o con i pulsanti in fondo a ogni modulo. Ogni esercizio si salva da solo nel browser (niente esce dal tuo computer): puoi chiudere e riprendere. Con <strong>&#8681; Esporta</strong> scarichi tutte le tue risposte in un file Markdown. Il timer in alto serve al docente per tenere il ritmo.`},
     {t:'p',html:`<h3>Cosa devi saper fare a fine giornata</h3>
@@ -907,75 +906,9 @@ MODULES.push({
   ]
 });
 
-/* ---------- 7. Test con concorrenza ---------- */
+/* ---------- 7. Test BDD ---------- */
 MODULES.push({
-  id:'m9', n:'07', title:'Task 4 — Uno script di test con concorrenza', min:14,
-  blocks:[
-    {t:'p',html:`<p>I problemi di concorrenza sono quelli su cui un agente è meno affidabile quando legge il codice: legge il codice come una storia che va in ordine, e in una storia in ordine due richieste che arrivano insieme non si vedono. Per questo non glieli fai <em>cercare</em>: li <strong>provi</strong>. Uno script che lancia tante richieste insieme e guarda se il sistema si comporta come dovrebbe.</p>
-      <p>Attenzione: non stiamo misurando la velocità. Ci interessa un'altra cosa — <strong>quando due richieste arrivano insieme, il risultato è ancora giusto?</strong></p>`},
-    {t:'callout',kind:'bad',title:'Dove si lancia',html:`<strong>Solo su ambiente locale o di sviluppo.</strong> Mai contro un ambiente condiviso, mai contro produzione. Uno script del genere, puntato sul posto sbagliato, è indistinguibile da un attacco: riempie i log, satura le connessioni, e può bloccare il lavoro di altri. Prima di lanciarlo, guarda due volte l'indirizzo che c'è dentro.`},
-
-    {t:'p',html:`<h3>6A — Lo script (8 min)</h3>`},
-    {t:'promptkit',id:'pk9',title:'Compito: script di prova in parallelo',
-      sub:'Descrivi cosa deve succedere e, soprattutto, qual è la regola che non deve mai essere violata.',
-      fields:[
-        {k:'end',lb:'Cosa chiamare',ph:'Es. POST http://localhost:3000/ordini/{id}/conferma con header Authorization',rows:2},
-        {k:'inv',lb:'La regola che non deve mai rompersi',ph:'Es. un ordine può essere confermato una volta sola: su 50 richieste insieme, 1 sola deve andare a buon fine e 49 devono dare 409',rows:3},
-        {k:'come',lb:'Come misurare che la regola ha tenuto',ph:'Es. contando le risposte per codice, e poi leggendo la riga sul DB: ordini.confermato_il deve essere valorizzato una volta sola',rows:2}
-      ],
-      build:(v)=>
-`Scrivimi uno script per provare il comportamento sotto richieste
-simultanee. Serve a verificare la correttezza, non la velocita'.
-
-Cosa chiamare: `+(v.end||'[endpoint o funzione]')+`
-Regola che non deve mai rompersi: `+(v.inv||'[la regola]')+`
-Come verificarla: `+(v.come||'[come si controlla]')+`
-
-Lo script deve:
-1. Lanciare N richieste il piu' possibile nello stesso istante
-   (N configurabile, default 50). Partire davvero insieme, non in fila.
-2. Contare le risposte per codice di stato.
-3. Controllare la regola e stampare alla fine, chiaro:
-   REGOLA RISPETTATA  oppure  REGOLA VIOLATA: <cosa e' successo>
-4. Uscire con codice 1 se la regola e' violata, cosi' si puo' mettere
-   in una pipeline.
-5. Ripetere il giro M volte (default 10): questi problemi non
-   succedono tutte le volte.
-6. Avere l'indirizzo di destinazione in una variabile in cima al file,
-   con scritto in un commento che va usato SOLO in locale.
-
-Vincoli:
-- Linguaggio e librerie: quelli gia' usati in questo progetto.
-- Stampa alla fine un riassunto leggibile in 5 righe.
-- Aggiungi una nota su come pulire i dati creati dallo script.`},
-    {t:'p',html:`<p>I punti 1 e 5 sono quelli che la gente dimentica sempre. <strong>Partire davvero insieme</strong>: se lo script manda le richieste in fila, non stai provando niente. <strong>Ripetere</strong>: una gara fra processi si vede magari una volta su venti, quindi un giro solo che va bene non dimostra nulla.</p>`},
-
-    {t:'p',html:`<h3>6B — Lanciarlo e leggere il risultato (6 min)</h3>`},
-    {t:'table',head:['Cosa vedi','Cosa vuol dire','Cosa fai'],rows:[
-      ['Regola rispettata tutte le volte','Il punto è protetto — oppure lo script non parte davvero insieme','Controlla lo script: rompi apposta la protezione e vedi se lo script se ne accorge'],
-      ['Regola violata ogni tanto','Hai trovato una gara vera','Ticket, con lo script allegato: è la riprova'],
-      ['Regola violata sempre','Non è concorrenza: manca proprio il controllo','Guarda il codice, probabilmente non c\'è nessun vincolo'],
-      ['Errori di connessione','Hai saturato qualcosa','Abbassa N. Non è il problema che stavi cercando']
-    ]},
-    {t:'callout',kind:'ok',title:'Il controllo dello script stesso',html:`Il rischio più insidioso è uno script che <strong>non sa fallire</strong>. Prima di credere a un "regola rispettata", togli la protezione nel codice (commenta la transazione, il lock, il vincolo unico) e rilancia: se adesso dice VIOLATA, lo script funziona. Se dice ancora RISPETTATA, stavi guardando un test che non guarda niente. Questo vale per ogni test scritto da un agente: <strong>un test che non fallisce mai non è un test</strong>.`},
-    {t:'exercise',id:'ex9',label:'Esercizio 7.1 — La controprova (4 minuti)',
-      prompt:'Rompi apposta la protezione e rilancia lo script. Si accorge della differenza? Scrivi cosa hai tolto e cosa è cambiato nel risultato.',
-      placeholder:'Ho tolto: ...\nPrima: ...\nDopo: ...\nLo script se ne accorge? ...'},
-    {t:'checklist',id:'ck9',title:'Task 4 completato quando...',
-      items:[
-        'Lo script punta a un ambiente locale e sta scritto nel file',
-        'Le richieste partono davvero insieme, non in fila',
-        'Lo script ripete il giro più volte',
-        'Dice chiaramente se la regola ha tenuto o no, ed esce con codice 1 se no',
-        'Ho fatto la controprova: rotta la protezione, lo script se ne accorge',
-        'So come pulire i dati creati dallo script'
-      ]}
-  ]
-});
-
-/* ---------- 8. Test BDD ---------- */
-MODULES.push({
-  id:'m10', n:'08', title:'Task 5 — Un test BDD', min:14,
+  id:'m10', n:'07', title:'Task 4 — Un test BDD', min:14,
   blocks:[
     {t:'p',html:`<h3>Cos'è un test BDD, in breve</h3>
       <p>Un test BDD descrive il comportamento con <strong>parole che capisce anche chi non programma</strong>, in tre parti fisse:</p>`},
@@ -992,7 +925,7 @@ MODULES.push({
 
     {t:'p',html:`<h3>7A — Scrivere lo scenario (5 min)</h3>
       <p>Questa parte falla <strong>tu</strong>, a mano. È l'unico pezzo che l'agente non può fare al posto tuo, perché richiede di sapere cosa deve fare il sistema — e quello sta nella tua testa, non nel codice.</p>`},
-    {t:'exercise',id:'ex10a',label:'Esercizio 8.1 — Il tuo scenario (5 minuti)',
+    {t:'exercise',id:'ex10a',label:'Esercizio 7.1 — Il tuo scenario (5 minuti)',
       prompt:'Scegli una funzionalità del tuo progetto e scrivi due scenari: uno che va a buon fine e uno che deve essere rifiutato. Usa Dato che / Quando / Allora. Niente termini tecnici: solo cosa succede.',
       placeholder:'Funzionalità: ...\n\nScenario: (caso buono)\n  Dato che ...\n  Quando ...\n  Allora ...\n\nScenario: (caso rifiutato)\n  Dato che ...\n  Quando ...\n  Allora ...',
       solution:'Due errori tipici. <strong>Primo:</strong> mettere la tecnica nello scenario («Quando faccio una POST su /api/v2/ordini con header X»). Lo scenario dice <em>cosa</em> succede, non <em>come</em> si chiama. Il come sta nel codice sotto. <strong>Secondo:</strong> un "Allora" vago («Allora l\'ordine viene gestito correttamente»). Se non si può controllare con un confronto, non è un Allora: scrivi il valore atteso.'},
@@ -1053,7 +986,7 @@ Poi:
         {tx:'Leggere i nomi dei test',ok:false,why:'Aiuta a capire l\'intenzione, ma un nome giusto può stare sopra a un controllo inutile.'},
         {tx:'Chiedergli di aggiungerne altri',ok:false,why:'Se non sai se i cinque che hai servono, aggiungerne altri cinque non migliora niente.'}
       ]},
-    {t:'checklist',id:'ck10',title:'Task 5 completato quando...',
+    {t:'checklist',id:'ck10',title:'Task 4 completato quando...',
       items:[
         'Ho scritto io gli scenari, a parole, senza termini tecnici',
         'C\'è anche uno scenario di caso rifiutato, non solo quello buono',
@@ -1065,9 +998,9 @@ Poi:
   ]
 });
 
-/* ---------- 9. Debug ---------- */
+/* ---------- 8. Debug ---------- */
 MODULES.push({
-  id:'m11', n:'09', title:'Task 6 — Debug da log e payload', min:20,
+  id:'m11', n:'08', title:'Task 5 — Debug da log e payload', min:20,
   blocks:[
     {t:'p',html:`<p>L'ultimo compito è quello per cui, secondo molti, un agente rende di più: <strong>hai un errore, hai dei log, non hai idea di dove guardare</strong>.</p>
       <p>Il motivo è semplice. Un log di duemila righe tu lo leggi in venti minuti e a metà ti si offusca la vista. Lui lo legge tutto, e sa anche cercare nel codice il punto che produce una certa riga. È un incrocio fra due cose grandi, ed è esattamente quello che fa meglio.</p>`},
@@ -1148,11 +1081,11 @@ Adesso:
       ['Dà una risposta diversa ogni volta','Vuol dire che il materiale non basta. Servono più log, non più domande.'],
       ['Tre giri senza progresso','Cambia strada: chiedigli di scrivere <em>come si riproduce a comando</em> il problema. Un caso che si riproduce vale più di dieci ipotesi.']
     ]},
-    {t:'exercise',id:'ex11',label:'Esercizio 9.1 — Com\'è andata (5 minuti)',
+    {t:'exercise',id:'ex11',label:'Esercizio 8.1 — Com\'è andata (5 minuti)',
       prompt:'Scrivi come è andato il debug: la causa proposta, come l\'hai verificata, se era giusta, quanto ci hai messo. E cosa avresti fatto senza agente.',
       placeholder:'Causa proposta: ...\nVerifica: ...\nEra giusta? ...\nTempo: ...\nSenza agente avrei: ...',
       solution:'Il guadagno vero quasi mai è "ha trovato il bug". È che <strong>ha tolto dal tavolo le strade sbagliate in due minuti</strong>: ti ha detto dove non è il problema. Il restringimento del campo è il lavoro che costa più tempo a una persona, ed è quello che lui fa meglio. La decisione finale resta tua, ma parti da un campo dieci volte più piccolo.'},
-    {t:'checklist',id:'ck11',title:'Task 6 completato quando...',
+    {t:'checklist',id:'ck11',title:'Task 5 completato quando...',
       items:[
         'Ho ripulito i log dai dati personali prima di incollarli',
         'Ho dato attesa, sintomo, frequenza, log e payload',
@@ -1164,9 +1097,9 @@ Adesso:
   ]
 });
 
-/* ---------- 10. Best practices ---------- */
+/* ---------- 9. Best practices ---------- */
 MODULES.push({
-  id:'mbp', n:'10', title:'Best practices', min:15,
+  id:'mbp', n:'09', title:'Best practices', min:15,
   blocks:[
     {t:'p',html:`<p class="lede">Il lavoro si sposta: scrivi meno codice a mano, ma devi diventare bravo a <strong>specificare, delegare, verificare e controllare</strong> un sistema che il codice lo scrive. Queste regole vengono tutte da lì. Per ognuna trovi il motivo e un esempio di cosa fare e cosa evitare.</p>`},
 
@@ -1299,9 +1232,9 @@ MODULES.push({
   ]
 });
 
-/* ---------- 11. Chiusura ---------- */
+/* ---------- 10. Chiusura ---------- */
 MODULES.push({
-  id:'m12', n:'11', title:'Chiusura', min:11,
+  id:'m12', n:'10', title:'Chiusura', min:11,
   blocks:[
     {t:'p',html:`<h3>Le otto cose da portarsi a casa</h3>`},
     {t:'table',head:['#','Regola','Da dove viene'],rows:[
@@ -1309,10 +1242,10 @@ MODULES.push({
       ['2','<strong>Il file di contesto va tenuto corto.</strong> Una pagina. I documenti lunghi si richiamano, non si copiano dentro.','Modulo 02'],
       ['3','<strong>Le procedure lunghe e rare diventano skill</strong>, e la descrizione dice <em>quando</em> usarle.','Modulo 03'],
       ['4','<strong>Chiedi sempre le prove:</strong> file, riga, output vero. E lascia la porta aperta al «NON SO».','Modulo 05'],
-      ['5','<strong>Prima il piano, poi il codice</strong>, su tutto ciò che tocca più di un file.','Modulo 10'],
-      ['6','<strong>Un test che non fallisce mai non è un test.</strong> Rompi il codice apposta e guarda.','Moduli 07 e 08'],
-      ['7','<strong>Trova la causa e correggi sono due compiti diversi.</strong> Non farli fare insieme.','Modulo 09'],
-      ['8','<strong>Quello che firmi è tuo.</strong> Chi ha scritto materialmente il codice non interessa a nessuno fra sei mesi.','Modulo 10']
+      ['5','<strong>Prima il piano, poi il codice</strong>, su tutto ciò che tocca più di un file.','Modulo 09'],
+      ['6','<strong>Un test che non fallisce mai non è un test.</strong> Rompi il codice apposta e guarda.','Modulo 07'],
+      ['7','<strong>Trova la causa e correggi sono due compiti diversi.</strong> Non farli fare insieme.','Modulo 08'],
+      ['8','<strong>Quello che firmi è tuo.</strong> Chi ha scritto materialmente il codice non interessa a nessuno fra sei mesi.','Modulo 09']
     ]},
     {t:'p',html:`<h3>Dove conviene e dove no</h3>`},
     {t:'split2',a:{h:'Conviene quasi sempre',items:[
