@@ -274,7 +274,7 @@ MODULES.push({
       ['— Pausa','10 min'],
       ['05 · Task 2 — Capire un progetto vero','28 min'],
       ['06 · Task 3 — Aggiungere funzionalità: Salvare il tracing di esecuzione','22 min'],
-      ['07 · Task 4 — Un test BDD','14 min'],
+      ['07 · Task 4 — Un test BDD','19 min'],
       ['08 · Task 5 — Debug da log e payload','20 min'],
       ['10 · Chiusura','11 min']
     ]},
@@ -908,7 +908,7 @@ MODULES.push({
 
 /* ---------- 7. Test BDD ---------- */
 MODULES.push({
-  id:'m10', n:'07', title:'Task 4 — Un test BDD', min:14,
+  id:'m10', n:'07', title:'Task 4 — Un test BDD', min:19,
   blocks:[
     {t:'p',html:`<h3>Cos'è un test BDD, in breve</h3>
       <p>Un test BDD descrive il comportamento con <strong>parole che capisce anche chi non programma</strong>, in tre parti fisse:</p>`},
@@ -965,6 +965,19 @@ Poi:
    questo test dovrebbe coprire, rilancia, e mostrami il test che
    FALLISCE. Poi rimetti a posto il codice.`},
     {t:'callout',kind:'ok',title:'Quell\'ultimo punto è il cuore del modulo',html:`Un agente sa scrivere test verdi. È bravissimo: se serve, adatta il test finché non passa — anche quando il codice è sbagliato. <strong>L'unica prova che un test serve a qualcosa è vederlo fallire quando deve.</strong> Fallo fare a lui, davanti a te, e guarda l'output. Prendi l'abitudine: vale per tutti i test che ti consegnerà da qui in avanti.`},
+    {t:'p',html:`<h3>7C — Controlla il test creato e le step definition (5 min)</h3>
+      <p>Il test è verde. Adesso leggi <strong>cosa ha scritto davvero</strong>: il file <code>.feature</code> e le step definition sotto. Quando un agente deve far passare un test e non ci riesce subito, tende a cambiare il test invece del codice. Lo fa in modi che dall'output non si vedono: il test resta verde, ma non controlla più niente.</p>`},
+    {t:'tablewrap',head:['Il trucco','Come si presenta','Dove guardare'],rows:[
+      ['Ha cambiato lo scenario','Il valore atteso nell\'Allora non è più quello che avevi scritto tu: è quello che il codice restituisce.','<code>git diff</code> sul file <code>.feature</code>: confrontalo riga per riga con il tuo.'],
+      ['Allora senza controllo','Lo step dell\'Allora non ha un <code>assert</code>/<code>expect</code>, o ne ha uno sempre vero (<code>expect(true).toBe(true)</code>, un valore confrontato con se stesso).','Ogni step <code>Then</code>: deve confrontare un risultato con un valore atteso.'],
+      ['Il Quando non chiama il codice vero','Invece di chiamare il servizio, lo step scrive direttamente il risultato atteso (nel DB, in una variabile) e l\'Allora lo rilegge.','Lo step <code>When</code>: deve chiamare il codice di produzione, non simularne l\'effetto.'],
+      ['Ha finto il pezzo da testare','Un mock o uno stub proprio sulla funzione che lo scenario deve verificare: il test controlla il finto.','I mock: devono sostituire solo le dipendenze esterne, mai il codice sotto test.'],
+      ['Parametri ignorati','Lo step accetta <code>{int}</code> o <code>{string}</code> ma dentro usa un valore fisso: cambi lo scenario e il test passa lo stesso.','Le step definition con parametri: il parametro deve essere usato davvero.'],
+      ['Errore inghiottito','Un <code>try/catch</code> dentro lo step che cattura l\'errore e non fa niente.','Ogni <code>catch</code> negli step. Nel caso rifiutato l\'errore va controllato, non nascosto.'],
+      ['Scenario saltato','Un tag <code>@skip</code>/<code>@wip</code>, un tag escluso nella configurazione, uno scenario sparito: il totale dei test passati torna, ma ne gira uno in meno.','<code>git diff</code> su <code>.feature</code> e configurazione di Cucumber. Conta gli scenari nell\'output.'],
+      ['Ha toccato la produzione per il test','Un <code>if</code> sull\'ambiente di test nel codice vero, o una regola allentata perché lo scenario passi.','<code>git diff --stat</code>: se il compito era solo il test, <code>src/</code> non doveva cambiare.']
+    ]},
+    {t:'callout',kind:'warn',title:'La review falla fare in una sessione nuova',html:`L'agente che ha scritto il test tende a difenderlo: conosce le sue ragioni e le trova convincenti. Apri una <strong>sessione pulita</strong> e chiedigli di fare la review del test e delle step definition, senza modificare niente: legge il test come lo leggerebbe un collega che non l'ha scritto. Poi i punti che segnala controllali tu, aprendo il file.`},
     {t:'p',html:`<h3>Come si riconosce un test che non serve</h3>`},
     {t:'split2',a:{h:'Segnali di allarme',items:[
       ['Controlla solo che "non sia nullo"','Passa anche se il valore è completamente sbagliato.'],
@@ -993,6 +1006,7 @@ Poi:
         'Il test usa solo gli strumenti già presenti nel progetto',
         'Ogni Allora è un confronto con un valore atteso',
         'Ho visto il test fallire quando ho rotto il codice apposta',
+        'Ho letto le step definition: nessun controllo finto, nessuno scenario cambiato o saltato',
         'Il test gira da solo e due volte di fila senza problemi'
       ]}
   ]
