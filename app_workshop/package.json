@@ -1,0 +1,14 @@
+{
+  "name": "app-workshop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Git history analytics (file volatility) built with the Luminous architecture",
+  "main": "cli/run.js",
+  "scripts": {
+    "start": "node cli/run.js",
+    "test": "cucumber-js"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^13.2.1"
+  }
+}

@@ -1,0 +1,7 @@
+services:
+  # To enter in the container:  docker exec -it agentic_bootcamp-agentic-1 bash
+  agentic:
+    build: .
+    entrypoint: tail -f /dev/null
+    volumes:
+      - .:/Code

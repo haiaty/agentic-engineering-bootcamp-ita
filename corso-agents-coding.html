@@ -185,11 +185,6 @@ label.fl{display:block;font-size:12px;font-weight:650;text-transform:uppercase;l
 .lstep span{color:var(--muted);font-size:12.5px;display:block;margin-top:3px}
 
 /* ---------- builder file di contesto ---------- */
-.fl-row{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:var(--panel-2);margin-bottom:5px;cursor:pointer;font-size:13.5px}
-.fl-row input{margin-top:4px;flex:none;accent-color:var(--accent);width:15px;height:15px}
-.fl-row.on{border-color:var(--accent);background:var(--accent-soft)}
-.fl-row .w{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--muted);flex:none;padding-top:2px}
-.fl-sec{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:14px 0 6px;font-weight:700}
 
 .footnav{display:flex;justify-content:space-between;gap:10px;margin-top:46px;padding-top:18px;border-top:1px solid var(--line)}
 .timerbox{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
@@ -609,7 +604,6 @@ pnpm lint --fix       # obbligatorio prima di ogni commit
         <li><strong>Mettilo in git.</strong> È del team, non tuo. Va rivisto come il codice.</li>
       </ul>`},
 
-    {t:'ctxfiles'},
     {t:'triage'},
 
     {t:'quiz',id:'q2a',q:'Perché tenere corto il file di contesto è così importante?',
@@ -1706,7 +1700,6 @@ function renderBlock(b, mid, i){
     case 'exercise':  mounts.push(()=>mountExercise(id,b));  return '<div id="'+id+'"></div>';
     case 'checklist': mounts.push(()=>mountChecklist(id,b)); return '<div id="'+id+'"></div>';
     case 'agentloop': mounts.push(()=>mountAgentLoop(id));   return '<div id="'+id+'"></div>';
-    case 'ctxfiles':  mounts.push(()=>mountCtxFiles(id));    return '<div id="'+id+'"></div>';
     case 'triage':    mounts.push(()=>mountTriage(id));      return '<div id="'+id+'"></div>';
     case 'cmdlab':    mounts.push(()=>mountCmdLab(id));      return '<div id="'+id+'"></div>';
     case 'promptkit': mounts.push(()=>mountPromptKit(id,b)); return '<div id="'+id+'"></div>';
@@ -1852,68 +1845,6 @@ function mountAgentLoop(id){
     timer = setInterval(next, 1600); draw();
   });
   draw();
-}
-
-/* ---------- builder del file di contesto ---------- */
-const CTX_ITEMS = [
-  {k:'cmd',  s:'Comandi',  tx:'I comandi esatti per installare, costruire, testare, lint', w:8,  c:'core', why:'È la cosa che serve di più e che l\'agente non può indovinare senza aprire mezza repo.'},
-  {k:'gotcha',s:'Comandi', tx:'La trappola dei comandi ("usa pnpm, non npm: i lockfile vanno in conflitto")', w:3, c:'core', why:'Una riga che evita un errore sistematico. Il rapporto valore/costo migliore di tutti.'},
-  {k:'entry',s:'Mappa',    tx:'Entry point e le 4 cartelle che contano', w:8, c:'core', why:'Gli dà l\'orientamento in 8 righe invece che in venti letture di file.'},
-  {k:'tree', s:'Mappa',    tx:'L\'albero completo delle cartelle, file per file', w:60, c:'bad', why:'Invecchia in una settimana e l\'agente sa cercare da solo. Costo alto, valore quasi zero.'},
-  {k:'conv', s:'Regole',   tx:'2-3 convenzioni non ovvie ("ogni rotta va aggiunta anche a routes.ts")', w:6, c:'core', why:'Sono le cose che non si deducono dal codice: esattamente quello che serve scrivere.'},
-  {k:'bug',  s:'Regole',   tx:'Una regola nata da un bug vero, con scritto il perché', w:4, c:'core', why:'Le regole con un motivo vengono seguite di più. E tu ti ricordi perché c\'è.'},
-  {k:'nice', s:'Regole',   tx:'"Scrivi codice pulito, usa nomi chiari, segui i principi SOLID"', w:6, c:'bad', why:'Non si può verificare e non cambia il comportamento. Rumore che diluisce le righe utili.'},
-  {k:'style',s:'Regole',   tx:'Le 40 regole di stile del codice, una per riga', w:45, c:'bad', why:'Questo è lavoro del linter, non del file di contesto. Una riga: "lancia pnpm lint --fix".'},
-  {k:'hist', s:'Contorno', tx:'La storia del progetto e chi l\'ha scritto', w:15, c:'bad', why:'Non serve a nessun compito. Costa a ogni messaggio, per sempre.'},
-  {k:'arch', s:'Contorno', tx:'Il documento di architettura completo, copiato dentro', w:120, c:'bad', why:'Va in docs/ con un rimando di una riga. Così si legge solo quando serve.'},
-  {k:'link', s:'Contorno', tx:'Rimandi di una riga ai documenti lunghi ("Autenticazione: docs/auth.md")', w:5, c:'core', why:'Il modo giusto di avere i documenti lunghi: costo minimo, apertura quando serve.'},
-  {k:'sec',  s:'Contorno', tx:'Le credenziali del database di sviluppo, "così le ha sottomano"', w:4, c:'never', why:'Mai. Questo file sta in git e viene letto ad alta voce dal modello.'}
-];
-function mountCtxFiles(id){
-  const el = document.getElementById(id);
-  const saved = store.get('ctxfiles', {cmd:1,gotcha:1,entry:1,conv:1,tree:0,bug:0,nice:0,style:0,hist:0,arch:0,link:0,sec:0});
-  let secs = [], out = '';
-  CTX_ITEMS.forEach(it=>{ if(secs.indexOf(it.s)<0) secs.push(it.s); });
-  secs.forEach(s=>{
-    out += '<div class="fl-sec">'+s+'</div>';
-    CTX_ITEMS.filter(i=>i.s===s).forEach(it=>{
-      out += '<label class="fl-row'+(saved[it.k]?' on':'')+'" data-k="'+it.k+'">'+
-        '<input type="checkbox" '+(saved[it.k]?'checked':'')+'><span>'+it.tx+'</span>'+
-        '<span class="w">~'+it.w+' righe</span></label>';
-    });
-  });
-  const body = '<div class="split"><div>'+out+'</div><div>'+
-    '<div class="meter"><i id="'+id+'_m"></i></div>'+
-    '<div class="scoreline"><span id="'+id+'_n"></span><span>obiettivo: 100 righe</span></div>'+
-    '<div class="diag" id="'+id+'_d"></div></div></div>';
-  el.innerHTML = widgetShell('Lab 2.1','Componi il tuo AGENTS.md',
-    'Spunta cosa ci metteresti. A destra vedi quanto pesa e cosa ne pensa il revisore.', body);
-  const rows = el.querySelectorAll('.fl-row');
-  function upd(){
-    let tot=0, core=0, bad=[], never=false;
-    rows.forEach(r=>{
-      const k=r.dataset.k, it=CTX_ITEMS.find(x=>x.k===k), on=r.querySelector('input').checked;
-      saved[k]=on?1:0; r.classList.toggle('on',on);
-      if(on){ tot+=it.w; if(it.c==='core') core++; if(it.c==='bad') bad.push(it); if(it.c==='never') never=true; }
-    });
-    store.set('ctxfiles',saved);
-    document.getElementById(id+'_m').style.width = Math.min(100, tot/2)+'%';
-    document.getElementById(id+'_m').style.background = tot>160?'var(--bad)': tot>110?'var(--warn)':'var(--ok)';
-    document.getElementById(id+'_n').textContent = '≈ '+tot+' righe';
-    const d=[];
-    if(never) d.push(['bad','Hai messo dei segreti in un file che sta in git e che il modello legge per intero. Toglili subito: questo è l\'unico errore della lista che non si recupera.']);
-    if(tot>160) d.push(['bad','Oltre 160 righe: questo file lo paghi a ogni singolo messaggio, tutto il giorno. E le tre righe che contano davvero sono annegate in mezzo.']);
-    else if(tot>110) d.push(['warn','Sopra le 110 righe. Si può ancora tenere, ma guarda se c\'è qualcosa da spostare in docs/ con un rimando.']);
-    bad.forEach(it=>d.push(['warn','«'+it.tx.slice(0,48)+'…» — '+it.why]));
-    if(core<4) d.push(['warn','Mancano le basi. Senza comandi, entry point e convenzioni non ovvie, l\'agente deve dedurre tutto da capo ogni volta.']);
-    if(!saved.link && (saved.arch||saved.style)) d.push(['warn','Hai copiato dentro un documento lungo invece di richiamarlo con una riga. È il taglio che fa risparmiare di più.']);
-    if(!d.length && tot<=110 && core>=4) d.push(['ok','File difendibile: sta in una pagina, ha i comandi, la mappa, le convenzioni non ovvie e nessun riempitivo. Adesso l\'unica cosa che conta è tenerlo aggiornato quando l\'agente sbaglia.']);
-    document.getElementById(id+'_d').innerHTML = d.map(x=>'<div style="color:'+(x[0]==='bad'?'var(--bad)':x[0]==='warn'?'var(--warn)':'var(--ok)')+'">'+
-      (x[0]==='bad'?'✗ ':x[0]==='warn'?'⚠ ':'✓ ')+x[1]+'</div>').join('');
-    refreshStats();
-  }
-  rows.forEach(r=>r.querySelector('input').addEventListener('change',upd));
-  upd();
 }
 
 /* ---------- triage: dove lo metti? ---------- */
@@ -2260,13 +2191,6 @@ function doExport(planOnly){
         L.push('- '+(tr[k]===it.a?'✅':'❌')+' '+it.tx+' → hai scelto **'+TR_LB[tr[k]]+'**'+(tr[k]===it.a?'':', corretta: **'+TR_LB[it.a]+'**')); } });
       L.push('');
       L.push('**'+ok+'/'+tot+' corrette.**');
-    }
-    const cf=store.get('ctxfiles',null);
-    if(cf){
-      L.push(''); L.push('## Il tuo AGENTS.md composto in aula');
-      let tot=0;
-      CTX_ITEMS.forEach(it=>{ if(cf[it.k]){ tot+=it.w; L.push('- '+it.tx+' (~'+it.w+' righe)'); } });
-      L.push(''); L.push('**Totale stimato: '+tot+' righe** (obiettivo: sotto le 100).');
     }
   }
   L.push(''); L.push('## Piano di adozione');
