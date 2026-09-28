@@ -1275,19 +1275,7 @@ MODULES.push({
       ['Quando non sai giudicare il risultato','Se non sai dire se è giusto, non stai delegando: stai sperando.']
     ]}},
     {t:'callout',kind:'warn',title:'L\'unica cosa che davvero non delega',html:`Il giudizio. Un agente non sa quando una cosa è <em>abbastanza</em> buona, non sa cosa succede in produzione fra tre mesi, e non sa che in quella cartella c'è un pezzo che sembra morto ma lo usa il gestionale della logistica. <strong>Il lavoro che passa a te è più difficile di prima, non più facile:</strong> scrivere bene i compiti, e leggere bene i risultati.`},
-    {t:'plan'},
-    {t:'exercise',id:'ex12',label:'Chiusura (2 minuti)',
-      prompt:'Due righe: la cosa più utile di oggi, e la prima cosa che farai entro venerdì.',
-      placeholder:'Più utile: ...\nEntro venerdì: ...'},
-    {t:'checklist',id:'ck12',title:'Prima di chiudere la giornata',
-      items:[
-        'Ho un AGENTS.md nel mio progetto, riletto e corretto a mano',
-        'So usare l\'agente sia in sessione sia con un solo comando',
-        'Ho almeno un ticket vero nato dalle analisi di oggi',
-        'Ho scritto il piano di adozione qui sopra',
-        'Ho esportato le mie risposte in Markdown'
-      ]},
-    {t:'callout',kind:'',title:'Prima di chiudere',html:`Usa <strong>&#8681; Esporta</strong> in alto a destra: scarichi in Markdown tutte le risposte, le checklist e il piano di adozione. Quel file è il tuo materiale di lavoro per la settimana prossima.`}
+    {t:'callout',kind:'',title:'Prima di chiudere',html:`Usa <strong>&#8681; Esporta</strong> in alto a destra: scarichi in Markdown tutte le risposte e le checklist. Quel file è il tuo materiale di lavoro per la settimana prossima.`}
   ]
 });
 
@@ -1333,7 +1321,6 @@ function renderBlock(b, mid, i){
     case 'cmdlab':    mounts.push(()=>mountCmdLab(id));      return '<div id="'+id+'"></div>';
     case 'promptkit': mounts.push(()=>mountPromptKit(id,b)); return '<div id="'+id+'"></div>';
     case 'reveal':    mounts.push(()=>mountReveal(id,b));    return '<div id="'+id+'"></div>';
-    case 'plan':      mounts.push(()=>mountPlan(id));        return '<div id="'+id+'"></div>';
     default: return '';
   }
 }
@@ -1670,31 +1657,6 @@ function mountReveal(id, b){
   });
 }
 
-/* ---------- piano di adozione ---------- */
-const PLAN = [
-  {k:'uno', lb:'1 · Il primo uso, quello che parte lunedì', ph:'Un compito solo, concreto, che fai già oggi a mano. Es. «primo giro di analisi sui log degli errori della notte».', rows:3},
-  {k:'file', lb:'2 · Il file di contesto: chi lo scrive, dove sta, chi lo rivede', ph:'Es. lo scrivo io entro venerdì, sta in AGENTS.md alla radice, lo rivediamo in retrospettiva ogni due settimane.', rows:3},
-  {k:'skill', lb:'3 · La prima skill: quale procedura smettete di spiegare a voce', ph:'Es. la procedura di release. Oggi la spiego a ogni persona nuova.', rows:3},
-  {k:'reg', lb:'4 · Le regole della squadra: cosa si può dare all\'agente e cosa no', ph:'Es. mai su dati veri; sempre su branch a parte; il diff si legge sempre prima del commit; niente log non ripuliti.', rows:4},
-  {k:'ver', lb:'5 · Come verificate il lavoro prima che entri in main', ph:'Es. code review normale + il test deve fallire se si rompe il codice apposta.', rows:3},
-  {k:'mis', lb:'6 · Come saprete fra un mese se è andata bene', ph:'Es. quante ore di lettura codice risparmiate; quanti bug trovati dall\'analisi; quante volte abbiamo dovuto buttare il lavoro dell\'agente.', rows:3}
-];
-function mountPlan(id){
-  const el=document.getElementById(id);
-  const body=PLAN.map(f=>'<label class="fl">'+f.lb+'</label><textarea data-k="'+f.k+'" rows="'+f.rows+'" placeholder="'+esc(f.ph)+'"></textarea>').join('')+
-    '<div class="btnrow"><button class="btn primary" id="'+id+'_ex">Esporta il piano</button><span class="saved" id="'+id+'_sv">salvato</span></div>';
-  el.innerHTML=widgetShell('Piano','Piano di adozione',
-    'Sei domande. Compila la 6 per prima: se non sai come misurerai il risultato, il primo uso non è ancora scelto bene.',body);
-  const sv=document.getElementById(id+'_sv');
-  el.querySelectorAll('textarea').forEach(ta=>{
-    const k='plan.'+ta.dataset.k;
-    ta.value=answers[k]||'';
-    let t; ta.addEventListener('input',()=>{ answers[k]=ta.value; clearTimeout(t);
-      t=setTimeout(()=>{saveAll(); sv.classList.add('on'); setTimeout(()=>sv.classList.remove('on'),1200); refreshStats();},400); });
-  });
-  document.getElementById(id+'_ex').addEventListener('click',()=>doExport(true));
-}
-
 /* ============================================================
    NAVIGAZIONE
    ============================================================ */
@@ -1784,20 +1746,18 @@ function refreshStats(){
   const aE=exIds.filter(k=>(answers[k]||'').trim().length>20).length;
   const kits=allBlocks('promptkit');
   const aK=kits.filter(x=>x.b.fields.some(f=>(answers[x.b.id+'.'+f.k]||'').trim().length>10)).length;
-  const planN=PLAN.filter(f=>(answers['plan.'+f.k]||'').trim().length>20).length;
   const dM=Object.keys(done).length;
   const nM=MODULES.filter(m=>m.id!=='brk').length;
   document.getElementById('statsBox').innerHTML=
     'Moduli completati <strong>'+dM+'/'+nM+'</strong><br>'+
     'Quiz risposti <strong>'+aQ+'/'+quizzes.length+'</strong>'+(aQ?' · corretti <strong>'+okQ+'</strong>':'')+'<br>'+
     'Esercizi svolti <strong>'+aE+'/'+exIds.length+'</strong><br>'+
-    'Compiti composti <strong>'+aK+'/'+kits.length+'</strong><br>'+
-    'Piano <strong>'+planN+'/'+PLAN.length+'</strong> sezioni';
-  const tot=nM+quizzes.length+exIds.length+kits.length+PLAN.length;
-  document.getElementById('pbar').style.width=((dM+aQ+aE+aK+planN)/tot*100)+'%';
+    'Compiti composti <strong>'+aK+'/'+kits.length+'</strong>';
+  const tot=nM+quizzes.length+exIds.length+kits.length;
+  document.getElementById('pbar').style.width=((dM+aQ+aE+aK)/tot*100)+'%';
 }
 
-function doExport(planOnly){
+function doExport(){
   const L=[];
   const d=new Date();
   const stamp=d.toLocaleDateString('it-IT')+' '+d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
@@ -1805,52 +1765,48 @@ function doExport(planOnly){
   L.push('');
   L.push('Esportato il '+stamp+'  ·  tempo d’aula registrato: '+fmt(elapsed));
   L.push('');
-  if(!planOnly){
-    L.push('## Risposte agli esercizi');
-    allBlocks('exercise').forEach(x=>{
-      const v=(answers[x.b.id]||'').trim();
-      L.push(''); L.push('### '+x.m.n+' — '+x.b.label);
-      L.push(''); L.push('> '+x.b.prompt);
-      L.push(''); L.push(v||'_(non compilato)_');
-    });
-    L.push(''); L.push('## Compiti composti (da riusare)');
-    allBlocks('promptkit').forEach(x=>{
-      const v={}; let any=false;
-      x.b.fields.forEach(f=>{ v[f.k]=(answers[x.b.id+'.'+f.k]||'').trim(); if(v[f.k]) any=true; });
-      L.push(''); L.push('### '+x.m.n+' — '+x.b.title);
-      L.push('');
-      if(!any){ L.push('_(non compilato)_'); }
-      else { L.push('```'); L.push(x.b.build(v)); L.push('```'); }
-    });
-    L.push(''); L.push('## Quiz');
-    allBlocks('quiz').forEach(x=>{
-      const k=quizState[x.b.id];
-      L.push('- **'+x.b.q.replace(/<[^>]+>/g,'')+'**');
-      L.push('  - Risposta data: '+(k===undefined?'_nessuna_':x.b.opts[k].tx+(x.b.opts[k].ok?' ✅':' ❌')));
-      if(k!==undefined&&!x.b.opts[k].ok) L.push('  - Corretta: '+x.b.opts.find(o=>o.ok).tx);
-    });
-    L.push(''); L.push('## Checklist');
-    allBlocks('checklist').forEach(x=>{
-      const s=store.get('ck.'+x.b.id,[]);
-      L.push(''); L.push('### '+x.m.n+' — '+x.b.title);
-      x.b.items.forEach((it,i)=>L.push('- ['+(s[i]?'x':' ')+'] '+it));
-    });
-    const tr=store.get('triage',null);
-    if(tr && Object.keys(tr).length){
-      L.push(''); L.push('## Esercizio «Dove lo metti?»');
-      let ok=0, tot=0;
-      TRIAGE.forEach((it,k)=>{ if(tr[k]!==undefined){ tot++; if(tr[k]===it.a) ok++;
-        L.push('- '+(tr[k]===it.a?'✅':'❌')+' '+it.tx+' → hai scelto **'+TR_LB[tr[k]]+'**'+(tr[k]===it.a?'':', corretta: **'+TR_LB[it.a]+'**')); } });
-      L.push('');
-      L.push('**'+ok+'/'+tot+' corrette.**');
-    }
+  L.push('## Risposte agli esercizi');
+  allBlocks('exercise').forEach(x=>{
+    const v=(answers[x.b.id]||'').trim();
+    L.push(''); L.push('### '+x.m.n+' — '+x.b.label);
+    L.push(''); L.push('> '+x.b.prompt);
+    L.push(''); L.push(v||'_(non compilato)_');
+  });
+  L.push(''); L.push('## Compiti composti (da riusare)');
+  allBlocks('promptkit').forEach(x=>{
+    const v={}; let any=false;
+    x.b.fields.forEach(f=>{ v[f.k]=(answers[x.b.id+'.'+f.k]||'').trim(); if(v[f.k]) any=true; });
+    L.push(''); L.push('### '+x.m.n+' — '+x.b.title);
+    L.push('');
+    if(!any){ L.push('_(non compilato)_'); }
+    else { L.push('```'); L.push(x.b.build(v)); L.push('```'); }
+  });
+  L.push(''); L.push('## Quiz');
+  allBlocks('quiz').forEach(x=>{
+    const k=quizState[x.b.id];
+    L.push('- **'+x.b.q.replace(/<[^>]+>/g,'')+'**');
+    L.push('  - Risposta data: '+(k===undefined?'_nessuna_':x.b.opts[k].tx+(x.b.opts[k].ok?' ✅':' ❌')));
+    if(k!==undefined&&!x.b.opts[k].ok) L.push('  - Corretta: '+x.b.opts.find(o=>o.ok).tx);
+  });
+  L.push(''); L.push('## Checklist');
+  allBlocks('checklist').forEach(x=>{
+    const s=store.get('ck.'+x.b.id,[]);
+    L.push(''); L.push('### '+x.m.n+' — '+x.b.title);
+    x.b.items.forEach((it,i)=>L.push('- ['+(s[i]?'x':' ')+'] '+it));
+  });
+  const tr=store.get('triage',null);
+  if(tr && Object.keys(tr).length){
+    L.push(''); L.push('## Esercizio «Dove lo metti?»');
+    let ok=0, tot=0;
+    TRIAGE.forEach((it,k)=>{ if(tr[k]!==undefined){ tot++; if(tr[k]===it.a) ok++;
+      L.push('- '+(tr[k]===it.a?'✅':'❌')+' '+it.tx+' → hai scelto **'+TR_LB[tr[k]]+'**'+(tr[k]===it.a?'':', corretta: **'+TR_LB[it.a]+'**')); } });
+    L.push('');
+    L.push('**'+ok+'/'+tot+' corrette.**');
   }
-  L.push(''); L.push('## Piano di adozione');
-  PLAN.forEach(f=>{ L.push(''); L.push('### '+f.lb); L.push(''); L.push((answers['plan.'+f.k]||'').trim()||'_(non compilato)_'); });
   const blob=new Blob([L.join('\n')],{type:'text/markdown;charset=utf-8'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
-  a.download=(planOnly?'piano-adozione-coding-agents':'corso-agents-coding')+'.md';
+  a.download='corso-agents-coding.md';
   a.click(); URL.revokeObjectURL(a.href);
 }
 
@@ -1858,7 +1814,7 @@ function doExport(planOnly){
    BOOT
    ============================================================ */
 document.getElementById('timerBtn').addEventListener('click',toggleTimer);
-document.getElementById('exportBtn').addEventListener('click',()=>doExport(false));
+document.getElementById('exportBtn').addEventListener('click',()=>doExport());
 document.getElementById('themeBtn').addEventListener('click',()=>{
   const t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
   document.documentElement.setAttribute('data-theme',t); store.set('theme',t);
