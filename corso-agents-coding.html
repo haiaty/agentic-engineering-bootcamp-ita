@@ -896,7 +896,14 @@ MODULES.push({
   blocks:[
     {t:'exercise',id:'ex7a',label:'Esercizio 6.1 — Una nuova funzionalità: il tracing di esecuzione',
       prompt:'Aggiungi al progetto questa nuova funzionalità: la possibilità di salvare il tracing di esecuzione in un database SQLite oppure su un file. Fatti aiutare dall\'agente, poi scrivi qui il prompt che gli hai dato e com\'è andata.',
-      placeholder:'Il compito che ho dato all\'agente: ...\nCosa ha modificato: ...\nCome ho verificato che funziona (SQLite e file): ...\nCosa ho dovuto correggere: ...'}
+      placeholder:'Il compito che ho dato all\'agente: ...\nCosa ha modificato: ...\nCome ho verificato che funziona (SQLite e file): ...\nCosa ho dovuto correggere: ...'},
+    {t:'p',html:`<p>Come riferimento, una chiamata di tracing si presenta così: un messaggio che dice cosa è successo e un oggetto con i dati utili a ricostruire l'esecuzione.</p>`},
+    {t:'code',lang:'javascript',code:`await emitTrace("[info] previewed edition is current in its own language, sign proceeds", {
+    file_code: file_code,
+    external_edc_patient_id: external_edc_patient_id,
+    previewed_file_config_id: previewedFileConfigId,
+    active_file_config_id: active_file_config_id
+});`}
   ]
 });
 
