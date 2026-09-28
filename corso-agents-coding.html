@@ -261,7 +261,7 @@ MODULES.push({
     {t:'p',html:`<p>Il corso è diviso in due metà. Nella prima impari come funziona e ti alleni su script piccoli, dove se sbagli non succede niente. Nella seconda lavori su una repo vera del tuo lavoro: capire, analizzare, aggiungere, testare, debuggare.</p>`},
     {t:'cards',cards:[
       {tag:'Ora 1',h:'Teoria',p:'Cosa sono, quali sono, i file che leggono (AGENTS.md e CLAUDE.md), le skill.'},
-      {tag:'Ora 2',h:'Primi task',p:'Installare Pi, creare e modificare script, usarlo in sessione e con un solo comando.'},
+      {tag:'Ora 2',h:'Primi task',p:'Installare Pi e fare le prime prove, in sessione e con un solo comando.'},
       {tag:'Ora 3',h:'Codice vero',p:'Capire un progetto sconosciuto, aggiungere un comando nuovo alla CLI.'},
       {tag:'Ora 4',h:'Lavoro vero',p:'Aggiungere una funzione, test di concorrenza, un test BDD, debug da log e payload.'}
     ]},
@@ -271,14 +271,13 @@ MODULES.push({
       ['02 · I file che l\'agente legge: AGENTS.md e CLAUDE.md','22 min'],
       ['03 · Le skill','14 min'],
       ['04 · Task 1 — Installare Pi','12 min'],
-      ['05 · Task 2 — Creare e modificare script','28 min'],
       ['— Pausa','10 min'],
-      ['06 · Task 3 — Capire un progetto vero','28 min'],
-      ['07 · Task 4 — Aggiungere una nuova funzionalità da essere usata con la CLI','22 min'],
-      ['08 · Task 5 — Aggiungere una piccola funzione','22 min'],
-      ['09 · Task 6 — Script di test con concorrenza','14 min'],
-      ['10 · Task 7 — Un test BDD','14 min'],
-      ['11 · Task 8 — Debug da log e payload','20 min'],
+      ['05 · Task 2 — Capire un progetto vero','28 min'],
+      ['06 · Task 3 — Aggiungere una nuova funzionalità da essere usata con la CLI','22 min'],
+      ['07 · Task 4 — Aggiungere una piccola funzione','22 min'],
+      ['08 · Task 5 — Script di test con concorrenza','14 min'],
+      ['09 · Task 6 — Un test BDD','14 min'],
+      ['10 · Task 7 — Debug da log e payload','20 min'],
       ['12 · Chiusura','11 min']
     ]},
     {t:'callout',kind:'ok',title:'Come si usa questo materiale',html:`Naviga con la barra a sinistra o con i pulsanti in fondo a ogni modulo. Ogni esercizio si salva da solo nel browser (niente esce dal tuo computer): puoi chiudere e riprendere. Con <strong>&#8681; Esporta</strong> scarichi tutte le tue risposte in un file Markdown. Il timer in alto serve al docente per tenere il ritmo.`},
@@ -377,7 +376,6 @@ pi
 # Con un solo comando: il compito va nel comando, lui lavora, stampa e esce
 claude -p "Spiega in 5 righe cosa fa main.py"
 pi -p "Spiega in 5 righe cosa fa main.py"`},
-    {t:'p',html:`<p>Nel modulo 05 li proviamo tutti e due sullo stesso compito, così la differenza si vede con gli occhi.</p>`},
 
     {t:'p',html:`<h3>Cosa fanno bene e cose che fanno su cui bisogna stare attenti</h3>
       <p>Dirlo chiaro all'inizio evita due errori opposti: aspettarsi troppo, e non usarlo dove serve.</p>`},
@@ -812,89 +810,6 @@ pi          # oppure: claude
   ]
 });
 
-/* ---------- 5. Task 2: script semplici ---------- */
-MODULES.push({
-  id:'m5', n:'05', title:'Task 2 — Creare e modificare script', min:28,
-  blocks:[
-    {t:'p',html:`<p>Mezz'ora su cose piccole, in una cartella di prova, dove non c'è niente da rompere. L'obiettivo non è lo script: è <strong>prendere le misure allo strumento</strong>. Capire come chiede i permessi, cosa fa quando il compito è vago, cosa fa quando è preciso, e che differenza c'è fra parlarci e dargli un comando secco.</p>`},
-    {t:'code',lang:'bash',code:`mkdir ~/lab-agente && cd ~/lab-agente
-git init
-echo "# Lab" > README.md
-git add -A && git commit -m "inizio"
-# Da adesso, dopo ogni esercizio: git diff  ->  vedi esattamente cosa ha fatto`},
-
-    {t:'p',html:`<h3>2A — Il primo script (10 min)</h3>
-      <p>Apri la sessione e dai questo compito. Poi <strong>guarda mentre lavora</strong>: quali file apre, cosa lancia, quando ti chiede il permesso.</p>`},
-    {t:'code',lang:'text',code:`Scrivi uno script Python chiamato csv2json.py che:
-- prende in ingresso il percorso di un file CSV e scrive un file JSON
-  con lo stesso nome ma estensione .json
-- usa solo la libreria standard
-- se il file non esiste, stampa un messaggio chiaro ed esce con codice 1
-- ha un --help che si capisce
-
-Poi crea un file di esempio con 3 righe, provalo davvero, e mostrami
-l'output del comando.`},
-    {t:'p',html:`<p>Nota tre cose di questo compito, perché sono lo schema di tutti i compiti buoni:</p>
-      <ul>
-        <li><strong>Dice cosa deve fare, non come scriverlo.</strong> Il "come" è il suo mestiere.</li>
-        <li><strong>Mette i limiti</strong> ("solo libreria standard"). Senza limiti, si installa tre pacchetti.</li>
-        <li><strong>Chiede la prova.</strong> "Provalo davvero e mostrami l'output" cambia tutto: lo costringe a lanciare il codice invece di consegnartelo e basta.</li>
-      </ul>`},
-    {t:'callout',kind:'warn',title:'Da guardare mentre lavora',html:`Se scrive lo script e <strong>non lo lancia</strong>, fermalo e chiediglielo. Codice mai eseguito è codice non verificato — ed è il modo più comune in cui un agente ti consegna qualcosa che non funziona con la massima sicurezza.`},
-
-    {t:'p',html:`<h3>2B — Modificarlo (10 min)</h3>
-      <p>Adesso la parte interessante. Cambiare codice esistente è più difficile che scriverlo da zero, perché deve capire cosa c'è già. Dai queste tre modifiche <strong>una alla volta</strong>, e fai <code>git diff</code> dopo ognuna.</p>`},
-    {t:'table',head:['#','Compito','Cosa stai osservando'],rows:[
-      ['1','«Aggiungi l\'opzione <code>--delimiter</code> per scegliere il separatore, con default la virgola.»','Modifica piccola e chiara: il diff dovrebbe essere di 5-6 righe. Se ne tocca trenta, ha "sistemato" cose che non avevi chiesto.'],
-      ['2','«Aggiungi <code>--dry-run</code>: stampa a video cosa scriverebbe, senza scrivere il file.»','Deve cambiare il flusso, non solo aggiungere un parametro. Guarda se il controllo lo mette nel punto giusto.'],
-      ['3','«Le righe con un numero di colonne diverso dall\'intestazione vanno saltate, con un avviso su stderr. Aggiungi un test che lo dimostra.»','Caso limite + prova. Il test deve <em>fallire</em> se togli la gestione: chiediglielo.']
-    ]},
-    {t:'exercise',id:'ex5a',label:'Esercizio 5.1 — Cos\'è successo nei diff (3 minuti)',
-      prompt:'Guarda i tre git diff. Quante righe ha toccato ogni volta? Ha cambiato qualcosa che non avevi chiesto? Scrivi cosa hai notato.',
-      placeholder:'Modifica 1: ... righe. Ha toccato anche ...\nModifica 2: ...\nModifica 3: ...\nCosa ho notato: ...',
-      solution:'Il segnale da cercare si chiama <strong>modifica che deborda</strong>: hai chiesto un parametro e ti ritrovi anche i commenti riscritti, le import riordinate, un refactoring "già che c\'ero". Non è un disastro su uno script di venti righe, ma sulla repo vera rende il diff illeggibile e il code review impossibile. Si cura con una riga nel compito: <em>«tocca solo il minimo necessario, non riformattare il resto»</em>. Mettila in AGENTS.md e vale sempre.'},
-
-    {t:'p',html:`<h3>2C — Lo stesso lavoro, con un solo comando (8 min)</h3>
-      <p>Fin qui hai parlato con l'agente. Adesso lo usi come un normale comando del terminale: gli passi il compito, lui lavora e stampa il risultato, poi esce. Senza sessione.</p>`},
-    {t:'cmdlab'},
-    {t:'p',html:`<p>È lo stesso motore, ma il modo di lavorare cambia parecchio:</p>`},
-    {t:'table',head:['','In sessione','Un solo comando'],rows:[
-      ['Ti dice cosa sta facendo','Sì, passo per passo','Solo il risultato finale'],
-      ['Puoi correggerlo a metà','Sì','No: se il compito è scritto male, te ne accorgi alla fine'],
-      ['Chiede i permessi','Sì','Dipende: o glieli dai prima, o si blocca'],
-      ['Si può mettere in uno script','No','Sì — è tutto il punto'],
-      ['Si può mettere in pipe','No','Sì: prende da stdin e scrive su stdout'],
-      ['Quando usarlo','Compiti poco chiari, lavoro esplorativo','Compiti chiari e ripetuti, tanti file, CI']
-    ]},
-    {t:'p',html:`<p>Il caso in cui vale davvero la pena è questo: <strong>lo stesso compito su tante cose</strong>. Un ciclo del terminale e l'agente diventa un comando come tutti gli altri.</p>`},
-    {t:'code',lang:'bash',code:`# Un riassunto di testa per ogni script della cartella
-for f in *.py; do
-  echo "== $f"
-  pi -p "Leggi $f e scrivi 2 righe: a cosa serve, e un problema che vedi."
-done
-
-# In pipe: l'agente legge da stdin
-git diff | pi -p "Riassumi queste modifiche in 5 punti per il changelog."
-
-# Dentro uno script, con il risultato salvato
-pi -p "Elenca le funzioni pubbliche di src/, una per riga" > funzioni.txt`},
-    {t:'callout',kind:'warn',title:'Attenzione ai permessi',html:`Se il comando secco deve anche <strong>scrivere</strong> file o lanciare comandi, deve poterlo fare senza chiedere: altrimenti resta lì fermo ad aspettare una risposta che nessuno gli darà. Le opzioni per dargli questi permessi esistono in tutti gli strumenti — e sono anche il modo più rapido per farsi male. <strong>Usale solo dentro una copia usa e getta o in un contenitore isolato</strong>, mai sulla repo vera.`},
-    {t:'exercise',id:'ex5b',label:'Esercizio 5.2 — Un comando riutilizzabile (5 minuti)',
-      prompt:'Scrivi il comando secco (una riga di terminale) di un lavoro che ripeti spesso nel tuo lavoro. Poi provalo e scrivi se il risultato era usabile così com\'era o no.',
-      placeholder:'Comando: pi -p "..."\nRisultato usabile? ...\nCosa ho dovuto aggiungere al compito per farlo funzionare: ...',
-      solution:'Quasi sempre serve un secondo giro, e quasi sempre per lo stesso motivo: <strong>il formato dell\'output</strong>. In sessione un output sciolto va benissimo, tanto lo leggi tu. In uno script no: se il testo ti serve per un altro comando devi chiederlo esplicitamente («solo le righe, senza introduzione», «rispondi solo con JSON valido, niente altro»). È la differenza fra un giocattolo e una cosa che metti in pipeline.'},
-    {t:'checklist',id:'ck5',title:'Task 2 completato quando...',
-      items:[
-        'Ho creato uno script da zero e l\'agente l\'ha davvero eseguito',
-        'Ho fatto tre modifiche e guardato il git diff di ognuna',
-        'Ho notato almeno una volta una modifica più grande del necessario',
-        'Ho rifatto un compito con un solo comando, senza sessione',
-        'Ho provato l\'agente in pipe (qualcosa | pi -p "...")',
-        'So dire in che casi userei l\'uno e in che casi l\'altro'
-      ]}
-  ]
-});
-
 /* ---------- Pausa ---------- */
 MODULES.push({
   id:'brk', n:'—', title:'Pausa', min:10,
@@ -902,13 +817,13 @@ MODULES.push({
     {t:'p',html:`<h1 style="font-size:26px;margin-top:10px">Pausa — 10 minuti</h1>
       <p class="lede">Al ritorno si smette di giocare: si lavora su una repo vera.</p>`},
     {t:'callout',kind:'warn',title:'Prima di tornare, prepara la repo',html:`Apri il progetto su cui lavorerai e lancia <code>git status</code>. Deve essere <strong>pulito</strong>: niente file modificati, niente file nuovi. Se hai lavoro in sospeso, mettilo da parte con <code>git stash</code> oppure fai un branch nuovo. Serve anche che il progetto <strong>si costruisca e i test girino</strong> prima di iniziare: se non funziona già prima, non saprai mai se è colpa tua o dell'agente.`},
-    {t:'callout',kind:'',title:'Domanda su cui pensare durante la pausa',html:`Fin qui hai controllato il lavoro dell'agente con <code>git diff</code>, su script di venti righe. Su una repo da centomila righe che non conosci del tutto: <strong>come farai a sapere se quello che ti consegna è giusto?</strong> È la domanda vera della seconda parte.`}
+    {t:'callout',kind:'',title:'Domanda su cui pensare durante la pausa',html:`Da qui in poi controllerai il lavoro dell'agente con <code>git diff</code>. Su una repo da centomila righe che non conosci del tutto: <strong>come farai a sapere se quello che ti consegna è giusto?</strong> È la domanda vera della seconda parte.`}
   ]
 });
 
-/* ---------- 6. Capire un progetto vero ---------- */
+/* ---------- 5. Capire un progetto vero ---------- */
 MODULES.push({
-  id:'m6', n:'06', title:'Task 3 — Capire un progetto vero', min:28,
+  id:'m6', n:'05', title:'Task 2 — Capire un progetto vero', min:28,
   blocks:[
     {t:'p',html:`<p>Questo è il primo uso di un coding agent che conviene davvero a tutti, anche a chi è scettico: <strong>farsi spiegare un progetto che non si conosce</strong>. È veloce, non tocca niente, e il risultato lo puoi verificare.</p>
       <p>È anche il momento in cui impari il gesto più importante della giornata: <strong>non fidarti della spiegazione, chiedi le prove</strong>.</p>`},
@@ -958,7 +873,7 @@ REGOLE:
       ['Una cosa che sai già','Cercala nella risposta. L\'ha detta giusta?','30 secondi']
     ]},
     {t:'callout',kind:'bad',title:'Il tipo di errore da cercare',html:`Gli errori grossi si vedono. Quelli pericolosi no: sono le <strong>righe plausibili e sbagliate</strong>. «La validazione avviene in <code>middleware/validate.ts</code>» — il file esiste, il nome torna, ma la validazione vera la fa un altro pezzo e quel middleware è morto da un anno. Se non apri il file non te ne accorgi mai, e ci costruisci sopra tutto il resto del corso.`},
-    {t:'exercise',id:'ex6a',label:'Esercizio 6.1 — Il controllo (3 minuti)',
+    {t:'exercise',id:'ex6a',label:'Esercizio 5.1 — Il controllo (3 minuti)',
       prompt:'Hai controllato quattro cose. Quante erano giuste? Scrivi l\'errore più insidioso che hai trovato (o scrivi che non ne hai trovati).',
       placeholder:'Controllate: 4. Giuste: ...\nErrore trovato: ...\nPerché era insidioso: ...'},
 
@@ -973,7 +888,7 @@ REGOLE:
       ['«Dove viene deciso lo stato di una spedizione? Elenca TUTTI i punti che lo scrivono.»','Risposta chiusa e controllabile con una ricerca.'],
       ['«Cosa succede se il pagamento va a buon fine ma la scrittura sull\'ordine fallisce?»','Un caso limite: scopre in due minuti se c\'è un buco.']
     ]}},
-    {t:'exercise',id:'ex6b',label:'Esercizio 6.2 — La domanda che ti porti dietro da mesi (5 minuti)',
+    {t:'exercise',id:'ex6b',label:'Esercizio 5.2 — La domanda che ti porti dietro da mesi (5 minuti)',
       prompt:'Riprendi la cosa che nel modulo 00 hai scritto di non aver mai capito del tuo progetto. Trasformala in una domanda "che segue un percorso" e falla all\'agente. Incolla qui la domanda e le due righe più utili della risposta.',
       placeholder:'Domanda: Segui ... dal ... fino a ...\nRisposta utile: ...\nL\'ho verificata aprendo: ...',
       solution:'Se la risposta ti ha svelato qualcosa, hai appena visto il caso d\'uso che conviene sempre: <strong>l\'agente come mappa di un territorio grande</strong>. Fa in due minuti la ricerca incrociata che a te costa mezza giornata. Ma resta una mappa: prima di prendere una decisione su quello che ti ha detto, il file lo apri tu.'},
@@ -991,7 +906,7 @@ Vincoli:
 - Metti le trappole: le cose che uno nuovo sbaglierebbe.
 - I documenti lunghi richiamali con una riga, non copiarli dentro.`},
     {t:'callout',kind:'warn',title:'Prima di salvarlo, leggilo tutto',html:`Questo file guiderà l'agente per settimane. Se contiene una riga sbagliata, la sbaglierà sistematicamente, ogni volta. <strong>Correggi a mano</strong> quello che sai essere impreciso, e togli tutto quello che non ti sembra necessario: in genere si può tagliare un terzo.`},
-    {t:'checklist',id:'ck6',title:'Task 3 completato quando...',
+    {t:'checklist',id:'ck6',title:'Task 2 completato quando...',
       items:[
         'Ho ottenuto una descrizione del progetto con citazioni di file e righe',
         'Ho aperto almeno tre citazioni per controllarle',
@@ -1003,12 +918,12 @@ Vincoli:
   ]
 });
 
-/* ---------- 7. Aggiungere una nuova funzionalità da essere usata con la CLI ---------- */
+/* ---------- 6. Aggiungere una nuova funzionalità da essere usata con la CLI ---------- */
 MODULES.push({
-  id:'m7', n:'07', title:'Task 4 — Aggiungere una nuova funzionalità da essere usata con la CLI', min:22,
+  id:'m7', n:'06', title:'Task 3 — Aggiungere una nuova funzionalità da essere usata con la CLI', min:22,
   blocks:[
     {t:'p',html:`<p>Fin qui l'agente ha solo letto. Adesso scrive, e si parte da una cosa piccola e ben delimitata: <strong>un comando nuovo nella riga di comando del progetto</strong>. Per esempio un comando che esporta dei dati in CSV, uno che controlla la configurazione prima di un deploy, uno che stampa le statistiche di una tabella.</p>
-      <p>È un buon primo lavoro di scrittura perché un comando nuovo si aggiunge <strong>accanto</strong> a quelli che ci sono, senza cambiarli, e si prova subito dal terminale. Se il progetto non ha ancora una CLI, prendi uno degli script del modulo 05 e trasformalo in un comando con le sue opzioni.</p>`},
+      <p>È un buon primo lavoro di scrittura perché un comando nuovo si aggiunge <strong>accanto</strong> a quelli che ci sono, senza cambiarli, e si prova subito dal terminale. Se il progetto non ha ancora una CLI, prendi un piccolo script che usi già e trasformalo in un comando con le sue opzioni.</p>`},
     {t:'callout',kind:'warn',title:'Branch nuovo, adesso',html:`<code>git checkout -b lab/cli</code>. Da qui in poi si scrive sul serio. Un branch a parte vuol dire che se il risultato non va bene lo butti via con un comando e non resta niente.`},
 
     {t:'p',html:`<h3>4A — Come è fatta la CLI oggi (6 min)</h3>
@@ -1040,7 +955,7 @@ Rispondimi con:
 5. Se ci sono test per la CLI: dove sono e come si lanciano.
 
 Cita sempre file e riga. Se una cosa non la trovi, scrivi NON SO.`},
-    {t:'exercise',id:'ex7c',label:'Esercizio 7.1 — Controlla il modello (3 minuti)',
+    {t:'exercise',id:'ex7c',label:'Esercizio 6.1 — Controlla il modello (3 minuti)',
       prompt:'Lancia tu il comando che l\'agente ha scelto come modello, con --help e poi una volta vera. Quello che vedi corrisponde a quello che ti ha descritto?',
       placeholder:'Comando modello: ...\nAiuto e opzioni come descritto? ...\nCodice di uscita (echo $?): ...\nDifferenze con la descrizione: ...',
       solution:'Il comando modello è la scelta più importante di tutto il task: il codice nuovo gli somiglierà. Se l\'agente ne ha scelto uno vecchio o fuori stile (capita spesso: il primo che trova), <strong>diglielo adesso</strong> e indicagli tu quello giusto. Cambiare modello dopo vuol dire riscrivere il comando.'},
@@ -1119,11 +1034,11 @@ git diff --stat`},
         {tx:'Solo se il comando verrà usato in produzione',ok:false,why:'Una CLI si usa negli script proprio perché è comoda. Se il comando esiste, prima o poi ci finisce dentro.'},
         {tx:'No, basta che i test passino',ok:false,why:'I test passano se controllano il messaggio e non il codice di uscita. È proprio il caso da aggiungere ai test.'}
       ]},
-    {t:'exercise',id:'ex7d',label:'Esercizio 7.2 — Il caso che non ha provato (4 minuti)',
+    {t:'exercise',id:'ex7d',label:'Esercizio 6.2 — Il caso che non ha provato (4 minuti)',
       prompt:'Trova un modo di usare il comando che l\'agente non ha provato (un input strano, un file che esiste già, un periodo senza dati) e lancialo. Cosa è successo? Cosa gli hai chiesto di sistemare?',
       placeholder:'Ho provato: ...\nÈ successo: ...\nCodice di uscita: ...\nGli ho chiesto: ...',
       solution:'Quasi sempre c\'è almeno un caso scoperto: il periodo senza dati che produce un file vuoto senza dirlo, il file che viene sovrascritto senza chiedere, l\'input sbagliato che finisce in uno stack trace. Non è colpa dell\'agente: prova i casi che gli hai descritto. <strong>I casi che non gli hai descritto li devi provare tu.</strong>'},
-    {t:'checklist',id:'ck7b',title:'Task 4 completato quando...',
+    {t:'checklist',id:'ck7b',title:'Task 3 completato quando...',
       items:[
         'Ho lavorato su un branch a parte',
         'So dove si registra un comando e quale comando ho usato come modello',
@@ -1136,11 +1051,11 @@ git diff --stat`},
   ]
 });
 
-/* ---------- 8. Aggiungere una funzione ---------- */
+/* ---------- 7. Aggiungere una funzione ---------- */
 MODULES.push({
-  id:'m8', n:'08', title:'Task 5 — Aggiungere una piccola funzione', min:22,
+  id:'m8', n:'07', title:'Task 4 — Aggiungere una piccola funzione', min:22,
   blocks:[
-    {t:'p',html:`<p>Nel modulo 07 hai aggiunto un comando accanto a quelli che c'erano. Adesso una modifica che <strong>entra nel codice esistente</strong> e tocca più file. Il compito di esempio è utile davvero: <strong>tracciare le chiamate al database</strong> — per ogni query, sapere quale, quanto ci ha messo, e da dove è partita.</p>
+    {t:'p',html:`<p>Nel modulo 06 hai aggiunto un comando accanto a quelli che c'erano. Adesso una modifica che <strong>entra nel codice esistente</strong> e tocca più file. Il compito di esempio è utile davvero: <strong>tracciare le chiamate al database</strong> — per ogni query, sapere quale, quanto ci ha messo, e da dove è partita.</p>
       <p>Se nel tuo progetto esiste già, scegli un'altra funzione piccola: un endpoint di stato che dice se il servizio è vivo, un contatore di quante volte viene usata una funzione, un log strutturato su un punto che oggi non ne ha.</p>`},
     {t:'callout',kind:'warn',title:'Branch nuovo, adesso',html:`Torna su main e parti da zero: <code>git checkout main && git checkout -b lab/tracing</code>. Una modifica per branch. Un branch a parte vuol dire che se il risultato non va bene lo butti via con un comando e non resta niente.`},
 
@@ -1176,7 +1091,7 @@ Prima leggi il codice che c'e', poi rispondimi con:
 
 Poi fermati e aspetta il mio ok.`},
     {t:'callout',kind:'ok',title:'Il punto 2 è quello che salva il codice',html:`«Se esiste già qualcosa di simile, aggancia a quello». Senza questa riga, un agente aggiunge volentieri <strong>un secondo modo di fare una cosa che il progetto già faceva</strong>: un altro logger, un altro wrapper, un'altra configurazione. Funziona, passa i test, e intanto il progetto ha due sistemi paralleli da mantenere.`},
-    {t:'exercise',id:'ex8a',label:'Esercizio 8.1 — Correggi il piano (4 minuti)',
+    {t:'exercise',id:'ex8a',label:'Esercizio 7.1 — Correggi il piano (4 minuti)',
       prompt:'Leggi il piano. Cosa hai dovuto correggere prima di dargli l\'ok?',
       placeholder:'Il piano proponeva: ...\nHo corretto: ...\nPerché: ...',
       solution:'Le correzioni più frequenti sono tre: <strong>1)</strong> il punto scelto è sbagliato — funziona ma non è il punto di passaggio giusto; <strong>2)</strong> tocca più file del necessario; <strong>3)</strong> ignora una cosa che il progetto ha già. Tutte e tre, sul codice fatto, costano dieci volte tanto a sistemarle.'},
@@ -1207,11 +1122,11 @@ Poi fermati e aspetta il mio ok.`},
       ['6','Rompi qualcosa apposta','Fai fallire il tracciamento. La query deve continuare a funzionare.']
     ]},
     {t:'callout',kind:'warn',title:'La domanda da fare quando qualcosa non torna',html:`Non «sistemalo». Prima: <strong>«perché hai fatto così invece che così?»</strong>. Metà delle volte c'è un motivo che non avevi visto — e impari qualcosa sul tuo progetto. L'altra metà non c'è, e allora glielo dici.`},
-    {t:'exercise',id:'ex8b',label:'Esercizio 8.2 — Il diff (5 minuti)',
+    {t:'exercise',id:'ex8b',label:'Esercizio 7.2 — Il diff (5 minuti)',
       prompt:'Quanti file e quante righe ha toccato? Il diff era leggibile? Hai trovato righe che non sapevi spiegare? Lo faresti passare in code review così com\'è?',
       placeholder:'File: ... Righe: ...\nRighe non chiare: ...\nLo farei passare in review? ... perché ...',
       solution:'Il criterio è uno solo, e vale anche per il codice scritto dalle persone: <strong>lo firmeresti?</strong> Se il tuo nome finisce su quel commit, quel codice è tuo — chi lo ha materialmente scritto non interessa a nessuno fra sei mesi quando si romperà. Se non lo firmeresti, non è finito.'},
-    {t:'checklist',id:'ck8',title:'Task 5 completato quando...',
+    {t:'checklist',id:'ck8',title:'Task 4 completato quando...',
       items:[
         'Ho lavorato su un branch a parte',
         'Ho chiesto il piano prima del codice e l\'ho corretto',
@@ -1224,9 +1139,9 @@ Poi fermati e aspetta il mio ok.`},
   ]
 });
 
-/* ---------- 9. Test con concorrenza ---------- */
+/* ---------- 8. Test con concorrenza ---------- */
 MODULES.push({
-  id:'m9', n:'09', title:'Task 6 — Uno script di test con concorrenza', min:14,
+  id:'m9', n:'08', title:'Task 5 — Uno script di test con concorrenza', min:14,
   blocks:[
     {t:'p',html:`<p>I problemi di concorrenza sono quelli su cui un agente è meno affidabile quando legge il codice: legge il codice come una storia che va in ordine, e in una storia in ordine due richieste che arrivano insieme non si vedono. Per questo non glieli fai <em>cercare</em>: li <strong>provi</strong>. Uno script che lancia tante richieste insieme e guarda se il sistema si comporta come dovrebbe.</p>
       <p>Attenzione: non stiamo misurando la velocità. Ci interessa un'altra cosa — <strong>quando due richieste arrivano insieme, il risultato è ancora giusto?</strong></p>`},
@@ -1275,10 +1190,10 @@ Vincoli:
       ['Errori di connessione','Hai saturato qualcosa','Abbassa N. Non è il problema che stavi cercando']
     ]},
     {t:'callout',kind:'ok',title:'Il controllo dello script stesso',html:`Il rischio più insidioso è uno script che <strong>non sa fallire</strong>. Prima di credere a un "regola rispettata", togli la protezione nel codice (commenta la transazione, il lock, il vincolo unico) e rilancia: se adesso dice VIOLATA, lo script funziona. Se dice ancora RISPETTATA, stavi guardando un test che non guarda niente. Questo vale per ogni test scritto da un agente: <strong>un test che non fallisce mai non è un test</strong>.`},
-    {t:'exercise',id:'ex9',label:'Esercizio 9.1 — La controprova (4 minuti)',
+    {t:'exercise',id:'ex9',label:'Esercizio 8.1 — La controprova (4 minuti)',
       prompt:'Rompi apposta la protezione e rilancia lo script. Si accorge della differenza? Scrivi cosa hai tolto e cosa è cambiato nel risultato.',
       placeholder:'Ho tolto: ...\nPrima: ...\nDopo: ...\nLo script se ne accorge? ...'},
-    {t:'checklist',id:'ck9',title:'Task 6 completato quando...',
+    {t:'checklist',id:'ck9',title:'Task 5 completato quando...',
       items:[
         'Lo script punta a un ambiente locale e sta scritto nel file',
         'Le richieste partono davvero insieme, non in fila',
@@ -1290,9 +1205,9 @@ Vincoli:
   ]
 });
 
-/* ---------- 10. Test BDD ---------- */
+/* ---------- 9. Test BDD ---------- */
 MODULES.push({
-  id:'m10', n:'10', title:'Task 7 — Un test BDD', min:14,
+  id:'m10', n:'09', title:'Task 6 — Un test BDD', min:14,
   blocks:[
     {t:'p',html:`<h3>Cos'è un test BDD, in breve</h3>
       <p>Un test BDD descrive il comportamento con <strong>parole che capisce anche chi non programma</strong>, in tre parti fisse:</p>`},
@@ -1309,7 +1224,7 @@ MODULES.push({
 
     {t:'p',html:`<h3>7A — Scrivere lo scenario (5 min)</h3>
       <p>Questa parte falla <strong>tu</strong>, a mano. È l'unico pezzo che l'agente non può fare al posto tuo, perché richiede di sapere cosa deve fare il sistema — e quello sta nella tua testa, non nel codice.</p>`},
-    {t:'exercise',id:'ex10a',label:'Esercizio 10.1 — Il tuo scenario (5 minuti)',
+    {t:'exercise',id:'ex10a',label:'Esercizio 9.1 — Il tuo scenario (5 minuti)',
       prompt:'Scegli una funzionalità del tuo progetto e scrivi due scenari: uno che va a buon fine e uno che deve essere rifiutato. Usa Dato che / Quando / Allora. Niente termini tecnici: solo cosa succede.',
       placeholder:'Funzionalità: ...\n\nScenario: (caso buono)\n  Dato che ...\n  Quando ...\n  Allora ...\n\nScenario: (caso rifiutato)\n  Dato che ...\n  Quando ...\n  Allora ...',
       solution:'Due errori tipici. <strong>Primo:</strong> mettere la tecnica nello scenario («Quando faccio una POST su /api/v2/ordini con header X»). Lo scenario dice <em>cosa</em> succede, non <em>come</em> si chiama. Il come sta nel codice sotto. <strong>Secondo:</strong> un "Allora" vago («Allora l\'ordine viene gestito correttamente»). Se non si può controllare con un confronto, non è un Allora: scrivi il valore atteso.'},
@@ -1370,7 +1285,7 @@ Poi:
         {tx:'Leggere i nomi dei test',ok:false,why:'Aiuta a capire l\'intenzione, ma un nome giusto può stare sopra a un controllo inutile.'},
         {tx:'Chiedergli di aggiungerne altri',ok:false,why:'Se non sai se i cinque che hai servono, aggiungerne altri cinque non migliora niente.'}
       ]},
-    {t:'checklist',id:'ck10',title:'Task 7 completato quando...',
+    {t:'checklist',id:'ck10',title:'Task 6 completato quando...',
       items:[
         'Ho scritto io gli scenari, a parole, senza termini tecnici',
         'C\'è anche uno scenario di caso rifiutato, non solo quello buono',
@@ -1382,9 +1297,9 @@ Poi:
   ]
 });
 
-/* ---------- 11. Debug ---------- */
+/* ---------- 10. Debug ---------- */
 MODULES.push({
-  id:'m11', n:'11', title:'Task 8 — Debug da log e payload', min:20,
+  id:'m11', n:'10', title:'Task 7 — Debug da log e payload', min:20,
   blocks:[
     {t:'p',html:`<p>L'ultimo compito è quello per cui, secondo molti, un agente rende di più: <strong>hai un errore, hai dei log, non hai idea di dove guardare</strong>.</p>
       <p>Il motivo è semplice. Un log di duemila righe tu lo leggi in venti minuti e a metà ti si offusca la vista. Lui lo legge tutto, e sa anche cercare nel codice il punto che produce una certa riga. È un incrocio fra due cose grandi, ed è esattamente quello che fa meglio.</p>`},
@@ -1465,11 +1380,11 @@ Adesso:
       ['Dà una risposta diversa ogni volta','Vuol dire che il materiale non basta. Servono più log, non più domande.'],
       ['Tre giri senza progresso','Cambia strada: chiedigli di scrivere <em>come si riproduce a comando</em> il problema. Un caso che si riproduce vale più di dieci ipotesi.']
     ]},
-    {t:'exercise',id:'ex11',label:'Esercizio 11.1 — Com\'è andata (5 minuti)',
+    {t:'exercise',id:'ex11',label:'Esercizio 10.1 — Com\'è andata (5 minuti)',
       prompt:'Scrivi come è andato il debug: la causa proposta, come l\'hai verificata, se era giusta, quanto ci hai messo. E cosa avresti fatto senza agente.',
       placeholder:'Causa proposta: ...\nVerifica: ...\nEra giusta? ...\nTempo: ...\nSenza agente avrei: ...',
       solution:'Il guadagno vero quasi mai è "ha trovato il bug". È che <strong>ha tolto dal tavolo le strade sbagliate in due minuti</strong>: ti ha detto dove non è il problema. Il restringimento del campo è il lavoro che costa più tempo a una persona, ed è quello che lui fa meglio. La decisione finale resta tua, ma parti da un campo dieci volte più piccolo.'},
-    {t:'checklist',id:'ck11',title:'Task 8 completato quando...',
+    {t:'checklist',id:'ck11',title:'Task 7 completato quando...',
       items:[
         'Ho ripulito i log dai dati personali prima di incollarli',
         'Ho dato attesa, sintomo, frequenza, log e payload',
@@ -1481,9 +1396,9 @@ Adesso:
   ]
 });
 
-/* ---------- 12. Best practices ---------- */
+/* ---------- 11. Best practices ---------- */
 MODULES.push({
-  id:'mbp', n:'12', title:'Best practices', min:15,
+  id:'mbp', n:'11', title:'Best practices', min:15,
   blocks:[
     {t:'p',html:`<p class="lede">Il lavoro si sposta: scrivi meno codice a mano, ma devi diventare bravo a <strong>specificare, delegare, verificare e controllare</strong> un sistema che il codice lo scrive. Queste regole vengono tutte da lì. Per ognuna trovi il motivo e un esempio di cosa fare e cosa evitare.</p>`},
 
@@ -1616,9 +1531,9 @@ MODULES.push({
   ]
 });
 
-/* ---------- 13. Chiusura ---------- */
+/* ---------- 12. Chiusura ---------- */
 MODULES.push({
-  id:'m12', n:'13', title:'Chiusura', min:11,
+  id:'m12', n:'12', title:'Chiusura', min:11,
   blocks:[
     {t:'p',html:`<h3>Le otto cose da portarsi a casa</h3>`},
     {t:'table',head:['#','Regola','Da dove viene'],rows:[
