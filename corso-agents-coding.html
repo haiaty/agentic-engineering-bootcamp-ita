@@ -829,20 +829,14 @@ MODULES.push({
       <p>È anche il momento in cui impari il gesto più importante della giornata: <strong>non fidarti della spiegazione, chiedi le prove</strong>.</p>`},
     {t:'callout',kind:'warn',title:'Controllo prima di iniziare',html:`<code>git status</code> pulito. Il progetto si costruisce e i test passano. Se una di queste due cose non è vera, sistemala adesso: altrimenti per tutta la seconda parte non saprai distinguere i problemi tuoi da quelli dell'agente.`},
 
-    {t:'p',html:`<h3>3A — La prima domanda (8 min)</h3>
-      <p>Apri la sessione nella radice del progetto e parti con una domanda larga. Non chiedere subito il dettaglio: prima la mappa.</p>`},
-    {t:'promptkit',id:'pk6',title:'Compito: capire il progetto',
-      sub:'Compila i campi con i dati del tuo progetto. Sotto ti si compone il compito da copiare nella sessione.',
-      fields:[
-        {k:'nome',lb:'Nome e tipo del progetto',ph:'Es. gestionale ordini, API REST in Node + Postgres',rows:2},
-        {k:'so',lb:'Cosa già sai (anche poco)',ph:'Es. so che c\'è un frontend React e che il DB è Postgres. Non so come sono divisi i moduli.',rows:2},
-        {k:'serve',lb:'Perché ti serve capirlo',ph:'Es. devo aggiungere un campo a un ordine e non so quanti punti tocca.',rows:2}
-      ],
-      build:(v)=>
-`Sei appena entrato in questo progetto e non lo conosci.
-Progetto: `+(v.nome||'[nome e tipo]')+`
-Quello che so gia': `+(v.so||'[cosa sai]')+`
-Mi serve per: `+(v.serve||'[obiettivo]')+`
+    {t:'p',html:`<h3>Esercizio: capire il progetto app_workshop</h3>
+      <p>Crea il prompt per conoscere il nuovo progetto, supponendo che ti sia appena stato assegnato e che sia la prima volta che ci devi lavorare. Scrivilo tu e provalo nella sessione, poi confrontalo con la soluzione di riferimento.</p>`},
+    {t:'reveal',id:'pk6',title:'Compito: capire il progetto app_workshop',
+      sub:'Quando hai fatto la tua prova, apri la soluzione di riferimento e confrontala con il tuo prompt.',
+      text:`Sei appena entrato in questo progetto e non lo conosci.
+Progetto: [nome e tipo]
+Quello che so gia': [cosa sai]
+Mi serve per: [obiettivo]
 
 Leggi il codice e rispondimi in modo strutturato:
 
@@ -864,7 +858,7 @@ REGOLE:
 - Non modificare nessun file.`},
     {t:'callout',kind:'ok',title:'Le due righe che fanno la differenza',html:`«<strong>Cita il file e la riga</strong>» e «<strong>scrivi NON SO</strong>». La prima ti dà un modo per controllare in dieci secondi: apri il file, guardi. La seconda gli dà il permesso di ammettere un buco — senza, riempirà il buco con una risposta plausibile, detta con la stessa sicurezza del resto.`},
 
-    {t:'p',html:`<h3>3B — Verificare (7 min)</h3>
+    {t:'p',html:`<h3>Verificare quello che ti dice llm</h3>
       <p>Adesso la parte che quasi nessuno fa, ed è quella che conta. Prendi la risposta e controllala.</p>`},
     {t:'table',head:['Cosa','Come si controlla','Quanto ci vuole'],rows:[
       ['L\'entry point','Aprilo. C\'è davvero? Fa quello che ha detto?','30 secondi'],
@@ -1618,6 +1612,7 @@ function renderBlock(b, mid, i){
     case 'triage':    mounts.push(()=>mountTriage(id));      return '<div id="'+id+'"></div>';
     case 'cmdlab':    mounts.push(()=>mountCmdLab(id));      return '<div id="'+id+'"></div>';
     case 'promptkit': mounts.push(()=>mountPromptKit(id,b)); return '<div id="'+id+'"></div>';
+    case 'reveal':    mounts.push(()=>mountReveal(id,b));    return '<div id="'+id+'"></div>';
     case 'plan':      mounts.push(()=>mountPlan(id));        return '<div id="'+id+'"></div>';
     default: return '';
   }
@@ -1931,6 +1926,28 @@ function mountPromptKit(id, b){
     const sv=document.getElementById(id+'_sv'); sv.classList.add('on'); setTimeout(()=>sv.classList.remove('on'),1400);
   });
   upd(false);
+}
+
+/* ---------- soluzione di riferimento nascosta ---------- */
+function mountReveal(id, b){
+  const el = document.getElementById(id);
+  const body = '<div class="btnrow"><button class="btn" id="'+id+'_show">Mostra soluzione di riferimento</button></div>'+
+    '<div id="'+id+'_out" style="display:none"><label class="fl">Soluzione di riferimento</label>'+
+    '<div class="preview" id="'+id+'_pv" style="max-height:560px"></div>'+
+    '<div class="btnrow"><button class="btn primary" id="'+id+'_cp">Copia il compito</button>'+
+    '<span class="saved" id="'+id+'_sv">copiato</span></div></div>';
+  el.innerHTML = widgetShell('Compito', b.title, b.sub, body);
+  document.getElementById(id+'_pv').textContent = b.text;
+  const out = document.getElementById(id+'_out'), btn = document.getElementById(id+'_show');
+  btn.addEventListener('click',()=>{
+    const open = out.style.display==='none';
+    out.style.display = open?'':'none';
+    btn.textContent = open?'Nascondi soluzione di riferimento':'Mostra soluzione di riferimento';
+  });
+  document.getElementById(id+'_cp').addEventListener('click',()=>{
+    navigator.clipboard && navigator.clipboard.writeText(b.text);
+    const sv=document.getElementById(id+'_sv'); sv.classList.add('on'); setTimeout(()=>sv.classList.remove('on'),1400);
+  });
 }
 
 /* ---------- piano di adozione ---------- */
