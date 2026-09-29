@@ -46,15 +46,13 @@ RUN npm install -g --ignore-scripts @earendil-works/pi-coding-agent
 #=====================
 # Create non-root user 'claude' because we will allow tools to be used
 #=====================
-RUN useradd -m -u 1000 -s /bin/bash claude
+RUN useradd -m -u 1000 -s /bin/bash devworkshop
 
 #=====================
 # Switch to non-root user
 #=====================
-USER claude
+USER devworkshop
 
-# Verify installation
-RUN claude --version
 
 # Default shell
 CMD ["/bin/bash"]
