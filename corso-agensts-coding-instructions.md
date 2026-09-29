@@ -7,16 +7,17 @@ docker exec -it agentic_bootcamp-agentic-1 bash
 - dentro container:
 
 configurare l'agente PI
+pi
 vi $HOME/.pi/agent/models.json
 
 verificare che sia stato configurato correttamente:
 pi --list-models
 
 entrare dentro la folder dove faremo i task
-cd Code/app
+cd /Code/app_workshop
 
 lanciare pi dentro la cartella
-pi --provider omlx --model Qwen3.8-27B-8bit
+pi --provider omlx --model Qwen3.6-35B-A3B-8bit
 
 
 aprire poi phpstorm o qualsiasi editor 
