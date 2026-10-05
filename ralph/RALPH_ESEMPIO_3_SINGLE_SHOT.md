@@ -26,5 +26,13 @@ Your task is:
 
 <task>
 
-Refactor to do ...
+Add a feature to trace calls and write to a jsonl file.
+
+I would like something like 
+
+trace("a custom message", { custom_prop: "hello"})
+
+that I can put in my code in order to get a tracing.
+
+Keep it simple
 </task>
