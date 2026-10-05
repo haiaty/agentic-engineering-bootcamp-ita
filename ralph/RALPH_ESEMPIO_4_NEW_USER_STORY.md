@@ -1,4 +1,4 @@
-You are working inside an existing codebase.
+You are working inside an existing codebase  which is located in app_workshop/.
 
 Inputs and reference files:
 - Progress log to know what has been done and how to resume: `progress.txt`
@@ -176,4 +176,4 @@ Given [initial state], when [action], then [observable result].
 </feature_template>
 
 
-If user story is not provided by the user, take the first not completed yet and start it
+Your task is to do the user story number 2

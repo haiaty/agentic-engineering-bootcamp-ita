@@ -72,8 +72,16 @@ cat ralph/RALPH_ESEMPIO_3_SINGLE_SHOT.md | pi --print --provider omlx --model Qw
 
 
 
+Esempio 4 -Full user story
 
-- Generate scenarios to cover edge cases. See 
+cat ralph/RALPH_ESEMPIO_4_NEW_USER_STORY.md | pi --print --provider omlx --model Qwen3.8-27B-8bit  --approve --mode json 2>&1 | tee pi-run-debug.log
+
+
+
+other possible use cases:
+- Generate scenarios to cover edge cases.
+- Debug
+- Code audits: security, concurrency, data integrity/consistency/transaction
 
 
 
