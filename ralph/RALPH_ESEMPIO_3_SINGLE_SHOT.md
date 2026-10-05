@@ -1,4 +1,4 @@
-You are working inside an existing codebase.
+You are working inside an existing codebase which is located in app_workshop/
 
 Inputs and reference files:
 - Agent rules: `AGENTS.md`
