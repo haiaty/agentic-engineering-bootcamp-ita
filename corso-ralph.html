@@ -484,11 +484,7 @@ Scrivi il report in 'report_qualita_codice_<date>.md', nella cartella reports/`}
         why:'Nessuno potrà dirgli «no, guarda nell\'altra cartella». E tu sai esattamente dove cercare al ritorno.',
         do:'«Il codice è in app_workshop/src. Scrivi in reports/report_qualita_codice_&lt;date&gt;.md»',
         dont:'«Analizza il progetto e fammi sapere.»'}
-    ]},
-    {t:'exercise',id:'ex4',label:'Esercizio 4.1 — Verifica il report (5 minuti)',
-      prompt:'Prendi i due problemi con severità alta del report. Apri i file indicati: il problema c\'è davvero? La raccomandazione ha senso? Annota cosa trovi.',
-      placeholder:'Problema 1: ... → vero / falso / esagerato, perché ...\nProblema 2: ...',
-      solution:'Il report è un punto di partenza, non una sentenza. Capita spesso che un problema sia reale ma la severità esagerata, o che il file citato sia giusto ma la riga no. Controllare due voci a caso ti dice quanto fidarti del resto.'}
+    ]}
   ]
 });
 
@@ -556,6 +552,7 @@ Keep it simple
       ['<strong>&lt;task&gt;</strong>','Il compito vero, breve, separato dal resto con un tag così non si confonde con le regole.']
     ]},
     {t:'callout',kind:'warn',title:'«Do not fake test success»',html:`Con <code>--approve</code> e nessuno a guardare, la scorciatoia più comoda per l'agente è far passare i test invece di far funzionare il codice: un <code>expect(true)</code>, uno step vuoto, un test saltato. I vincoli lo dicono esplicitamente, e tu al ritorno lo <strong>verifichi</strong>: rompi la funzione e controlla che i test falliscano.`},
+    {t:'callout',kind:'bad',title:'ATTENZIONE',html:`Devi <strong>sempre</strong> controllare i test e il codice dei test: spesso i modelli creano dei <strong>falsi positivi</strong>, test che passano senza verificare davvero niente. Quindi il test va sempre letto, verificato ed <strong>eseguito una volta a mano</strong>.`},
     {t:'checklist',id:'ck5',title:'Al ritorno, controlla che...',
       items:[
         'git diff tocca solo i file che ti aspetti per una funzione di tracing',
@@ -564,13 +561,6 @@ Keep it simple
         'Se commenti il corpo di trace(), i test falliscono',
         'Il modello dati non è stato toccato',
         'Hai letto i dubbi/edge case che l\'agente ti ha segnalato'
-      ]},
-    {t:'quiz',id:'q5a',q:'Perché il prompt chiede «If you find any logic errors… advice me and suggest a change»?',
-      opts:[
-        {tx:'Per far scrivere all\'agente più testo',ok:false,why:'Non è la quantità che conta.'},
-        {tx:'Perché in modalità Ralph non può fermarsi a chiedere: così i dubbi non si perdono, finiscono nel risultato e li leggi tu alla fine',ok:true,why:'Esatto. È il modo di recuperare la «conversazione» senza interattività: decisioni dubbie scritte, non prese in silenzio.'},
-        {tx:'Perché altrimenti l\'agente non trova i bug',ok:false,why:'Li può trovare comunque; la differenza è se te li dice o li «sistema» a modo suo senza dirtelo.'},
-        {tx:'Per correggere automaticamente i bug trovati',ok:false,why:'Al contrario: chiede di <em>suggerire</em>, non di cambiare. Così resta nel perimetro del compito.'}
       ]}
   ]
 });
@@ -666,10 +656,6 @@ done`},
         do:'Append in <code>error_memories.md</code> e <code>learned.md</code>, e rileggerli fra i file di riferimento.',
         dont:'Contare sul fatto che «stavolta andrà meglio».'}
     ]},
-    {t:'exercise',id:'ex6',label:'Esercizio 6.1 — Interrompi e riprendi (8 minuti)',
-      prompt:'Lancia l\'esempio 4. Quando progress.txt mostra che l\'agente è dentro il passo 3, interrompi con Ctrl+C. Rilancia lo stesso comando. Riparte dal punto giusto? Cosa ha letto per capirlo?',
-      placeholder:'Interrotto al passo: ...\nAl rilancio è ripartito da: ...\nFile letti per capirlo: ...\nHa rifatto qualcosa che era già fatto? ...',
-      solution:'Se riparte da capo, guarda il contenuto di <code>progress.txt</code>: i marker sono abbastanza precisi? Un «implementing code» generico non dice <em>quale</em> scenario. Il rimedio è nel prompt: chiedi marker con user story, feature e scenario, per esempio <code>US002 / feature_1 / scenario 2 / step definitions DONE</code>.'},
     {t:'checklist',id:'ck6',title:'Al ritorno, controlla che...',
       items:[
         'user_stories.toml ha la storia 2 completed, e le altre storie sono intatte',
