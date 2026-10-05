@@ -403,7 +403,6 @@ cat ralph/RALPH_ESEMPIO_1.md | pi --print --provider omlx --model Qwen3.8-27B-8b
       ['<code>2&gt;&amp;1 | tee pi-run-debug.log</code>','Unisce anche gli errori e scrive tutto su file mentre lo vedi a schermo. Quando torni, il log è lì.']
     ]},
     {t:'callout',kind:'warn',title:'Il log non è un optional',html:`Quando controlli solo alla fine, <code>pi-run-debug.log</code> è l'unico modo per capire <em>perché</em> l'agente ha fatto una scelta strana o dove si è bloccato. Lancia sempre con <code>--mode json</code> e <code>tee</code> i run lunghi.`},
-    {t:'cmdlab'},
     {t:'quiz',id:'q2a',q:'Hai lanciato un Ralph di notte, al mattino il risultato è sbagliato. Cosa ti serviva per capire cos\'è successo?',
       opts:[
         {tx:'Niente: basta rilanciarlo e guardare meglio',ok:false,why:'Rilanciare senza capire spesso ripete lo stesso errore, e costa un\'altra notte.'},
@@ -860,7 +859,6 @@ function renderBlock(b, mid, i){
     case 'checklist': mounts.push(()=>mountChecklist(id,b)); return '<div id="'+id+'"></div>';
     case 'agentloop': mounts.push(()=>mountAgentLoop(id));   return '<div id="'+id+'"></div>';
     case 'triage':    mounts.push(()=>mountTriage(id));      return '<div id="'+id+'"></div>';
-    case 'cmdlab':    mounts.push(()=>mountCmdLab(id));      return '<div id="'+id+'"></div>';
     case 'promptkit': mounts.push(()=>mountPromptKit(id,b)); return '<div id="'+id+'"></div>';
     case 'reveal':    mounts.push(()=>mountReveal(id,b));    return '<div id="'+id+'"></div>';
     default: return '';
@@ -1060,102 +1058,6 @@ function mountTriage(id){
     Object.keys(saved).forEach(k=>delete saved[k]); store.set('triage',saved); paint();
   });
   paint();
-}
-
-/* ---------- costruttore del comando Ralph ---------- */
-const RFILES = [
-  {f:'ralph/RALPH_ESEMPIO_1.md', l:'Esempio 1 — Saluta', marker:''},
-  {f:'ralph/RALPH_ESEMPIO_2.md', l:'Esempio 2 — Report qualità', marker:''},
-  {f:'ralph/RALPH_ESEMPIO_3_SINGLE_SHOT.md', l:'Esempio 3 — Single shot', marker:''},
-  {f:'ralph/RALPH_ESEMPIO_4_NEW_USER_STORY.md', l:'Esempio 4 — User story', marker:'USER STORY FINISHED'}
-];
-function mountCmdLab(id){
-  const el = document.getElementById(id);
-  const st = store.get('cmdlab', {file:0, json:1, loop:0, max:5, night:0, box:1});
-  const body =
-    '<div class="split"><div>'+
-      '<label class="fl">Prompt file</label>'+
-      '<select id="'+id+'_f">'+RFILES.map((r,k)=>'<option value="'+k+'">'+r.l+'</option>').join('')+'</select>'+
-      '<label class="chk" style="margin-top:10px"><input type="checkbox" id="'+id+'_json"><span>'+
-        '<span class="lb">Log completo (--mode json + tee)</span>'+
-        '<span class="ds">Vedi e salvi ogni passo. Senza, vedi solo la risposta finale.</span></span></label>'+
-      '<label class="chk"><input type="checkbox" id="'+id+'_loop"><span>'+
-        '<span class="lb">In loop</span>'+
-        '<span class="ds">Rilancia lo stesso prompt con contesto pulito, fino al segnale di fine o al tetto.</span></span></label>'+
-      '<label class="fl">MAX_ITERATIONS</label>'+
-      '<input type="text" id="'+id+'_max" inputmode="numeric">'+
-      '<label class="chk" style="margin-top:10px"><input type="checkbox" id="'+id+'_night"><span>'+
-        '<span class="lb">Gira di notte sul Mac</span>'+
-        '<span class="ds">Aggiunge caffeinate, così il Mac non va in stop.</span></span></label>'+
-      '<label class="chk"><input type="checkbox" id="'+id+'_box"><span>'+
-        '<span class="lb">Dentro il container</span>'+
-        '<span class="ds">Utente non root devworkshop, progetto montato in /Code.</span></span></label>'+
-    '</div><div>'+
-      '<label class="fl">Comando</label>'+
-      '<div class="preview" id="'+id+'_pv"></div>'+
-      '<div class="btnrow"><button class="btn" id="'+id+'_cp">Copia</button>'+
-      '<span class="saved" id="'+id+'_sv">copiato</span></div>'+
-      '<div class="diag" id="'+id+'_d"></div>'+
-    '</div></div>';
-  el.innerHTML = widgetShell('Lab 2.1','Costruisci il comando Ralph',
-    'Scegli il prompt e come lanciarlo. Guarda come cambia il comando, e cosa devi tenere d\'occhio.', body);
-  const f=document.getElementById(id+'_f'), mx=document.getElementById(id+'_max');
-  const pv=document.getElementById(id+'_pv'), dg=document.getElementById(id+'_d');
-  f.value = st.file; mx.value = st.max;
-  ['json','loop','night','box'].forEach(k=>{ document.getElementById(id+'_'+k).checked = !!st[k]; });
-  let last='';
-  function upd(){
-    st.file=+f.value; st.max=mx.value;
-    ['json','loop','night','box'].forEach(k=>{ st[k]=document.getElementById(id+'_'+k).checked?1:0; });
-    store.set('cmdlab',st);
-    const r = RFILES[st.file];
-    const n = parseInt(st.max,10) > 0 ? parseInt(st.max,10) : 5;
-    mx.disabled = !st.loop;
-    const pi = 'pi --print --provider omlx --model Qwen3.8-27B-8bit --approve';
-    let cmd;
-    if(!st.loop){
-      cmd = 'cat '+r.f+' | '+pi+(st.json?' --mode json 2>&1 | tee pi-run-debug.log':'');
-    } else {
-      const marker = r.marker || 'RALPH FINISHED';
-      cmd = 'MAX_ITERATIONS='+n+'\n\nfor i in $(seq 1 $MAX_ITERATIONS); do\n'+
-        '  echo "=== Ralph Iteration $i of $MAX_ITERATIONS"\n'+
-        '  cat '+r.f+' \\\n'+
-        '    | '+pi+(st.json?' --mode json':'')+' 2>&1 \\\n'+
-        '    | tee -a pi-run-debug.log > last-run.log\n'+
-        '  grep -q "'+marker+'" last-run.log && break\n'+
-        'done';
-    }
-    let full;
-    if(st.night){
-      // di notte il comando va in uno script, e caffeinate gira sul Mac (non nel container)
-      full = '# ralph.sh, nella cartella del progetto\n'+cmd+'\n\n# sul Mac\n'+
-        (st.box ? 'docker compose up -d\ncaffeinate -i docker exec agentic_bootcamp-agentic-1 bash -lc \'cd /Code && sh ralph.sh\''
-                : 'caffeinate -i sh ralph.sh');
-    } else if(st.box){
-      full = '# sul tuo computer\ndocker compose up -d\ndocker exec -it agentic_bootcamp-agentic-1 bash\n\n# dentro il container\nwhoami   # devworkshop, non root\ncd /Code\n'+cmd;
-    } else full = cmd;
-    last = full;
-    pv.textContent = full;
-    const d=[];
-    if(!st.box) d.push(['bad','Fuori dal container, con <code>--approve</code>, l\'agente esegue comandi sul tuo computer con i tuoi permessi. Per un Ralph usa <strong>sempre</strong> la sandbox.']);
-    if(st.box) d.push(['ok','Nel container lavori come <code>devworkshop</code>. Ricorda che <code>/Code</code> è la tua cartella montata: nessun file con credenziali di produzione lì dentro.']);
-    if(!st.json) d.push(['warn','Senza log completo, al ritorno vedi solo la risposta finale. Va bene per l\'esempio 1, non per un lavoro lungo.']);
-    if(st.loop && !r.marker) d.push(['warn','Questo prompt non stampa un segnale di fine: il loop girerà fino a MAX_ITERATIONS, rifacendo lo stesso lavoro. Aggiungi al prompt «When done print exactly: RALPH FINISHED», oppure lancialo senza loop.']);
-    if(st.loop && r.marker) d.push(['ok','Il prompt stampa <code>'+r.marker+'</code>: lo script si ferma appena lo trova. Se un giro si interrompe, il successivo riprende da <code>progress.txt</code>.']);
-    if(st.loop && n>20) d.push(['warn','Un tetto alto è un costo alto se qualcosa si incastra. Parti basso e alzalo quando il prompt ha dimostrato di convergere.']);
-    if(st.night && !st.loop) d.push(['ok','Per un singolo lancio notturno va bene, ma un single shot di solito finisce in pochi minuti. caffeinate serve davvero con il loop.']);
-    if(st.night) d.push(['ok','Su un server remoto usa invece <code>screen -S ralph ./ralph.sh</code> e stacca con <code>Ctrl+A D</code>.']);
-    dg.innerHTML = d.map(x=>'<div style="color:'+(x[0]==='bad'?'var(--bad)':x[0]==='warn'?'var(--warn)':'var(--ok)')+'">'+
-      (x[0]==='bad'?'✗ ':x[0]==='warn'?'⚠ ':'✓ ')+x[1]+'</div>').join('');
-  }
-  f.addEventListener('change',upd);
-  mx.addEventListener('input',upd);
-  ['json','loop','night','box'].forEach(k=>document.getElementById(id+'_'+k).addEventListener('change',upd));
-  document.getElementById(id+'_cp').addEventListener('click',()=>{
-    navigator.clipboard && navigator.clipboard.writeText(last);
-    const sv=document.getElementById(id+'_sv'); sv.classList.add('on'); setTimeout(()=>sv.classList.remove('on'),1400);
-  });
-  upd();
 }
 
 /* ---------- compositore di compiti ---------- */
