@@ -91,3 +91,10 @@ Modulo resources:
 - First principles: https://www.youtube.com/watch?v=4Nna09dG_c0
 - Ralph Auto Loop - Autonomous AI coding agent that implements specs: https://github.com/mikearnaldi/accountability/blob/main/ralph-auto.sh
 - Ralph Wiggum - Long-running AI agent loop: https://github.com/mikearnaldi/accountability/blob/main/ralph-auto.sh
+
+
+3) tips e cose da ricordare:
+
+- usa sempre sandbox e dentro la sandbox non ci deve mai essere env o file con credenziali di produzione
+- se lo devi far runnare di notte, ricordati di rimuovere lo sleep del pc  (sul mac puoi mettere caffeinate) o di runnarlo come screen (se sei un server remoto)
+- 
