@@ -4,7 +4,7 @@
 
 "Ralph is an autonomous AI agent loop that runs AI coding tools (Pi or Claude Code) repeatedly until all PRD/user stories items are complete. Each iteration is a fresh instance with clean context."
 
-
+questa è la sua definizione vera. un loop agentico finchè non finisci le user stories per finire un prodotto.
 
 Esempio pseudocodice:
 
@@ -20,6 +20,15 @@ echo "==============================================================="
 fi
 ```
 
+Però possiamo in realtà usarlo senza un loop. 
+
+quando usarlo? cose piu o meno lunghe in cui non vuoi avere un interazione con l'agente.
+
+E' molto simile al singolo prompt dove apri una sehll interattiva dell'agente e gli dai il prompt. 
+La differenza principale è che in modalità ralph non hai intenzione di avere un interazione di chat/risposta con l'agente, ma gli vuoi lasciare la totale autonomia per completare il task
+e vuoi controllare il task solo alla fine.
+
+Diciamo che questa è la differenza principale con il singolo prompt.
 
 
 
