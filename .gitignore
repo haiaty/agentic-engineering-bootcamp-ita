@@ -2,3 +2,5 @@
 pi-config.json
 app_workshop/node_modules/*
 solutions
+pi-run-debug.log
+reports/*

@@ -1,6 +1,5 @@
 You are working inside an existing codebase.
 
-
 Inputs and reference files:
 - Progress log to know what has been done and how to resume: `progress.txt`
 - Agent rules: `AGENTS.md`
@@ -175,3 +174,6 @@ Acceptance criteria
 Given [initial state], when [action], then [observable result].
 
 </feature_template>
+
+
+If user story is not provided by the user, take the first not completed yet and start it
