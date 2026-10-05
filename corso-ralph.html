@@ -1,0 +1,1394 @@
+<!doctype html>
+<html lang="it" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ralph Loops — Corso</title>
+<style>
+:root{
+  --bg:#f7f7f5; --panel:#ffffff; --panel-2:#f1f1ee; --text:#1c1c1a; --muted:#6b6b63;
+  --line:#e2e2dc; --accent:#c2451f; --accent-soft:#fdefe9; --ok:#1f7a4d; --ok-soft:#e8f5ee;
+  --warn:#8a5a00; --warn-soft:#fdf3e0; --bad:#a52020; --bad-soft:#fbeaea;
+  --code-bg:#1e1e1c; --code-text:#f0efe9; --shadow:0 1px 2px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.05);
+  --radius:12px; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+}
+html[data-theme="dark"]{
+  --bg:#141413; --panel:#1e1e1c; --panel-2:#26261f; --text:#f0efe9; --muted:#a3a39a;
+  --line:#33332c; --accent:#e8825c; --accent-soft:#2e211c; --ok:#5ec48d; --ok-soft:#17281f;
+  --warn:#e0b45f; --warn-soft:#2a2318; --bad:#e88b8b; --bad-soft:#2b1a1a;
+  --code-bg:#0f0f0e; --code-text:#e8e7e1; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;font-size:inherit;cursor:pointer}
+a{color:var(--accent)}
+
+/* ---------- layout ---------- */
+header.top{
+  position:sticky;top:0;z-index:40;background:var(--panel);border-bottom:1px solid var(--line);
+  display:flex;flex-wrap:wrap;align-items:center;gap:14px;padding:10px 18px;
+}
+.brand{font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;gap:9px;font-size:15px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--accent);flex:none}
+.brand small{display:block;font-weight:500;color:var(--muted);font-size:11.5px;letter-spacing:0}
+.spacer{flex:1}
+.pill{
+  border:1px solid var(--line);background:var(--panel-2);color:var(--text);
+  border-radius:999px;padding:6px 12px;font-size:12.5px;font-weight:600;display:inline-flex;align-items:center;gap:7px;
+}
+.pill.ghost{background:transparent}
+.pill:hover{border-color:var(--accent)}
+.clock{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.progress-wrap{width:100%;height:3px;background:var(--panel-2)}
+.progress-bar{height:100%;width:0;background:var(--accent);transition:width .35s ease}
+
+.shell{display:grid;grid-template-columns:274px minmax(0,1fr);gap:0;align-items:start}
+nav.side{
+  position:sticky;top:57px;height:calc(100vh - 57px);overflow-y:auto;
+  border-right:1px solid var(--line);padding:16px 12px 40px;background:var(--bg);
+}
+nav.side h4{font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:6px 8px 8px}
+.navitem{
+  display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;border:0;background:transparent;
+  color:var(--text);padding:8px 10px;border-radius:9px;margin-bottom:2px;line-height:1.35;
+}
+.navitem:hover{background:var(--panel-2)}
+.navitem.active{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.navitem .idx{font-family:var(--mono);font-size:11px;color:var(--muted);width:20px;flex:none;padding-top:2px}
+.navitem.active .idx{color:var(--accent)}
+.navitem .nt{font-size:13.5px}
+.navitem .nm{font-size:11px;color:var(--muted);display:block}
+.navitem .tick{margin-left:auto;color:var(--ok);font-size:12px;flex:none}
+
+main{padding:30px 34px 90px;max-width:920px;margin:0 auto;width:100%}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+h1{font-size:31px;line-height:1.18;letter-spacing:-.02em;margin:0 0 6px}
+h2{font-size:21px;letter-spacing:-.01em;margin:38px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h3{font-size:16px;margin:24px 0 8px}
+.lede{color:var(--muted);font-size:15px;margin:0 0 4px}
+.prose{font-size:15px}
+.prose p{margin:12px 0}
+.prose ul,.prose ol{margin:12px 0;padding-left:22px}
+.prose li{margin:6px 0}
+.prose strong{font-weight:650}
+code{font-family:var(--mono);font-size:.875em;background:var(--panel-2);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+pre{background:var(--code-bg);color:var(--code-text);padding:14px 16px;border-radius:var(--radius);overflow-x:auto;font-size:12.5px;line-height:1.55;margin:14px 0}
+pre code{background:none;border:0;padding:0;color:inherit;font-size:12.5px}
+
+.callout{border:1px solid var(--line);border-left:3px solid var(--accent);background:var(--panel);border-radius:10px;padding:13px 16px;margin:16px 0;font-size:14px;box-shadow:var(--shadow)}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.callout.ok{border-left-color:var(--ok);background:var(--ok-soft)}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.callout .ct{display:block;font-weight:700;font-size:12.5px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+
+.grid{display:grid;gap:12px;margin:16px 0}
+.grid.c2{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.grid.c3{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
+.card h5{margin:0 0 5px;font-size:13.5px}
+.card p{margin:0;font-size:13px;color:var(--muted)}
+.card .tag{font-family:var(--mono);font-size:10.5px;color:var(--accent);text-transform:uppercase;letter-spacing:.06em}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin:16px 0}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}
+.tablewrap table{margin:0}
+
+/* ---------- widgets ---------- */
+.widget{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin:20px 0;box-shadow:var(--shadow)}
+.widget-h{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}
+.widget-k{font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:1px 6px;flex:none}
+.widget-t{font-weight:650;font-size:15px}
+.widget-s{color:var(--muted);font-size:13.5px;margin:2px 0 14px}
+
+.opt{display:block;width:100%;text-align:left;border:1px solid var(--line);background:var(--panel-2);color:var(--text);border-radius:9px;padding:10px 13px;margin-bottom:7px;font-size:14px;transition:.15s}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:disabled{cursor:default}
+.opt.sel-ok{border-color:var(--ok);background:var(--ok-soft)}
+.opt.sel-bad{border-color:var(--bad);background:var(--bad-soft)}
+.opt.reveal-ok{border-color:var(--ok)}
+.opt .mk{font-family:var(--mono);font-weight:700;margin-right:8px;color:var(--muted)}
+.why{font-size:13px;color:var(--muted);margin-top:6px;padding-left:2px;display:none}
+.opt.shown .why{display:block}
+
+.chk{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--panel-2);margin-bottom:6px;cursor:pointer;font-size:14px}
+.chk input{margin-top:4px;flex:none;accent-color:var(--accent);width:15px;height:15px}
+.chk.on{border-color:var(--accent);background:var(--accent-soft)}
+.chk .lb{font-weight:600}
+.chk .ds{display:block;font-size:12.5px;color:var(--muted);font-weight:400}
+
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.pane{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.pane-h{padding:7px 12px;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.pane.bad .pane-h{background:var(--bad-soft);color:var(--bad)}
+.pane.ok .pane-h{background:var(--ok-soft);color:var(--ok)}
+.pane pre{margin:0;border-radius:0;max-height:340px}
+
+.bp{border:1px solid var(--line);border-radius:10px;background:var(--panel-2);padding:14px 16px;margin-bottom:10px}
+.bp-h{display:flex;gap:10px;align-items:baseline;font-weight:700;font-size:15px}
+.bp-n{font-family:var(--mono);font-size:12px;color:var(--accent);flex:none}
+.bp-why{font-size:13.5px;color:var(--muted);margin:6px 0 10px}
+.bp-ex{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.bp-ex>div{border-radius:8px;padding:8px 11px;font-size:13px;line-height:1.5}
+.bp-ex .do{background:var(--ok-soft);border-left:3px solid var(--ok)}
+.bp-ex .dont{background:var(--bad-soft);border-left:3px solid var(--bad)}
+.bp-ex b{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
+.bp-ex .do b{color:var(--ok)}
+.bp-ex .dont b{color:var(--bad)}
+
+.preview{background:var(--code-bg);color:var(--code-text);border-radius:10px;padding:14px 16px;font-family:var(--mono);font-size:12px;line-height:1.6;white-space:pre-wrap;max-height:400px;overflow-y:auto;min-height:80px}
+.meter{height:7px;border-radius:99px;background:var(--panel-2);overflow:hidden;margin:12px 0 6px;border:1px solid var(--line)}
+.meter > i{display:block;height:100%;background:var(--accent);transition:width .3s}
+.scoreline{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);font-family:var(--mono)}
+
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.tab{border:1px solid var(--line);background:var(--panel-2);color:var(--muted);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;font-family:var(--mono)}
+.tab:hover{border-color:var(--accent)}
+.tab.on{border-color:var(--accent);background:var(--accent-soft);color:var(--text)}
+
+textarea,input[type="text"],select{
+  width:100%;font-family:inherit;font-size:14px;color:var(--text);background:var(--panel-2);
+  border:1px solid var(--line);border-radius:9px;padding:10px 12px;resize:vertical;
+}
+textarea:focus,input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+label.fl{display:block;font-size:12px;font-weight:650;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:12px 0 5px}
+.btn{border:1px solid var(--line);background:var(--panel-2);color:var(--text);border-radius:8px;padding:8px 14px;font-size:13.5px;font-weight:600}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{filter:brightness(1.07)}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}
+.hint{font-size:12.5px;color:var(--muted)}
+.saved{font-size:12px;color:var(--ok);opacity:0;transition:.3s}
+.saved.on{opacity:1}
+
+.sorter-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--panel-2);margin-bottom:7px}
+.sorter-row .it{flex:1 1 240px;font-size:13.5px}
+.sorter-row .bs{display:flex;gap:5px;flex:none}
+.bbtn{border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:7px;padding:4px 9px;font-size:11.5px;font-weight:650}
+.bbtn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.sorter-row.ok{border-color:var(--ok);background:var(--ok-soft)}
+.sorter-row.bad{border-color:var(--bad);background:var(--bad-soft)}
+.sorter-row .fb{flex:1 1 100%;font-size:12.5px;color:var(--muted);display:none}
+.sorter-row.done .fb{display:block}
+
+.diag{margin-top:12px;font-size:13.5px}
+.diag div{padding:6px 0;border-top:1px dashed var(--line)}
+
+/* ---------- ciclo dell'agente ---------- */
+.loopgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:6px 0 12px}
+.lstep{border:1px solid var(--line);background:var(--panel-2);border-radius:10px;padding:10px 11px;font-size:13px;opacity:.45;transition:.2s}
+.lstep.on{opacity:1;border-color:var(--accent);background:var(--accent-soft)}
+.lstep.past{opacity:.85}
+.lstep b{display:block;font-size:11px;font-family:var(--mono);color:var(--accent);letter-spacing:.05em;text-transform:uppercase;margin-bottom:3px}
+.lstep span{color:var(--muted);font-size:12.5px;display:block;margin-top:3px}
+
+/* ---------- builder file di contesto ---------- */
+
+.footnav{display:flex;justify-content:space-between;gap:10px;margin-top:46px;padding-top:18px;border-top:1px solid var(--line)}
+.timerbox{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+.mod-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0 24px}
+.badge{font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-radius:6px;padding:3px 8px;color:var(--muted)}
+
+@media (max-width:900px){
+  .shell{grid-template-columns:1fr}
+  nav.side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);max-height:290px}
+  main{padding:22px 16px 70px}
+  h1{font-size:25px}
+}
+@media print{
+  nav.side,header.top,.footnav,.btnrow{display:none}
+  main{max-width:none;padding:0}
+  .widget,.card,.callout{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand"><span class="dot"></span><span>Ralph Loops<small>Programma formativo — 3 ore, agenti autonomi in loop, teoria + laboratorio</small></span></div>
+  <div class="spacer"></div>
+  <div class="timerbox">
+    <button class="pill ghost" id="timerBtn">▶ Avvia timer</button>
+    <span class="pill clock" id="clock">00:00:00 / 3:00:00</span>
+  </div>
+  <button class="pill ghost" id="exportBtn" title="Scarica risposte e note in Markdown">⬇ Esporta</button>
+  <button class="pill ghost" id="themeBtn" title="Tema chiaro/scuro">◐</button>
+</header>
+<div class="progress-wrap"><div class="progress-bar" id="pbar"></div></div>
+
+<div class="shell">
+  <nav class="side">
+    <h4>Programma</h4>
+    <div id="nav"></div>
+    <h4 style="margin-top:18px">Avanzamento</h4>
+    <div style="padding:0 10px;font-size:12.5px;color:var(--muted)" id="statsBox"></div>
+    <div style="padding:10px">
+      <button class="btn" id="resetBtn" style="width:100%;font-size:12px">Azzera avanzamento</button>
+    </div>
+  </nav>
+  <main id="main"></main>
+</div>
+
+<script>
+/* ============================================================
+   STATO + PERSISTENZA
+   ============================================================ */
+const NS = 'ralph3h.';
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(NS+k); return v===null? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(NS+k, JSON.stringify(v)); }catch(e){} },
+  del(k){ try{ localStorage.removeItem(NS+k); }catch(e){} },
+  clearAll(){ try{ Object.keys(localStorage).filter(k=>k.indexOf(NS)===0).forEach(k=>localStorage.removeItem(k)); }catch(e){} }
+};
+let current = store.get('current', 0);
+let done = store.get('done', {});
+let answers = store.get('answers', {});
+let quizState = store.get('quiz', {});
+
+function saveAll(){ store.set('done', done); store.set('answers', answers); store.set('quiz', quizState); }
+
+/* ============================================================
+   CONTENUTI
+   ============================================================ */
+const MODULES = [];
+
+/* ---------- 0. Apertura ---------- */
+MODULES.push({
+  id:'m0', n:'00', title:'Apertura', min:5,
+  blocks:[
+    {t:'p',html:`<p>Nel corso sui coding agent hai lavorato <strong>insieme</strong> all'agente: gli scrivi, ti risponde, correggi il tiro. Oggi facciamo il passo successivo: gli dai un compito scritto bene, <strong>lo lasci lavorare da solo</strong> e torni a controllare solo alla fine. Questo è un <strong>Ralph loop</strong>.</p>`},
+    {t:'cards',cards:[
+      {tag:'Parte 1',h:'Teoria',p:'Cos\'è un Ralph loop, in cosa è diverso dal singolo prompt, quando conviene.'},
+      {tag:'Parte 2',h:'Come si lancia',p:'In sessione, da linea di comando, con o senza log completo, dentro il container.'},
+      {tag:'Parte 3',h:'Quattro esempi',p:'Dal «saluta» fino a una user story completa con memoria e ripresa.'},
+      {tag:'Parte 4',h:'Sicurezza e tips',p:'Sandbox, credenziali, notti di lavoro senza che il Mac vada in stop.'}
+    ]},
+    {t:'table',head:['Blocco','Durata'],rows:[
+      ['00 · Apertura','5 min'],
+      ['01 · Che cos\'è un Ralph loop','25 min'],
+      ['02 · Come lo possiamo usare','20 min'],
+      ['03 · Esempio 1 — Il primo lancio','10 min'],
+      ['04 · Esempio 2 — Report sulla qualità del codice','15 min'],
+      ['— Pausa','10 min'],
+      ['05 · Esempio 3 — Una singola funzionalità','20 min'],
+      ['06 · Esempio 4 — Una user story completa','30 min'],
+      ['07 · Altri casi d\'uso','15 min'],
+      ['08 · Sicurezza e tips','15 min'],
+      ['09 · Chiusura','15 min']
+    ]},
+    {t:'callout',kind:'ok',title:'Come si usa questo materiale',html:`Naviga con la barra a sinistra, con i pulsanti in fondo a ogni modulo o con le frecce della tastiera. Ogni esercizio si salva da solo nel browser (niente esce dal tuo computer). Con <strong>&#8681; Esporta</strong> scarichi tutte le tue risposte e i prompt che hai composto in un file Markdown.`},
+    {t:'p',html:`<h3>Cosa devi saper fare a fine giornata</h3>
+      <ol>
+        <li>Spiegare cos'è un Ralph loop e perché ogni iterazione parte con il contesto pulito.</li>
+        <li>Dire quando conviene un Ralph e quando è meglio una sessione interattiva.</li>
+        <li>Lanciare un prompt file con Pi, sia vedendo solo il risultato sia con il log completo.</li>
+        <li>Scrivere un <code>RALPH.md</code> con file di riferimento, vincoli, compito e criterio di fine.</li>
+        <li>Dare all'agente una memoria su file (<code>progress.txt</code>, <code>learned.md</code>, <code>error_memories.md</code>) per riprendere il lavoro.</li>
+        <li>Far girare tutto in una sandbox sicura, senza credenziali di produzione.</li>
+      </ol>`}
+  ]
+});
+
+/* ---------- 1. Che cos'è un Ralph loop ---------- */
+MODULES.push({
+  id:'m1', n:'01', title:'Che cos\'è un Ralph loop', min:25,
+  blocks:[
+    {t:'callout',kind:'',title:'La definizione',html:`<em>«Ralph is an autonomous AI agent loop that runs AI coding tools (Pi or Claude Code) repeatedly until all PRD/user stories items are complete. Each iteration is a fresh instance with clean context.»</em>`},
+    {t:'p',html:`<p>Detto semplice: è un <strong>ciclo che lancia l'agente più e più volte</strong>, sempre con lo stesso prompt, finché le user stories del prodotto non sono tutte finite. Ogni giro è un'istanza nuova dell'agente, con il <strong>contesto pulito</strong>: non si ricorda niente del giro prima.</p>
+      <p>Due conseguenze importanti:</p>
+      <ul>
+        <li><strong>La memoria sta nei file, non nell'agente.</strong> Se il giro 3 deve sapere cosa ha fatto il giro 2, deve trovarlo scritto: in <code>progress.txt</code>, in <code>user_stories.toml</code>, nel codice, in git.</li>
+        <li><strong>Il contesto non si sporca mai.</strong> Una sessione lunghissima si riempie di tentativi falliti e log vecchi, e l'agente peggiora. Un giro nuovo riparte leggero.</li>
+      </ul>`},
+    {t:'cards',cards:[
+      {tag:'1',h:'Il prompt file',p:'Un RALPH.md con il compito, i file da leggere, i vincoli e quando fermarsi. È sempre lo stesso a ogni giro.'},
+      {tag:'2',h:'Il ciclo',p:'Uno script di shell che lancia l\'agente in modo non interattivo, N volte o finché non vede il segnale di fine.'},
+      {tag:'3',h:'La memoria su file',p:'Lo stato del lavoro scritto su disco, così il giro successivo sa da dove ripartire.'}
+    ]},
+    {t:'agentloop'},
+    {t:'p',html:`<h3>Il ciclo, in pseudocodice</h3><p>Il cuore è davvero così piccolo: un <code>for</code> in bash che passa il prompt all'agente.</p>`},
+    {t:'code',lang:'bash',code:`MAX_ITERATIONS=10
+
+for i in $(seq 1 $MAX_ITERATIONS); do
+  echo ""
+  echo "==============================================================="
+  echo "  Ralph Iteration $i of $MAX_ITERATIONS"
+  echo "==============================================================="
+
+  cat RALPH.md | pi --print --provider omlx --model Qwen3.8-27B-8bit --approve --mode json 2>&1 | tee pi-run-debug.log
+done`},
+    {t:'p',html:`<p>Nella versione reale conviene anche <strong>fermarsi da soli</strong> quando il lavoro è finito, invece di bruciare tutte le iterazioni. Il prompt chiede all'agente di stampare una frase precisa (per esempio <code>USER STORY FINISHED</code>) e lo script la cerca:</p>`},
+    {t:'code',lang:'bash',code:`MAX_ITERATIONS=10
+
+for i in $(seq 1 $MAX_ITERATIONS); do
+  echo "=== Ralph Iteration $i of $MAX_ITERATIONS"
+
+  cat RALPH.md \\
+    | pi --print --provider omlx --model Qwen3.8-27B-8bit --approve --mode json 2>&1 \\
+    | tee -a pi-run-debug.log > last-run.log
+
+  if grep -q "USER STORY FINISHED" last-run.log; then
+    echo "Fatto all'iterazione $i"
+    break
+  fi
+done`},
+
+    {t:'p',html:`<h3>Si può usare anche senza loop</h3>
+      <p>Il nome viene dal ciclo, ma l'idea che conta è un'altra: <strong>un compito lungo, scritto bene, lanciato in modo non interattivo</strong>. Anche un solo giro, senza <code>for</code>, è già un «Ralph» se lo lanci e torni a guardare alla fine. Tre dei quattro esempi di oggi sono proprio così.</p>`},
+    {t:'split2',a:{h:'Singolo prompt in sessione',items:[
+      ['Come funziona','Apri la shell interattiva dell\'agente, scrivi il prompt, lui lavora.'],
+      ['Il tuo ruolo','Stai lì: rispondi alle domande, correggi, approvi, chiedi altro.'],
+      ['Quando serve','Lavori esplorativi, cose poco chiare, quando vuoi guardare passo passo.'],
+      ['Il controllo','Continuo, durante il lavoro.']
+    ]},b:{h:'Modalità Ralph',items:[
+      ['Come funziona','Lanci il prompt file da linea di comando (in loop o no) e te ne vai.'],
+      ['Il tuo ruolo','Nessuna chat. All\'agente lasci <strong>totale autonomia</strong> per completare il task.'],
+      ['Quando serve','Cose più o meno lunghe in cui <strong>non vuoi interagire</strong> con l\'agente.'],
+      ['Il controllo','Solo alla fine: diff, test, report, log.']
+    ]}},
+    {t:'callout',kind:'ok',title:'La differenza in una riga',html:`Il prompt può anche essere identico. Quello che cambia è che in modalità Ralph <strong>non hai intenzione di avere un'interazione domanda/risposta</strong>: tutto quello che l'agente deve sapere deve essere già scritto nel prompt e nei file. Se manca qualcosa, non c'è nessuno a cui chiederlo.`},
+
+    {t:'triage'},
+
+    {t:'p',html:`<h3>Esempi in giro sul web</h3>`},
+    {t:'table',head:['Risorsa','Cosa è'],rows:[
+      ['<a href="https://github.com/mikearnaldi/accountability/blob/main/ralph-auto.sh" target="_blank" rel="noopener">Ralph Auto Loop</a>','Agente autonomo che implementa specifiche, script di shell completo.'],
+      ['<a href="https://github.com/mikearnaldi/accountability/blob/main/ralph-auto.sh" target="_blank" rel="noopener">Ralph Wiggum</a>','Loop di lunga durata, l\'idea originale da cui prende il nome.'],
+      ['<a href="https://claude.com/plugins/ralph-loop" target="_blank" rel="noopener">Ralph loop plugin di Claude</a>','Plugin ufficiale per Claude Code che fa girare il loop per te.']
+    ]},
+    {t:'callout',kind:'bad',title:'Molto importante',html:`Un Ralph gira <strong>da solo</strong> e con i permessi già approvati (<code>--approve</code>): nessuno legge i comandi prima che partano. Va fatto girare <strong>dentro un container, con un utente non root e senza alcun accesso a file che contengono parametri di ambienti di produzione</strong>. Ci torniamo nel modulo 08.`},
+
+    {t:'quiz',id:'q1a',q:'Perché in un Ralph loop ogni iterazione parte con il contesto pulito?',
+      opts:[
+        {tx:'Per risparmiare sul costo dei token',ok:false,why:'È un effetto collaterale, non il motivo. Il motivo vero riguarda la qualità del lavoro.'},
+        {tx:'Perché un contesto lungo si riempie di tentativi falliti e log vecchi e l\'agente peggiora; un giro nuovo riparte leggero e lo stato lo legge dai file',ok:true,why:'Esatto. Il contesto pulito tiene alta la qualità; la continuità la danno i file (<code>progress.txt</code>, <code>user_stories.toml</code>, git).'},
+        {tx:'Perché Pi non supporta sessioni lunghe',ok:false,why:'No: è una scelta di design del Ralph, vale uguale con Claude Code o qualunque altro agente.'},
+        {tx:'Perché così l\'agente si ricorda meglio le iterazioni precedenti',ok:false,why:'Al contrario: non si ricorda <em>niente</em>. Per questo la memoria va scritta su file.'}
+      ]},
+    {t:'quiz',id:'q1b',q:'Qual è la differenza principale fra un singolo prompt in sessione e la modalità Ralph?',
+      opts:[
+        {tx:'Ralph usa un modello più potente',ok:false,why:'Il modello può essere lo stesso identico.'},
+        {tx:'Ralph funziona solo dentro un for in bash',ok:false,why:'No: si può usare anche senza loop. Il ciclo è uno strumento, non la definizione.'},
+        {tx:'In Ralph non c\'è interazione: lasci all\'agente totale autonomia e controlli solo alla fine',ok:true,why:'Esatto. Per questo il prompt deve contenere già tutto: file di riferimento, vincoli, criterio di fine.'},
+        {tx:'In Ralph il prompt è più corto',ok:false,why:'Di solito è il contrario: senza nessuno a cui chiedere chiarimenti, il prompt è più lungo e preciso.'}
+      ]}
+  ]
+});
+
+/* ---------- 2. Come lo possiamo usare ---------- */
+MODULES.push({
+  id:'m2', n:'02', title:'Come lo possiamo usare', min:20,
+  blocks:[
+    {t:'p',html:`<p>Il prompt sta in un file Markdown (nella repo sono in <code>ralph/</code>). Lo stesso file si può lanciare in due modi.</p>
+      <h3>Opzione 1 — In maniera interattiva, con la shell</h3>
+      <p>Apri la sessione di Pi e gli passi il percorso del file come primo messaggio. Utile la prima volta che provi un prompt nuovo: vedi cosa fa e puoi fermarlo.</p>`},
+    {t:'code',lang:'bash',code:`pi --provider omlx --model Qwen3.8-27B-8bit
+# dentro la sessione, scrivi:
+ralph/RALPH_ESEMPIO_1.md`},
+    {t:'p',html:`<h3>Opzione 2 — Da linea di comando</h3>
+      <p>Il contenuto del file entra da stdin, <code>--print</code> fa lavorare Pi senza sessione e <code>--approve</code> approva in automatico i comandi. Qui hai due varianti, a seconda di quanto vuoi vedere:</p>`},
+    {t:'code',lang:'bash',code:`# Non vedi nulla, solo il risultato finale: la risposta dell'LLM
+cat ralph/RALPH_ESEMPIO_1.md | pi --print --provider omlx --model Qwen3.8-27B-8bit --approve
+
+# Vedi esattamente tutto quello che fa, e lo salvi in un log
+cat ralph/RALPH_ESEMPIO_1.md | pi --print --provider omlx --model Qwen3.8-27B-8bit --approve --mode json 2>&1 | tee pi-run-debug.log`},
+    {t:'table',head:['Pezzo del comando','A cosa serve'],rows:[
+      ['<code>cat ralph/RALPH_….md |</code>','Il prompt arriva da un file versionato, non da quello che scrivi al volo. Lo puoi rileggere, migliorare, rilanciare.'],
+      ['<code>--print</code>','Modalità non interattiva: lavora, stampa ed esce. È quello che permette di metterlo in un loop.'],
+      ['<code>--provider omlx --model …</code>','Quale modello usa. Oggi un modello locale servito da oMLX.'],
+      ['<code>--approve</code>','Approva da solo i comandi. È il motivo per cui serve la sandbox.'],
+      ['<code>--mode json</code>','Stampa ogni passo (messaggi, chiamate agli strumenti, risultati) come JSON: è il log completo.'],
+      ['<code>2&gt;&amp;1 | tee pi-run-debug.log</code>','Unisce anche gli errori e scrive tutto su file mentre lo vedi a schermo. Quando torni, il log è lì.']
+    ]},
+    {t:'callout',kind:'warn',title:'Il log non è un optional',html:`Quando controlli solo alla fine, <code>pi-run-debug.log</code> è l'unico modo per capire <em>perché</em> l'agente ha fatto una scelta strana o dove si è bloccato. Lancia sempre con <code>--mode json</code> e <code>tee</code> i run lunghi.`},
+    {t:'cmdlab'},
+    {t:'quiz',id:'q2a',q:'Hai lanciato un Ralph di notte, al mattino il risultato è sbagliato. Cosa ti serviva per capire cos\'è successo?',
+      opts:[
+        {tx:'Niente: basta rilanciarlo e guardare meglio',ok:false,why:'Rilanciare senza capire spesso ripete lo stesso errore, e costa un\'altra notte.'},
+        {tx:'Il log completo, salvato con --mode json e tee',ok:true,why:'Esatto. Senza il log vedi solo la risposta finale, non le scelte e gli errori intermedi.'},
+        {tx:'La cronologia della chat di Pi',ok:false,why:'In modalità <code>--print</code> non c\'è una chat da riaprire: o lo hai salvato, o è perso.'},
+        {tx:'Il git log',ok:false,why:'Ti dice cosa è cambiato, non perché. Aiuta, ma non basta.'}
+      ]}
+  ]
+});
+
+/* ---------- 3. Esempio 1 ---------- */
+MODULES.push({
+  id:'m3', n:'03', title:'Esempio 1 — Il primo lancio', min:10,
+  blocks:[
+    {t:'p',html:`<p>Il primo esempio non serve a niente, ed è proprio il punto: verifica che <strong>tutta la catena funzioni</strong> (container, Pi, provider, modello, log) prima di affidarle un lavoro vero.</p>`},
+    {t:'p',html:`<h3><code>ralph/RALPH_ESEMPIO_1.md</code></h3>`},
+    {t:'code',lang:'markdown',code:`Saluta in italiano!`},
+    {t:'code',lang:'bash',code:`# 1. Solo il risultato
+cat ralph/RALPH_ESEMPIO_1.md | pi --print --provider omlx --model Qwen3.8-27B-8bit --approve
+
+# 2. Con il log completo
+cat ralph/RALPH_ESEMPIO_1.md | pi --print --provider omlx --model Qwen3.8-27B-8bit --approve --mode json 2>&1 | tee pi-run-debug.log`},
+    {t:'checklist',id:'ck3',title:'Esempio 1 completato quando...',
+      items:[
+        'Sei dentro il container, con un utente non root (whoami non dice root)',
+        'Il comando senza --mode json stampa un saluto e torna al prompt',
+        'Il comando con --mode json stampa i passi in JSON',
+        'Il file pi-run-debug.log esiste e contiene gli stessi passi',
+        'Hai aperto il log e trovato il messaggio finale dell\'agente'
+      ]},
+    {t:'exercise',id:'ex3',label:'Esercizio 3.1 — Leggi il log (3 minuti)',
+      prompt:'Apri pi-run-debug.log. Quanti passi ci sono? Riesci a distinguere il tuo prompt, la risposta del modello ed eventuali chiamate a strumenti? Annota cosa trovi.',
+      placeholder:'Passi trovati: ...\nIl prompt compare come: ...\nLa risposta finale compare come: ...',
+      solution:'Anche per un saluto ci sono più eventi: l\'avvio, il messaggio utente, la risposta. Imparare a leggere questo log su un caso banale ti serve per quando, su una user story da un\'ora, dovrai trovare il punto esatto in cui l\'agente ha preso la strada sbagliata.'}
+  ]
+});
+
+/* ---------- 4. Esempio 2 ---------- */
+MODULES.push({
+  id:'m4', n:'04', title:'Esempio 2 — Report sulla qualità del codice', min:15,
+  blocks:[
+    {t:'p',html:`<p>Primo lavoro vero, e senza rischi: l'agente <strong>legge</strong> il codice e <strong>scrive un solo file</strong>, un report. È il caso ideale per un Ralph: compito lungo, nessuna decisione da prendere insieme, risultato da leggere alla fine.</p>`},
+    {t:'reveal',title:'ralph/RALPH_ESEMPIO_2.md',sub:'Guarda come è costruito: cosa valutare, che forma deve avere ogni problema, dove scrivere il risultato.',
+      text:`Analizza la qualità del codice del progetto e genera un report sintetico ma concreto.
+
+Valuta almeno:
+- leggibilità e manutenibilità
+- complessità e duplicazioni
+- organizzazione e architettura
+- gestione degli errori
+- sicurezza
+- performance
+- testabilità e copertura dei test
+- aderenza alle best practice del linguaggio/framework
+
+Per ogni problema trovato indica:
+1. severità: alta, media o bassa
+2. file o area coinvolta
+3. descrizione del problema
+4. impatto
+5. raccomandazione pratica per risolverlo
+
+Concludi con un punteggio complessivo da 1 a 10 e le 5 azioni con priorità più alta.
+
+Il codice si trova in app_workshop/src.
+
+Scrivi il report in 'report_qualita_codice_<date>.md', nella cartella reports/`},
+    {t:'code',lang:'bash',code:`cat ralph/RALPH_ESEMPIO_2.md | pi --print --provider omlx --model Qwen3.8-27B-8bit --approve --mode json 2>&1 | tee pi-run-debug.log`},
+    {t:'practices',title:'Perché questo prompt funziona senza interazione',items:[
+      {n:'01',h:'Dice cosa guardare',
+        why:'Senza una lista l\'agente si concentra su quello che nota per primo, di solito lo stile.',
+        do:'«Valuta almeno: leggibilità, complessità, errori, sicurezza, performance, test…»',
+        dont:'«Dimmi cosa ne pensi del codice.»'},
+      {n:'02',h:'Fissa la forma del risultato',
+        why:'Una forma fissa rende il report confrontabile fra un run e l\'altro, e leggibile in fretta.',
+        do:'«Per ogni problema: severità, file, descrizione, impatto, raccomandazione.»',
+        dont:'Lasciare che sia l\'agente a scegliere la struttura.'},
+      {n:'03',h:'Dice dove sta il codice e dove va l\'output',
+        why:'Nessuno potrà dirgli «no, guarda nell\'altra cartella». E tu sai esattamente dove cercare al ritorno.',
+        do:'«Il codice è in app_workshop/src. Scrivi in reports/report_qualita_codice_&lt;date&gt;.md»',
+        dont:'«Analizza il progetto e fammi sapere.»'}
+    ]},
+    {t:'exercise',id:'ex4',label:'Esercizio 4.1 — Verifica il report (5 minuti)',
+      prompt:'Prendi i due problemi con severità alta del report. Apri i file indicati: il problema c\'è davvero? La raccomandazione ha senso? Annota cosa trovi.',
+      placeholder:'Problema 1: ... → vero / falso / esagerato, perché ...\nProblema 2: ...',
+      solution:'Il report è un punto di partenza, non una sentenza. Capita spesso che un problema sia reale ma la severità esagerata, o che il file citato sia giusto ma la riga no. Controllare due voci a caso ti dice quanto fidarti del resto.'}
+  ]
+});
+
+/* ---------- Pausa ---------- */
+MODULES.push({
+  id:'brk', n:'—', title:'Pausa', min:10,
+  blocks:[
+    {t:'p',html:`<h1 style="font-size:26px;margin-top:10px">Pausa — 10 minuti</h1>
+      <p class="lede">Al ritorno l'agente non scrive più solo report: modifica il codice.</p>`},
+    {t:'callout',kind:'warn',title:'Prima di tornare',html:`Controlla che in <code>app_workshop/</code> <code>git status</code> sia <strong>pulito</strong> e che i test girino. Un Ralph che modifica codice lo controlli solo con il diff: se il diff parte già sporco, non saprai cosa ha fatto lui.`},
+    {t:'callout',kind:'',title:'Domanda su cui pensare',html:`Se l'agente non può chiederti niente, <strong>come fa a sapere quali regole del progetto seguire?</strong> Tieni la risposta: è la struttura dei prossimi due prompt.`}
+  ]
+});
+
+/* ---------- 5. Esempio 3 ---------- */
+MODULES.push({
+  id:'m5', n:'05', title:'Esempio 3 — Una singola funzionalità', min:20,
+  blocks:[
+    {t:'p',html:`<p>Ora l'agente aggiunge una funzionalità vera a <code>app_workshop/</code>: una funzione <code>trace()</code> che scrive le chiamate in un file JSONL. Un solo giro, niente loop: è un <strong>single shot</strong>.</p>
+      <p>Guarda la struttura del prompt: è la risposta alla domanda della pausa. Siccome non c'è chat, <strong>tutto il contesto viene dichiarato all'inizio</strong>.</p>`},
+    {t:'reveal',title:'ralph/RALPH_ESEMPIO_3_SINGLE_SHOT.md',sub:'Tre parti: file di riferimento, vincoli critici, il compito.',
+      text:`You are working inside an existing codebase which is located in app_workshop/
+
+Inputs and reference files:
+- Agent rules: \`AGENTS.md\`
+- Architectural considerations: \`docs/architectute/architecture_considerations.md\`
+- Testing rules: use the skill bdd-gherkin-feature-writer
+- Tech stack: \`specs/tech_stack.md\`
+- API conventions: \`specs/api_rules.md\`
+- things learned: \`learned.md\`s
+- errors learned in order to avoid them : \`error_memories.md\`
+- data models folder: \`docs/sql_data_model\`
+
+
+Critical constraints:
+- Always follow \`AGENTS.md\`.
+- Do not invent or modify the data model unless explicitly required by the existing project instructions.
+- Do not fake test success.
+- Do not create shallow or brittle step definitions just to make tests pass.
+- Implement real, robust behavior.
+- Implement only things needed. Do not implement things out of scope or out of the need
+- responses should always follow docs/architecture/ADR-003-standardized-api-response-format.md
+- add also at least 3 tests using skill 'bdd-gherkin-feature-writer' found in .claude/skills/bdd-gherkin-feature-writer
+- If you find any logic erros or possible bugs/conflicts/edge cases/inconsistency advice me and suggest a change
+
+Your task is:
+
+<task>
+
+Add a feature to trace calls and write to a jsonl file.
+
+I would like something like
+
+trace("a custom message", { custom_prop: "hello"})
+
+that I can put in my code in order to get a tracing.
+
+Keep it simple
+</task>`},
+    {t:'code',lang:'bash',code:`cat ralph/RALPH_ESEMPIO_3_SINGLE_SHOT.md | pi --print --provider omlx --model Qwen3.8-27B-8bit --approve --mode json 2>&1 | tee pi-run-debug.log`},
+    {t:'table',head:['Sezione','Cosa sostituisce'],rows:[
+      ['<strong>Inputs and reference files</strong>','Le domande «dove trovo le regole? come si testa? qual è il modello dati?» che in sessione ti farebbe.'],
+      ['<strong>Critical constraints</strong>','Le correzioni che in sessione faresti al volo: «non toccare il modello dati», «non barare sui test».'],
+      ['<strong>«advice me and suggest a change»</strong>','La conversazione. Invece di chiederti, scrive i dubbi nel risultato e tu li leggi alla fine.'],
+      ['<strong>&lt;task&gt;</strong>','Il compito vero, breve, separato dal resto con un tag così non si confonde con le regole.']
+    ]},
+    {t:'callout',kind:'warn',title:'«Do not fake test success»',html:`Con <code>--approve</code> e nessuno a guardare, la scorciatoia più comoda per l'agente è far passare i test invece di far funzionare il codice: un <code>expect(true)</code>, uno step vuoto, un test saltato. I vincoli lo dicono esplicitamente, e tu al ritorno lo <strong>verifichi</strong>: rompi la funzione e controlla che i test falliscano.`},
+    {t:'checklist',id:'ck5',title:'Al ritorno, controlla che...',
+      items:[
+        'git diff tocca solo i file che ti aspetti per una funzione di tracing',
+        'trace("msg", { custom_prop: "hello" }) scrive davvero una riga JSONL',
+        'Ci sono almeno 3 scenari BDD e passano',
+        'Se commenti il corpo di trace(), i test falliscono',
+        'Il modello dati non è stato toccato',
+        'Hai letto i dubbi/edge case che l\'agente ti ha segnalato'
+      ]},
+    {t:'quiz',id:'q5a',q:'Perché il prompt chiede «If you find any logic errors… advice me and suggest a change»?',
+      opts:[
+        {tx:'Per far scrivere all\'agente più testo',ok:false,why:'Non è la quantità che conta.'},
+        {tx:'Perché in modalità Ralph non può fermarsi a chiedere: così i dubbi non si perdono, finiscono nel risultato e li leggi tu alla fine',ok:true,why:'Esatto. È il modo di recuperare la «conversazione» senza interattività: decisioni dubbie scritte, non prese in silenzio.'},
+        {tx:'Perché altrimenti l\'agente non trova i bug',ok:false,why:'Li può trovare comunque; la differenza è se te li dice o li «sistema» a modo suo senza dirtelo.'},
+        {tx:'Per correggere automaticamente i bug trovati',ok:false,why:'Al contrario: chiede di <em>suggerire</em>, non di cambiare. Così resta nel perimetro del compito.'}
+      ]}
+  ]
+});
+
+/* ---------- 6. Esempio 4 ---------- */
+MODULES.push({
+  id:'m6', n:'06', title:'Esempio 4 — Una user story completa', min:30,
+  blocks:[
+    {t:'p',html:`<p>Qui c'è il Ralph «vero»: una user story intera, che può richiedere più giri. Il prompt è lungo perché deve fare tre cose che negli esempi precedenti non servivano:</p>`},
+    {t:'cards',cards:[
+      {tag:'Stato',h:'Sapere dove si è arrivati',p:'user_stories.toml dice quali storie sono in corso o finite; ogni feature ha done / in_progress.'},
+      {tag:'Ripresa',h:'Ripartire se si interrompe',p:'progress.txt registra ogni passo del workflow, così il giro successivo riprende dall\'ultimo completato.'},
+      {tag:'Memoria',h:'Non ripetere gli errori',p:'error_memories.md e learned.md raccolgono errori e cose imparate, e vengono riletti a ogni giro.'}
+    ]},
+    {t:'p',html:`<h3>Il workflow imposto dal prompt</h3>`},
+    {t:'table',head:['Passo','Cosa fa l\'agente'],rows:[
+      ['<strong>Prima di tutto</strong>','Crea o legge <code>user_stories.toml</code>, legge <code>progress.txt</code>, decide se riprendere o iniziare.'],
+      ['<strong>1</strong>','Segna la user story <code>in_progress</code>.'],
+      ['<strong>2</strong>','La scompone in feature: cartella <code>specs/user_story_xxx/</code>, un file per feature secondo il template.'],
+      ['<strong>3a</strong>','Per ogni feature scrive il <code>.feature</code> Gherkin (max 3 scenari, tag <code>@USxxx-scenario-y</code>, controlli su DB e audit).'],
+      ['<strong>3b</strong>','Per ogni scenario: codice di produzione → step definition → <code>npm run reload:dev</code> → <code>npm run test:tag @USxxx</code> → se fallisce, debug con la skill <code>agentic-debug</code> e riprova.'],
+      ['<strong>3d–e</strong>','Unit test per job e operazioni; feature segnata <code>done=true</code>.'],
+      ['<strong>4</strong>','Suite completa della user story, aggiornamento di <code>server/schema.json</code> (OpenAPI).'],
+      ['<strong>5–9</strong>','Storia <code>completed</code>, ultima riga in <code>progress.txt</code>, stampa <code>USER STORY FINISHED</code> ed esce.']
+    ]},
+    {t:'reveal',title:'ralph/RALPH_ESEMPIO_4_NEW_USER_STORY.md (estratto)',sub:'Le parti che rendono il prompt riprendibile. Il file completo è nella repo.',
+      text:`Progress reporting:
+- At every step of the implementation workflow, print what you are doing to \`progress.txt\` . For example "Decomposing in features", "Creating gherkin.features", "implementing code", etc..
+- Use clear progress markers so the task can be resumed later if the program stops.
+
+Memory:
+- append errors and issues that you got in 'error_memories.md'.
+- append caveats and important things that you learned in 'learned.md'
+
+Before doing any implementation:
+1. Check whether \`user_stories.toml\` already exists.
+2. If \`user_stories.toml\` does not exist:
+    - Create \`user_stories.toml\`.
+3. If \`user_stories.toml\` already exists:
+    - Do not recreate it.
+    - Read it and preserve its existing content.
+4. Read \`progress.txt\` if it exists.
+5. Determine whether the user story is already in progress.
+6. If the user story is in progress, resume from the last completed step recorded in \`progress.txt\`.
+7. If the user story is not in progress, start it and mark the 'in_progress = true'
+
+...
+
+7. Print exactly this message to standard output:
+
+   USER STORY FINISHED
+
+8. Stop execution immediately after completing this one user story.
+
+Important behavior:
+- Implement only one user story in this run.
+- Do not continue to another user story after finishing this one.
+- Resume work if interrupted.
+- Prefer small, verifiable changes.
+
+Your task is to do the user story number 2`},
+    {t:'code',lang:'bash',code:`# Un giro solo
+cat ralph/RALPH_ESEMPIO_4_NEW_USER_STORY.md | pi --print --provider omlx --model Qwen3.8-27B-8bit --approve --mode json 2>&1 | tee pi-run-debug.log
+
+# In loop: se un giro si interrompe a metà, il successivo riprende da progress.txt
+MAX_ITERATIONS=5
+for i in $(seq 1 $MAX_ITERATIONS); do
+  echo "=== Ralph Iteration $i of $MAX_ITERATIONS"
+  cat ralph/RALPH_ESEMPIO_4_NEW_USER_STORY.md \\
+    | pi --print --provider omlx --model Qwen3.8-27B-8bit --approve --mode json 2>&1 \\
+    | tee -a pi-run-debug.log > last-run.log
+  grep -q "USER STORY FINISHED" last-run.log && break
+done`},
+    {t:'practices',title:'Gli ingredienti di un prompt da loop',items:[
+      {n:'01',h:'Lo stato sta su file, in un formato rigido',
+        why:'Il giro successivo non ricorda niente. Un TOML con done / in_progress si rilegge senza ambiguità; un paragrafo di testo no.',
+        do:'<code>user_stories.toml</code> con <code>done = false</code>, <code>in_progress = true</code>.',
+        dont:'«Ricordati a che punto eri.»'},
+      {n:'02',h:'Ogni passo lascia una traccia',
+        why:'Se il processo muore a metà (timeout, crash, Mac in stop) il lavoro fatto non va perso.',
+        do:'«At every step, print what you are doing to progress.txt.»',
+        dont:'Scrivere lo stato solo alla fine.'},
+      {n:'03',h:'Un segnale di fine esatto',
+        why:'Lo script deve sapere quando smettere di lanciare giri. Una frase fissa si cerca con un grep.',
+        do:'«Print exactly: USER STORY FINISHED. Stop execution immediately.»',
+        dont:'«Quando hai finito, dimmelo.»'},
+      {n:'04',h:'Un perimetro per giro',
+        why:'Senza un limite l\'agente continua con la storia dopo, e il diff diventa impossibile da rivedere.',
+        do:'«Implement only one user story in this run.»',
+        dont:'«Implementa le user stories.»'},
+      {n:'05',h:'La memoria degli errori',
+        why:'Se il giro 1 ha sbattuto contro un problema, il giro 2 deve saperlo prima di sbatterci di nuovo.',
+        do:'Append in <code>error_memories.md</code> e <code>learned.md</code>, e rileggerli fra i file di riferimento.',
+        dont:'Contare sul fatto che «stavolta andrà meglio».'}
+    ]},
+    {t:'exercise',id:'ex6',label:'Esercizio 6.1 — Interrompi e riprendi (8 minuti)',
+      prompt:'Lancia l\'esempio 4. Quando progress.txt mostra che l\'agente è dentro il passo 3, interrompi con Ctrl+C. Rilancia lo stesso comando. Riparte dal punto giusto? Cosa ha letto per capirlo?',
+      placeholder:'Interrotto al passo: ...\nAl rilancio è ripartito da: ...\nFile letti per capirlo: ...\nHa rifatto qualcosa che era già fatto? ...',
+      solution:'Se riparte da capo, guarda il contenuto di <code>progress.txt</code>: i marker sono abbastanza precisi? Un «implementing code» generico non dice <em>quale</em> scenario. Il rimedio è nel prompt: chiedi marker con user story, feature e scenario, per esempio <code>US002 / feature_1 / scenario 2 / step definitions DONE</code>.'},
+    {t:'checklist',id:'ck6',title:'Al ritorno, controlla che...',
+      items:[
+        'user_stories.toml ha la storia 2 completed, e le altre storie sono intatte',
+        'Esiste specs/user_story_002/ con shared_across_features.md e i file feature_x',
+        'Gli scenari hanno i tag @US002-scenario-y',
+        'npm run test:tag @US002 passa anche lanciato da te',
+        'Gli step verificano davvero il database e la tabella di audit',
+        'server/schema.json è aggiornato con i nuovi endpoint',
+        'Hai letto error_memories.md e learned.md: ci sono cose da portare in AGENTS.md?'
+      ]}
+  ]
+});
+
+/* ---------- 7. Altri casi d'uso ---------- */
+MODULES.push({
+  id:'m7', n:'07', title:'Altri casi d\'uso', min:15,
+  blocks:[
+    {t:'p',html:`<p>Il Ralph non serve solo a scrivere feature. Funziona su qualunque compito <strong>lungo, ben definito e verificabile alla fine</strong>.</p>`},
+    {t:'cards',cards:[
+      {tag:'Test',h:'Scenari sui casi limite',p:'Generare scenari che coprono gli edge case di una feature esistente: input vuoti, limiti, permessi, errori.'},
+      {tag:'Debug',h:'Indagine su un bug',p:'Riprodurre il problema, restringere la causa, scrivere un report con le prove. La correzione è un giro a parte.'},
+      {tag:'Audit',h:'Audit del codice',p:'Sicurezza, concorrenza, integrità e consistenza dei dati, transazioni. Un audit per area, un report per audit.'}
+    ]},
+    {t:'callout',kind:'ok',title:'Un trucco per gli audit',html:`Invece di un solo prompt «controlla tutto», fai <strong>un prompt per tema</strong> (sicurezza, concorrenza, transazioni) e lanciali uno dopo l'altro nello stesso script. Ogni giro ha il contesto pulito e si concentra su una cosa sola: è esattamente il vantaggio del Ralph.`},
+    {t:'code',lang:'bash',code:`for audit in sicurezza concorrenza transazioni; do
+  echo "=== Audit: $audit"
+  cat ralph/AUDIT_$audit.md \\
+    | pi --print --provider omlx --model Qwen3.8-27B-8bit --approve --mode json 2>&1 \\
+    | tee "reports/audit-$audit.log"
+done`},
+    {t:'promptkit',id:'pk7',title:'Scrivi il tuo RALPH.md',
+      sub:'Componi un prompt per un caso d\'uso tuo. Ricorda: nessuno potrà rispondere alle sue domande.',
+      fields:[
+        {k:'where',lb:'Dove lavora',rows:2,ph:'You are working inside an existing codebase located in app_workshop/'},
+        {k:'refs',lb:'File di riferimento (uno per riga)',rows:4,ph:'Agent rules: AGENTS.md\nTech stack: specs/tech_stack.md\nErrors learned: error_memories.md'},
+        {k:'rules',lb:'Vincoli critici (uno per riga)',rows:4,ph:'Do not modify the data model\nDo not fake test success\nImplement only what is needed'},
+        {k:'task',lb:'Il compito',rows:4,ph:'Generate Gherkin scenarios covering edge cases of the login feature...'},
+        {k:'out',lb:'Output e criterio di fine',rows:3,ph:'Write the report in reports/edge_cases_<date>.md\nWhen done print exactly: RALPH FINISHED'}
+      ],
+      build:function(v){
+        const lines=s=>(s||'').split('\n').map(x=>x.trim()).filter(Boolean).map(x=>'- '+x).join('\n');
+        let o='';
+        o+=(v.where||'You are working inside an existing codebase located in ...')+'\n\n';
+        o+='Inputs and reference files:\n'+(lines(v.refs)||'- ...')+'\n\n';
+        o+='Critical constraints:\n'+(lines(v.rules)||'- ...')+'\n';
+        o+='- If you find any logic errors, edge cases or inconsistencies, report them and suggest a change instead of asking.\n\n';
+        o+='Your task is:\n\n<task>\n'+(v.task||'...')+'\n</task>\n\n';
+        o+='Output and completion:\n'+(lines(v.out)||'- ...');
+        return o;
+      }},
+    {t:'checklist',id:'ck7',title:'Il mio RALPH.md è pronto se...',
+      items:[
+        'Dice in quale cartella lavorare',
+        'Elenca i file da leggere prima di iniziare',
+        'Ha vincoli verificabili, non buoni propositi',
+        'Il compito è separato dalle regole (es. dentro <task>)',
+        'Dice dove scrivere il risultato',
+        'Ha un segnale di fine esatto, se andrà in loop',
+        'Chiede di segnalare i dubbi invece di decidere in silenzio'
+      ]}
+  ]
+});
+
+/* ---------- 8. Sicurezza e tips ---------- */
+MODULES.push({
+  id:'m8', n:'08', title:'Sicurezza e tips', min:15,
+  blocks:[
+    {t:'callout',kind:'bad',title:'Sempre in sandbox',html:`Usa <strong>sempre</strong> una sandbox. E dentro la sandbox non ci deve <strong>mai</strong> essere un <code>.env</code> o un file con credenziali di produzione. Con <code>--approve</code> l'agente esegue qualunque comando decida: se una credenziale è leggibile, prima o poi finisce in un log, in un test o in una richiesta di rete.`},
+    {t:'p',html:`<h3>La sandbox del corso</h3>
+      <p>Il <code>Dockerfile</code> della repo installa Node, Pi, Claude Code e Codex, e crea l'utente <strong>non root</strong> <code>devworkshop</code>. Il <code>docker-compose.yml</code> monta la cartella del progetto in <code>/Code</code>.</p>`},
+    {t:'code',lang:'bash',code:`# Avvia il container
+docker compose up -d --build
+
+# Entra nel container
+docker exec -it agentic_bootcamp-agentic-1 bash
+
+# Controlla di non essere root
+whoami          # devworkshop
+
+cd /Code
+cat ralph/RALPH_ESEMPIO_1.md | pi --print --provider omlx --model Qwen3.8-27B-8bit --approve`},
+    {t:'callout',kind:'warn',title:'Attenzione al volume montato',html:`Il compose monta <strong>tutta</strong> la cartella del progetto (<code>.:/Code</code>). Tutto quello che c'è lì dentro, l'agente lo vede e lo può modificare. Prima di lanciare un Ralph: nessun <code>.env</code> di produzione, nessuna chiave cloud, nessun file di configurazione con host e password veri in quella cartella.`},
+    {t:'p',html:`<h3>Farlo girare di notte</h3>
+      <p>Un Ralph lungo è perfetto per la notte. Ma se il computer va in stop, il processo si ferma a metà.</p>`},
+    {t:'split2',a:{h:'Sul Mac',items:[
+      ['caffeinate','Impedisce lo stop finché il comando che gli passi è in esecuzione.'],
+      ['Comando','<code>caffeinate -i ./ralph.sh</code>'],
+      ['Attenzione','Se chiudi il coperchio di un portatile senza alimentazione, va in stop lo stesso.']
+    ]},b:{h:'Su un server remoto',items:[
+      ['screen','Il processo sopravvive anche se la connessione SSH cade.'],
+      ['Avvio','<code>screen -S ralph ./ralph.sh</code>, poi stacchi con <code>Ctrl+A D</code>'],
+      ['Ritorno','<code>screen -r ralph</code> per riattaccarti e vedere a che punto è']
+    ]}},
+    {t:'practices',title:'Regole da ricordare',items:[
+      {n:'01',h:'Utente non root, sempre',
+        why:'Con root l\'agente può installare pacchetti di sistema, cambiare permessi, rompere il container in modi difficili da capire.',
+        do:'<code>USER devworkshop</code> nel Dockerfile, e <code>whoami</code> come primo controllo.',
+        dont:'Lanciare il container con <code>--user root</code> «perché così non ci sono problemi di permessi».'},
+      {n:'02',h:'Git pulito prima, diff dopo',
+        why:'Al ritorno il diff è l\'unico resoconto onesto di cosa è cambiato. Se parte sporco, non è più leggibile.',
+        do:'<code>git status</code> pulito, magari un branch dedicato al run.',
+        dont:'Lanciare il Ralph sopra lavoro tuo non committato.'},
+      {n:'03',h:'Un tetto alle iterazioni',
+        why:'Se il segnale di fine non arriva mai (test che non passa, prompt ambiguo), il loop gira all\'infinito.',
+        do:'<code>MAX_ITERATIONS</code> sempre presente, e ragionevole.',
+        dont:'<code>while true</code>.'},
+      {n:'04',h:'Log su file, sempre',
+        why:'Se qualcosa va storto, è l\'unica scatola nera che hai.',
+        do:'<code>--mode json 2&gt;&amp;1 | tee -a pi-run-debug.log</code>',
+        dont:'Lanciare in background senza salvare l\'output.'}
+    ]},
+    {t:'quiz',id:'q8a',q:'Vuoi lanciare un Ralph che lavora sul servizio ordini. Nella cartella c\'è un .env con le credenziali del DB di produzione «solo per leggere qualche dato». Cosa fai?',
+      opts:[
+        {tx:'Lo lascio: nel prompt scrivo di non usarlo',ok:false,why:'Un vincolo nel prompt non è una protezione. Con <code>--approve</code> nessuno controlla cosa legge davvero.'},
+        {tx:'Lo tolgo dalla cartella montata e uso un DB di sviluppo o una copia',ok:true,why:'Esatto. Dentro la sandbox non deve esistere nessun file con credenziali di produzione. Se l\'agente non può leggerlo, non può usarlo male.'},
+        {tx:'Lo lascio ma lancio il container come root per controllare meglio',ok:false,why:'Root peggiora le cose: dà più poteri all\'agente, non più controllo a te.'},
+        {tx:'Lo rinomino in .env.bak',ok:false,why:'È ancora lì, leggibile da chiunque cerchi nella cartella. Cambiare nome non toglie l\'accesso.'}
+      ]}
+  ]
+});
+
+/* ---------- 9. Chiusura ---------- */
+MODULES.push({
+  id:'m9', n:'09', title:'Chiusura', min:15,
+  blocks:[
+    {t:'p',html:`<h3>Le sette cose da portarsi a casa</h3>`},
+    {t:'table',head:['#','Regola','Da dove viene'],rows:[
+      ['1','<strong>Ralph = autonomia totale, controllo alla fine.</strong> Se vuoi parlarci mentre lavora, ti serve una sessione.','Modulo 01'],
+      ['2','<strong>Ogni giro ha il contesto pulito.</strong> La memoria sta nei file, non nell\'agente.','Modulo 01'],
+      ['3','<strong>Il prompt è un file versionato</strong>, con riferimenti, vincoli, compito e dove scrivere il risultato.','Moduli 04–05'],
+      ['4','<strong>Lo stato va scritto passo per passo</strong>, così un giro interrotto si riprende.','Modulo 06'],
+      ['5','<strong>Un segnale di fine esatto e un tetto alle iterazioni.</strong>','Moduli 01, 06'],
+      ['6','<strong>Il log completo sempre</strong>: <code>--mode json</code> e <code>tee</code>.','Modulo 02'],
+      ['7','<strong>Container, utente non root, zero credenziali di produzione.</strong> Non è negoziabile.','Modulo 08']
+    ]},
+    {t:'p',html:`<h3>Risorse</h3>`},
+    {t:'table',head:['Risorsa','Link'],rows:[
+      ['Ralph loop plugin di Claude','<a href="https://claude.com/plugins/ralph-loop" target="_blank" rel="noopener">claude.com/plugins/ralph-loop</a>'],
+      ['First principles (video)','<a href="https://www.youtube.com/watch?v=4Nna09dG_c0" target="_blank" rel="noopener">youtube.com/watch?v=4Nna09dG_c0</a>'],
+      ['Ralph Auto Loop','<a href="https://github.com/mikearnaldi/accountability/blob/main/ralph-auto.sh" target="_blank" rel="noopener">github.com/mikearnaldi/accountability — ralph-auto.sh</a>'],
+      ['Ralph Wiggum — long-running agent loop','<a href="https://github.com/mikearnaldi/accountability/blob/main/ralph-auto.sh" target="_blank" rel="noopener">github.com/mikearnaldi/accountability — ralph-auto.sh</a>']
+    ]},
+    {t:'exercise',id:'ex9',label:'Esercizio 9.1 — Il tuo primo Ralph vero (5 minuti)',
+      prompt:'Scegli un compito del tuo lavoro da lanciare come Ralph la settimana prossima. Scrivi: cosa deve fare, dove scrive il risultato, come capirai se è fatto bene, e cosa deve sparire dalla cartella prima di lanciarlo.',
+      placeholder:'Compito: ...\nOutput: ...\nCome verifico: ...\nDa togliere dalla sandbox: ...\nLoop sì/no, perché: ...',
+      solution:'Il primo Ralph vero conviene che sia di sola lettura (un report, un audit, un elenco di edge case): ti abitui a scrivere il prompt e a leggere il log senza rischiare il codice. Il passo dopo è un single shot su un branch dedicato. Il loop su user stories arriva per ultimo, quando i tuoi prompt hanno già dimostrato di reggere da soli.'},
+    {t:'callout',kind:'',title:'Prima di chiudere',html:`Usa <strong>&#8681; Esporta</strong> in alto a destra: scarichi in Markdown le risposte, le checklist e il <code>RALPH.md</code> che hai composto nel modulo 07.`}
+  ]
+});
+
+/* ============================================================
+   RENDERER
+   ============================================================ */
+const mounts = [];
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderBlock(b, mid, i){
+  const id = mid+'_'+i;
+  switch(b.t){
+    case 'p': return '<div class="prose">'+b.html+'</div>';
+    case 'code': return '<pre><code>'+esc(b.code)+'</code></pre>';
+    case 'callout':
+      return '<div class="callout '+(b.kind||'')+'"><span class="ct">'+b.title+'</span><div>'+b.html+'</div></div>';
+    case 'cards':
+      return '<div class="grid c3">'+b.cards.map(c=>
+        '<div class="card"><div class="tag">'+c.tag+'</div><h5>'+c.h+'</h5><p>'+c.p+'</p></div>').join('')+'</div>';
+    case 'table':
+    case 'tablewrap':
+      return '<div class="tablewrap"><table><thead><tr>'+b.head.map(h=>'<th>'+h+'</th>').join('')+
+        '</tr></thead><tbody>'+b.rows.map(r=>'<tr>'+r.map(c=>'<td>'+c+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
+    case 'compare':
+      return '<h3>'+b.title+'</h3><div class="split">'+
+        '<div class="pane bad"><div class="pane-h">'+b.bad.h+'</div><pre><code>'+esc(b.bad.code)+'</code></pre></div>'+
+        '<div class="pane ok"><div class="pane-h">'+b.good.h+'</div><pre><code>'+esc(b.good.code)+'</code></pre></div></div>';
+    case 'practices':
+      return (b.title?'<h3>'+b.title+'</h3>':'')+b.items.map(it=>
+        '<div class="bp"><div class="bp-h"><span class="bp-n">'+it.n+'</span><span>'+it.h+'</span></div>'+
+        '<div class="bp-why"><strong>Perché:</strong> '+it.why+'</div>'+
+        '<div class="bp-ex"><div class="do"><b>Fai così</b>'+it.do+'</div><div class="dont"><b>Non così</b>'+it.dont+'</div></div></div>').join('');
+    case 'split2':
+      return '<div class="split">'+[b.a,b.b].map(col=>
+        '<div class="widget" style="margin:0"><div class="widget-t">'+col.h+'</div><div style="margin-top:10px">'+
+        col.items.map(it=>'<div style="padding:8px 0;border-top:1px solid var(--line)"><strong style="font-size:13.5px">'+it[0]+
+        '</strong><div style="font-size:13px;color:var(--muted)">'+it[1]+'</div></div>').join('')+'</div></div>').join('')+'</div>';
+    case 'quiz':      mounts.push(()=>mountQuiz(id,b));      return '<div id="'+id+'"></div>';
+    case 'exercise':  mounts.push(()=>mountExercise(id,b));  return '<div id="'+id+'"></div>';
+    case 'checklist': mounts.push(()=>mountChecklist(id,b)); return '<div id="'+id+'"></div>';
+    case 'agentloop': mounts.push(()=>mountAgentLoop(id));   return '<div id="'+id+'"></div>';
+    case 'triage':    mounts.push(()=>mountTriage(id));      return '<div id="'+id+'"></div>';
+    case 'cmdlab':    mounts.push(()=>mountCmdLab(id));      return '<div id="'+id+'"></div>';
+    case 'promptkit': mounts.push(()=>mountPromptKit(id,b)); return '<div id="'+id+'"></div>';
+    case 'reveal':    mounts.push(()=>mountReveal(id,b));    return '<div id="'+id+'"></div>';
+    default: return '';
+  }
+}
+
+function widgetShell(kind,title,sub,body){
+  return '<div class="widget"><div class="widget-h"><span class="widget-k">'+kind+'</span><span class="widget-t">'+title+'</span></div>'+
+    (sub?'<div class="widget-s">'+sub+'</div>':'')+body+'</div>';
+}
+
+/* ---------- quiz ---------- */
+function mountQuiz(id, b){
+  const el = document.getElementById(id);
+  const marks = ['A','B','C','D','E'];
+  const body = '<div id="'+id+'_opts">'+b.opts.map((o,k)=>
+    '<button class="opt" data-k="'+k+'"><span class="mk">'+marks[k]+'</span>'+o.tx+
+    '<div class="why">'+o.why+'</div></button>').join('')+'</div>'+
+    '<div class="hint" id="'+id+'_fb" style="margin-top:8px"></div>';
+  el.innerHTML = widgetShell('Quiz', b.q, '', body);
+  const opts = el.querySelectorAll('.opt');
+  const fb = document.getElementById(id+'_fb');
+  function apply(k){
+    opts.forEach((btn,j)=>{
+      btn.disabled = true; btn.classList.add('shown');
+      if(j===k) btn.classList.add(b.opts[j].ok?'sel-ok':'sel-bad');
+      else if(b.opts[j].ok) btn.classList.add('reveal-ok');
+    });
+    fb.textContent = b.opts[k].ok ? '✓ Risposta corretta.' : '✗ Non corretta — la risposta giusta è evidenziata in verde.';
+    fb.style.color = b.opts[k].ok ? 'var(--ok)' : 'var(--bad)';
+  }
+  opts.forEach(btn=>btn.addEventListener('click',()=>{
+    const k = +btn.dataset.k; quizState[b.id]=k; saveAll(); apply(k); refreshStats();
+  }));
+  if(quizState[b.id]!==undefined) apply(quizState[b.id]);
+}
+
+/* ---------- esercizio ---------- */
+function mountExercise(id, b){
+  const el = document.getElementById(id);
+  const body = '<textarea id="'+id+'_ta" rows="9" placeholder="'+esc(b.placeholder||'')+'"></textarea>'+
+    '<div class="btnrow"><span class="saved" id="'+id+'_sv">salvato</span><span style="flex:1"></span>'+
+    (b.solution?'<button class="btn" id="'+id+'_sol">Mostra nota del docente</button>':'')+'</div>'+
+    (b.solution?'<div id="'+id+'_solbox" class="callout ok" style="display:none"><span class="ct"></span><div class="prose" style="font-size:14px">'+b.solution+'</div></div>':'');
+  el.innerHTML = widgetShell('Esercizio', b.label, b.prompt, body);
+  const ta = document.getElementById(id+'_ta');
+  const sv = document.getElementById(id+'_sv');
+  ta.value = answers[b.id] || '';
+  let t;
+  ta.addEventListener('input',()=>{
+    answers[b.id]=ta.value; clearTimeout(t);
+    t=setTimeout(()=>{ saveAll(); sv.classList.add('on'); setTimeout(()=>sv.classList.remove('on'),1200); refreshStats(); },400);
+  });
+  if(b.solution){
+    const btn=document.getElementById(id+'_sol'), box=document.getElementById(id+'_solbox');
+    btn.addEventListener('click',()=>{
+      const open = box.style.display!=='none';
+      box.style.display = open?'none':'block';
+      btn.textContent = open?'Mostra nota del docente':'Nascondi nota';
+    });
+  }
+}
+
+/* ---------- checklist ---------- */
+function mountChecklist(id, b){
+  const el = document.getElementById(id);
+  const saved = store.get('ck.'+b.id, []);
+  const body = b.items.map((it,k)=>
+    '<label class="chk'+(saved[k]?' on':'')+'" data-k="'+k+'"><input type="checkbox" '+(saved[k]?'checked':'')+
+    '><span class="lb" style="font-weight:500">'+it+'</span></label>').join('')+
+    '<div class="scoreline" style="margin-top:8px"><span id="'+id+'_c"></span><span></span></div>';
+  el.innerHTML = widgetShell('Checklist', b.title, 'Le spunte si salvano nel browser e finiscono nell’export.', body);
+  const rows = el.querySelectorAll('.chk');
+  const cnt = document.getElementById(id+'_c');
+  function upd(){
+    let n=0; rows.forEach((r,k)=>{ const c=r.querySelector('input').checked; saved[k]=c; if(c)n++; r.classList.toggle('on',c); });
+    cnt.textContent = n+'/'+b.items.length+' completati';
+    store.set('ck.'+b.id, saved); refreshStats();
+  }
+  rows.forEach(r=>r.querySelector('input').addEventListener('change',upd));
+  upd();
+}
+
+/* ---------- il ciclo dell'agente ---------- */
+const LOOP = [
+  {b:'Avvio', t:'Lo script legge RALPH.md',
+   d:'Il prompt è sempre lo stesso, a ogni giro. Non cambia niente fra un\'iterazione e l\'altra.',
+   log:'=== Ralph Iteration 1 of 5\n[script] cat RALPH.md | pi --print --approve ...'},
+  {b:'Giro 1', t:'Contesto pulito: legge lo stato',
+   d:'Non sa niente. Guarda i file: progress.txt non esiste, user_stories.toml sì.',
+   log:'[agente] progress.txt non trovato -> la storia 2 non è iniziata\n[agente] user_stories.toml: US-002 in_progress = true'},
+  {b:'Lavora', t:'Scompone e implementa',
+   d:'Crea specs/user_story_002/, scrive il .feature, il codice, gli step. Lancia i test.',
+   log:'[agente] specs/user_story_002/feature_1.md creato\n[shell] npm run test:tag @US002 -> 2 passed, 1 failed'},
+  {b:'Memoria', t:'Scrive cosa ha fatto e cosa ha imparato',
+   d:'Ogni passo finisce in progress.txt. L\'errore incontrato finisce in error_memories.md.',
+   log:'[file] progress.txt += "US002 / feature_1 / scenario 3 / test FAILING"\n[file] error_memories.md += "reload:dev va lanciato prima dei test"'},
+  {b:'Fine giro', t:'Il processo esce',
+   d:'Timeout, crash o fine naturale: il contesto viene buttato. Restano solo i file su disco.',
+   log:'[script] pi è uscito. Nessun "USER STORY FINISHED" in output.'},
+  {b:'Giro 2', t:'Contesto pulito, di nuovo',
+   d:'Stesso prompt. Ma adesso progress.txt esiste e dice esattamente dove ripartire.',
+   log:'=== Ralph Iteration 2 of 5\n[agente] progress.txt: ultimo passo feature_1 / scenario 3 -> riprendo da lì\n[agente] error_memories.md: lancio reload:dev prima dei test'},
+  {b:'Completa', t:'Finisce la storia',
+   d:'Tutti gli scenari passano, schema.json aggiornato, storia segnata completed.',
+   log:'[shell] npm run test:tag @US002 -> 3 passed\n[agente] USER STORY FINISHED'},
+  {b:'Stop', t:'Lo script vede il segnale e si ferma',
+   d:'grep trova la frase esatta e interrompe il for. Senza segnale si fermerebbe a MAX_ITERATIONS.',
+   log:'[script] grep "USER STORY FINISHED" -> trovato. break.\nFatto all\'iterazione 2'}
+];
+function mountAgentLoop(id){
+  const el = document.getElementById(id);
+  let i = 0, timer = null;
+  const body =
+    '<div class="loopgrid" id="'+id+'_g"></div>'+
+    '<div class="preview" id="'+id+'_lg"></div>'+
+    '<div class="btnrow">'+
+      '<button class="btn primary" id="'+id+'_nx">Passo successivo</button>'+
+      '<button class="btn" id="'+id+'_au">▶ Automatico</button>'+
+      '<button class="btn" id="'+id+'_rs">Riavvia</button>'+
+      '<span class="hint" id="'+id+'_c" style="margin-left:auto"></span>'+
+    '</div>';
+  el.innerHTML = widgetShell('Lab 1.1','Un Ralph loop, iterazione per iterazione',
+    'Una user story in due giri. Guarda cosa sopravvive fra un giro e l\'altro: solo i file su disco.', body);
+  const g = document.getElementById(id+'_g'), lg = document.getElementById(id+'_lg');
+  function draw(){
+    g.innerHTML = LOOP.map((s,k)=>
+      '<div class="lstep'+(k===i?' on':(k<i?' past':''))+'"><b>'+s.b+'</b>'+s.t+'<span>'+s.d+'</span></div>').join('');
+    lg.textContent = LOOP.slice(0,i+1).map(s=>s.log).join('\n');
+    lg.scrollTop = lg.scrollHeight;
+    document.getElementById(id+'_c').textContent = 'passo '+(i+1)+' di '+LOOP.length;
+  }
+  function next(){ if(i<LOOP.length-1){ i++; draw(); } else stop(); }
+  function stop(){ if(timer){ clearInterval(timer); timer=null; document.getElementById(id+'_au').textContent='▶ Automatico'; } }
+  document.getElementById(id+'_nx').addEventListener('click',()=>{ stop(); next(); });
+  document.getElementById(id+'_rs').addEventListener('click',()=>{ stop(); i=0; draw(); });
+  document.getElementById(id+'_au').addEventListener('click',()=>{
+    if(timer){ stop(); return; }
+    if(i>=LOOP.length-1) i=0;
+    document.getElementById(id+'_au').textContent='⏸ Pausa';
+    timer = setInterval(next, 1600); draw();
+  });
+  draw();
+}
+
+/* ---------- triage: dove lo metti? ---------- */
+const TRIAGE = [
+  {tx:'Generare un report sulla qualità del codice di tutta la cartella src/', a:'r',
+   why:'Ralph: compito lungo, sola lettura, una forma del risultato si può fissare nel prompt. Lo leggi alla fine.'},
+  {tx:'Capire perché un collega ha scelto quell\'architettura per il modulo pagamenti', a:'s',
+   why:'Sessione: è esplorativo, a ogni risposta ti verrà una domanda nuova. Serve la conversazione.'},
+  {tx:'Implementare la user story 2, con feature Gherkin, codice e test, durante la notte', a:'r',
+   why:'Ralph in loop: lungo, con workflow preciso, stato su file e un segnale di fine. È il caso per cui è nato.'},
+  {tx:'Decidere se passare da REST a GraphQL', a:'x',
+   why:'Nessuno dei due: è una decisione di architettura con implicazioni che l\'agente non conosce. Può aiutarti a raccogliere informazioni, non a decidere.'},
+  {tx:'Un bug che non sai ancora riprodurre e di cui non hai log', a:'s',
+   why:'Sessione: senza riproduzione non puoi scrivere un criterio di fine. Prima esplori insieme, poi magari lanci un Ralph per il fix.'},
+  {tx:'Audit di sicurezza, concorrenza e transazioni, un report per tema', a:'r',
+   why:'Ralph: un prompt per tema, ognuno con contesto pulito. Si lanciano in fila nello stesso script.'},
+  {tx:'Lanciare sul DB di produzione una migrazione scritta dall\'agente', a:'x',
+   why:'Nessuno dei due. Un agente con --approve non deve mai poter raggiungere la produzione. E nemmeno in sessione è un buon posto dove farlo.'},
+  {tx:'Generare scenari BDD sui casi limite di una feature già esistente e testata', a:'r',
+   why:'Ralph: perimetro chiaro, si verifica alla fine lanciando i test e rompendo il codice apposta.'},
+  {tx:'Provare per la prima volta un prompt nuovo e vedere se l\'agente lo capisce', a:'s',
+   why:'Sessione: con l\'opzione interattiva vedi subito dove sbaglia e lo correggi. Quando regge da solo, lo trasformi in Ralph.'}
+];
+const TR_LB = {r:'Ralph loop', s:'Sessione', x:'Né l\'uno né l\'altro'};
+function mountTriage(id){
+  const el = document.getElementById(id);
+  const saved = store.get('triage', {});
+  const body = TRIAGE.map((it,k)=>
+    '<div class="sorter-row" data-k="'+k+'"><span class="it">'+it.tx+'</span><span class="bs">'+
+    ['r','s','x'].map(c=>'<button class="bbtn" data-c="'+c+'">'+TR_LB[c]+'</button>').join('')+
+    '</span><span class="fb"></span></div>').join('')+
+    '<div class="scoreline" style="margin-top:10px"><span id="'+id+'_s"></span><button class="btn" id="'+id+'_rs" style="padding:3px 10px;font-size:12px">Azzera</button></div>';
+  el.innerHTML = widgetShell('Lab 1.2','Ralph o sessione?',
+    'Per ogni compito: lo lanci come Ralph e torni alla fine, lo fai in sessione, o non lo affidi all\'agente?', body);
+  const rows = el.querySelectorAll('.sorter-row');
+  function paint(){
+    let ok=0, tot=0;
+    rows.forEach((r,k)=>{
+      const ch = saved[k];
+      r.querySelectorAll('.bbtn').forEach(b=>b.classList.toggle('on', b.dataset.c===ch));
+      r.classList.remove('ok','bad','done');
+      if(ch){ tot++; const good = ch===TRIAGE[k].a; if(good) ok++;
+        r.classList.add('done', good?'ok':'bad');
+        r.querySelector('.fb').textContent = (good?'✓ ':'✗ ')+TRIAGE[k].why;
+      } else r.querySelector('.fb').textContent='';
+    });
+    document.getElementById(id+'_s').textContent = tot? ok+'/'+tot+' corrette ('+TRIAGE.length+' in tutto)' : 'nessuna risposta';
+    refreshStats();
+  }
+  rows.forEach(r=>r.querySelectorAll('.bbtn').forEach(b=>b.addEventListener('click',()=>{
+    saved[r.dataset.k]=b.dataset.c; store.set('triage',saved); paint();
+  })));
+  document.getElementById(id+'_rs').addEventListener('click',()=>{
+    Object.keys(saved).forEach(k=>delete saved[k]); store.set('triage',saved); paint();
+  });
+  paint();
+}
+
+/* ---------- costruttore del comando Ralph ---------- */
+const RFILES = [
+  {f:'ralph/RALPH_ESEMPIO_1.md', l:'Esempio 1 — Saluta', marker:''},
+  {f:'ralph/RALPH_ESEMPIO_2.md', l:'Esempio 2 — Report qualità', marker:''},
+  {f:'ralph/RALPH_ESEMPIO_3_SINGLE_SHOT.md', l:'Esempio 3 — Single shot', marker:''},
+  {f:'ralph/RALPH_ESEMPIO_4_NEW_USER_STORY.md', l:'Esempio 4 — User story', marker:'USER STORY FINISHED'}
+];
+function mountCmdLab(id){
+  const el = document.getElementById(id);
+  const st = store.get('cmdlab', {file:0, json:1, loop:0, max:5, night:0, box:1});
+  const body =
+    '<div class="split"><div>'+
+      '<label class="fl">Prompt file</label>'+
+      '<select id="'+id+'_f">'+RFILES.map((r,k)=>'<option value="'+k+'">'+r.l+'</option>').join('')+'</select>'+
+      '<label class="chk" style="margin-top:10px"><input type="checkbox" id="'+id+'_json"><span>'+
+        '<span class="lb">Log completo (--mode json + tee)</span>'+
+        '<span class="ds">Vedi e salvi ogni passo. Senza, vedi solo la risposta finale.</span></span></label>'+
+      '<label class="chk"><input type="checkbox" id="'+id+'_loop"><span>'+
+        '<span class="lb">In loop</span>'+
+        '<span class="ds">Rilancia lo stesso prompt con contesto pulito, fino al segnale di fine o al tetto.</span></span></label>'+
+      '<label class="fl">MAX_ITERATIONS</label>'+
+      '<input type="text" id="'+id+'_max" inputmode="numeric">'+
+      '<label class="chk" style="margin-top:10px"><input type="checkbox" id="'+id+'_night"><span>'+
+        '<span class="lb">Gira di notte sul Mac</span>'+
+        '<span class="ds">Aggiunge caffeinate, così il Mac non va in stop.</span></span></label>'+
+      '<label class="chk"><input type="checkbox" id="'+id+'_box"><span>'+
+        '<span class="lb">Dentro il container</span>'+
+        '<span class="ds">Utente non root devworkshop, progetto montato in /Code.</span></span></label>'+
+    '</div><div>'+
+      '<label class="fl">Comando</label>'+
+      '<div class="preview" id="'+id+'_pv"></div>'+
+      '<div class="btnrow"><button class="btn" id="'+id+'_cp">Copia</button>'+
+      '<span class="saved" id="'+id+'_sv">copiato</span></div>'+
+      '<div class="diag" id="'+id+'_d"></div>'+
+    '</div></div>';
+  el.innerHTML = widgetShell('Lab 2.1','Costruisci il comando Ralph',
+    'Scegli il prompt e come lanciarlo. Guarda come cambia il comando, e cosa devi tenere d\'occhio.', body);
+  const f=document.getElementById(id+'_f'), mx=document.getElementById(id+'_max');
+  const pv=document.getElementById(id+'_pv'), dg=document.getElementById(id+'_d');
+  f.value = st.file; mx.value = st.max;
+  ['json','loop','night','box'].forEach(k=>{ document.getElementById(id+'_'+k).checked = !!st[k]; });
+  let last='';
+  function upd(){
+    st.file=+f.value; st.max=mx.value;
+    ['json','loop','night','box'].forEach(k=>{ st[k]=document.getElementById(id+'_'+k).checked?1:0; });
+    store.set('cmdlab',st);
+    const r = RFILES[st.file];
+    const n = parseInt(st.max,10) > 0 ? parseInt(st.max,10) : 5;
+    mx.disabled = !st.loop;
+    const pi = 'pi --print --provider omlx --model Qwen3.8-27B-8bit --approve';
+    let cmd;
+    if(!st.loop){
+      cmd = 'cat '+r.f+' | '+pi+(st.json?' --mode json 2>&1 | tee pi-run-debug.log':'');
+    } else {
+      const marker = r.marker || 'RALPH FINISHED';
+      cmd = 'MAX_ITERATIONS='+n+'\n\nfor i in $(seq 1 $MAX_ITERATIONS); do\n'+
+        '  echo "=== Ralph Iteration $i of $MAX_ITERATIONS"\n'+
+        '  cat '+r.f+' \\\n'+
+        '    | '+pi+(st.json?' --mode json':'')+' 2>&1 \\\n'+
+        '    | tee -a pi-run-debug.log > last-run.log\n'+
+        '  grep -q "'+marker+'" last-run.log && break\n'+
+        'done';
+    }
+    let full;
+    if(st.night){
+      // di notte il comando va in uno script, e caffeinate gira sul Mac (non nel container)
+      full = '# ralph.sh, nella cartella del progetto\n'+cmd+'\n\n# sul Mac\n'+
+        (st.box ? 'docker compose up -d\ncaffeinate -i docker exec agentic_bootcamp-agentic-1 bash -lc \'cd /Code && sh ralph.sh\''
+                : 'caffeinate -i sh ralph.sh');
+    } else if(st.box){
+      full = '# sul tuo computer\ndocker compose up -d\ndocker exec -it agentic_bootcamp-agentic-1 bash\n\n# dentro il container\nwhoami   # devworkshop, non root\ncd /Code\n'+cmd;
+    } else full = cmd;
+    last = full;
+    pv.textContent = full;
+    const d=[];
+    if(!st.box) d.push(['bad','Fuori dal container, con <code>--approve</code>, l\'agente esegue comandi sul tuo computer con i tuoi permessi. Per un Ralph usa <strong>sempre</strong> la sandbox.']);
+    if(st.box) d.push(['ok','Nel container lavori come <code>devworkshop</code>. Ricorda che <code>/Code</code> è la tua cartella montata: nessun file con credenziali di produzione lì dentro.']);
+    if(!st.json) d.push(['warn','Senza log completo, al ritorno vedi solo la risposta finale. Va bene per l\'esempio 1, non per un lavoro lungo.']);
+    if(st.loop && !r.marker) d.push(['warn','Questo prompt non stampa un segnale di fine: il loop girerà fino a MAX_ITERATIONS, rifacendo lo stesso lavoro. Aggiungi al prompt «When done print exactly: RALPH FINISHED», oppure lancialo senza loop.']);
+    if(st.loop && r.marker) d.push(['ok','Il prompt stampa <code>'+r.marker+'</code>: lo script si ferma appena lo trova. Se un giro si interrompe, il successivo riprende da <code>progress.txt</code>.']);
+    if(st.loop && n>20) d.push(['warn','Un tetto alto è un costo alto se qualcosa si incastra. Parti basso e alzalo quando il prompt ha dimostrato di convergere.']);
+    if(st.night && !st.loop) d.push(['ok','Per un singolo lancio notturno va bene, ma un single shot di solito finisce in pochi minuti. caffeinate serve davvero con il loop.']);
+    if(st.night) d.push(['ok','Su un server remoto usa invece <code>screen -S ralph ./ralph.sh</code> e stacca con <code>Ctrl+A D</code>.']);
+    dg.innerHTML = d.map(x=>'<div style="color:'+(x[0]==='bad'?'var(--bad)':x[0]==='warn'?'var(--warn)':'var(--ok)')+'">'+
+      (x[0]==='bad'?'✗ ':x[0]==='warn'?'⚠ ':'✓ ')+x[1]+'</div>').join('');
+  }
+  f.addEventListener('change',upd);
+  mx.addEventListener('input',upd);
+  ['json','loop','night','box'].forEach(k=>document.getElementById(id+'_'+k).addEventListener('change',upd));
+  document.getElementById(id+'_cp').addEventListener('click',()=>{
+    navigator.clipboard && navigator.clipboard.writeText(last);
+    const sv=document.getElementById(id+'_sv'); sv.classList.add('on'); setTimeout(()=>sv.classList.remove('on'),1400);
+  });
+  upd();
+}
+
+/* ---------- compositore di compiti ---------- */
+const PKS = [];
+function mountPromptKit(id, b){
+  PKS.push(b);
+  const el = document.getElementById(id);
+  const body = '<div class="split"><div>'+
+    b.fields.map(f=>'<label class="fl">'+f.lb+'</label><textarea data-k="'+f.k+'" rows="'+f.rows+'" placeholder="'+esc(f.ph)+'"></textarea>').join('')+
+    '</div><div><label class="fl">Compito pronto da copiare</label>'+
+    '<div class="preview" id="'+id+'_pv" style="max-height:560px"></div>'+
+    '<div class="btnrow"><button class="btn primary" id="'+id+'_cp">Copia il compito</button>'+
+    '<span class="saved" id="'+id+'_sv">copiato</span></div></div></div>';
+  el.innerHTML = widgetShell('Compito', b.title, b.sub, body);
+  const tas = el.querySelectorAll('textarea');
+  const pv = document.getElementById(id+'_pv');
+  let last='';
+  function upd(save){
+    const v = {};
+    tas.forEach(ta=>{ v[ta.dataset.k]=ta.value.trim(); answers[b.id+'.'+ta.dataset.k]=ta.value; });
+    last = b.build(v);
+    pv.textContent = last;
+    if(save){ saveAll(); refreshStats(); }
+  }
+  tas.forEach(ta=>{
+    ta.value = answers[b.id+'.'+ta.dataset.k] || '';
+    let t; ta.addEventListener('input',()=>{ upd(false); clearTimeout(t); t=setTimeout(()=>upd(true),400); });
+  });
+  document.getElementById(id+'_cp').addEventListener('click',()=>{
+    navigator.clipboard && navigator.clipboard.writeText(last);
+    const sv=document.getElementById(id+'_sv'); sv.classList.add('on'); setTimeout(()=>sv.classList.remove('on'),1400);
+  });
+  upd(false);
+}
+
+/* ---------- soluzione di riferimento nascosta ---------- */
+function mountReveal(id, b){
+  const el = document.getElementById(id);
+  const body = '<div class="btnrow"><button class="btn" id="'+id+'_show">Mostra soluzione di riferimento</button></div>'+
+    '<div id="'+id+'_out" style="display:none"><label class="fl">Soluzione di riferimento</label>'+
+    '<div class="preview" id="'+id+'_pv" style="max-height:560px"></div>'+
+    '<div class="btnrow"><button class="btn primary" id="'+id+'_cp">Copia il compito</button>'+
+    '<span class="saved" id="'+id+'_sv">copiato</span></div></div>';
+  el.innerHTML = widgetShell('Compito', b.title, b.sub, body);
+  document.getElementById(id+'_pv').textContent = b.text;
+  const out = document.getElementById(id+'_out'), btn = document.getElementById(id+'_show');
+  btn.addEventListener('click',()=>{
+    const open = out.style.display==='none';
+    out.style.display = open?'':'none';
+    btn.textContent = open?'Nascondi soluzione di riferimento':'Mostra soluzione di riferimento';
+  });
+  document.getElementById(id+'_cp').addEventListener('click',()=>{
+    navigator.clipboard && navigator.clipboard.writeText(b.text);
+    const sv=document.getElementById(id+'_sv'); sv.classList.add('on'); setTimeout(()=>sv.classList.remove('on'),1400);
+  });
+}
+
+/* ============================================================
+   NAVIGAZIONE
+   ============================================================ */
+function renderNav(){
+  const nav=document.getElementById('nav');
+  nav.innerHTML=MODULES.map((m,i)=>
+    '<button class="navitem'+(i===current?' active':'')+'" data-i="'+i+'">'+
+    '<span class="idx">'+m.n+'</span><span><span class="nt">'+m.title+'</span><span class="nm">'+m.min+' minuti</span></span>'+
+    (done[m.id]?'<span class="tick">●</span>':'')+'</button>').join('');
+  nav.querySelectorAll('.navitem').forEach(b=>b.addEventListener('click',()=>go(+b.dataset.i)));
+}
+
+function renderModule(){
+  const m=MODULES[current];
+  mounts.length=0;
+  const main=document.getElementById('main');
+  const isBreak = m.id==='brk';
+  let html='';
+  if(!isBreak){
+    html+='<div class="eyebrow">Modulo '+m.n+' · '+m.min+' minuti</div><h1>'+m.title+'</h1>';
+    html+='<div class="mod-meta"><span class="badge">'+(current+1)+' di '+MODULES.length+'</span>'+
+      '<span class="badge" id="modTimer">⏱ --:--</span>'+
+      '<label class="chk" style="margin:0;padding:6px 11px"><input type="checkbox" id="modDone" '+(done[m.id]?'checked':'')+'><span class="lb" style="font-weight:600;font-size:13px">Modulo completato</span></label></div>';
+  }
+  html+=m.blocks.map((b,i)=>renderBlock(b,m.id,i)).join('');
+  html+='<div class="footnav">'+
+    (current>0?'<button class="btn" id="prevBtn">← '+MODULES[current-1].title+'</button>':'<span></span>')+
+    (current<MODULES.length-1?'<button class="btn primary" id="nextBtn">'+MODULES[current+1].title+' →</button>':'<span></span>')+
+    '</div>';
+  main.innerHTML=html;
+  mounts.forEach(f=>f());
+  const pb=document.getElementById('prevBtn'); if(pb) pb.addEventListener('click',()=>go(current-1));
+  const nb=document.getElementById('nextBtn'); if(nb) nb.addEventListener('click',()=>{
+    if(!isBreak && !done[m.id]){ done[m.id]=true; saveAll(); }
+    go(current+1);
+  });
+  const md=document.getElementById('modDone');
+  if(md) md.addEventListener('change',()=>{ if(md.checked) done[m.id]=true; else delete done[m.id]; saveAll(); renderNav(); refreshStats(); });
+  window.scrollTo({top:0,behavior:'instant'});
+  updModTimer();
+}
+
+function go(i){
+  if(i<0||i>=MODULES.length) return;
+  current=i; store.set('current',i); renderNav(); renderModule(); refreshStats();
+}
+
+/* ============================================================
+   TIMER
+   ============================================================ */
+const TOTAL=MODULES.reduce((s,m)=>s+m.min,0)*60;
+let elapsed=store.get('elapsed',0), running=false, tick=null;
+let modStart=null;
+function fmt(s){ s=Math.max(0,Math.floor(s)); const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(x).padStart(2,'0'); }
+function paintClock(){
+  const c=document.getElementById('clock');
+  c.textContent=fmt(elapsed)+' / '+fmt(TOTAL);
+  c.style.color = elapsed>TOTAL?'var(--bad)': elapsed>TOTAL*0.9?'var(--warn)':'';
+}
+function updModTimer(){
+  const e=document.getElementById('modTimer'); if(!e) return;
+  const m=MODULES[current];
+  const spent = modStart!==null? Math.floor((elapsed-modStart)) : 0;
+  e.textContent='⏱ '+Math.floor(spent/60)+' / '+m.min+' min';
+  e.style.color = spent/60>m.min?'var(--warn)':'';
+}
+function toggleTimer(){
+  running=!running;
+  const b=document.getElementById('timerBtn');
+  b.textContent = running?'⏸ Pausa timer':'▶ Avvia timer';
+  if(running){ if(modStart===null) modStart=elapsed;
+    tick=setInterval(()=>{ elapsed++; store.set('elapsed',elapsed); paintClock(); updModTimer(); },1000); }
+  else clearInterval(tick);
+}
+
+/* ============================================================
+   STATS / EXPORT / TEMA
+   ============================================================ */
+function allBlocks(t){ return MODULES.flatMap(m=>m.blocks.filter(b=>b.t===t).map(b=>({m:m,b:b}))); }
+
+function refreshStats(){
+  const quizzes = allBlocks('quiz');
+  const aQ=Object.keys(quizState).length;
+  const okQ=quizzes.filter(x=>quizState[x.b.id]!==undefined && x.b.opts[quizState[x.b.id]].ok).length;
+  const exIds=allBlocks('exercise').map(x=>x.b.id);
+  const aE=exIds.filter(k=>(answers[k]||'').trim().length>20).length;
+  const kits=allBlocks('promptkit');
+  const aK=kits.filter(x=>x.b.fields.some(f=>(answers[x.b.id+'.'+f.k]||'').trim().length>10)).length;
+  const dM=Object.keys(done).length;
+  const nM=MODULES.filter(m=>m.id!=='brk').length;
+  document.getElementById('statsBox').innerHTML=
+    'Moduli completati <strong>'+dM+'/'+nM+'</strong><br>'+
+    'Quiz risposti <strong>'+aQ+'/'+quizzes.length+'</strong>'+(aQ?' · corretti <strong>'+okQ+'</strong>':'')+'<br>'+
+    'Esercizi svolti <strong>'+aE+'/'+exIds.length+'</strong><br>'+
+    'Compiti composti <strong>'+aK+'/'+kits.length+'</strong>';
+  const tot=nM+quizzes.length+exIds.length+kits.length;
+  document.getElementById('pbar').style.width=((dM+aQ+aE+aK)/tot*100)+'%';
+}
+
+function doExport(){
+  const L=[];
+  const d=new Date();
+  const stamp=d.toLocaleDateString('it-IT')+' '+d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+  L.push('# Ralph Loops — 3 ore');
+  L.push('');
+  L.push('Esportato il '+stamp+'  ·  tempo d’aula registrato: '+fmt(elapsed));
+  L.push('');
+  L.push('## Risposte agli esercizi');
+  allBlocks('exercise').forEach(x=>{
+    const v=(answers[x.b.id]||'').trim();
+    L.push(''); L.push('### '+x.m.n+' — '+x.b.label);
+    L.push(''); L.push('> '+x.b.prompt);
+    L.push(''); L.push(v||'_(non compilato)_');
+  });
+  L.push(''); L.push('## Compiti composti (da riusare)');
+  allBlocks('promptkit').forEach(x=>{
+    const v={}; let any=false;
+    x.b.fields.forEach(f=>{ v[f.k]=(answers[x.b.id+'.'+f.k]||'').trim(); if(v[f.k]) any=true; });
+    L.push(''); L.push('### '+x.m.n+' — '+x.b.title);
+    L.push('');
+    if(!any){ L.push('_(non compilato)_'); }
+    else { L.push('```'); L.push(x.b.build(v)); L.push('```'); }
+  });
+  L.push(''); L.push('## Quiz');
+  allBlocks('quiz').forEach(x=>{
+    const k=quizState[x.b.id];
+    L.push('- **'+x.b.q.replace(/<[^>]+>/g,'')+'**');
+    L.push('  - Risposta data: '+(k===undefined?'_nessuna_':x.b.opts[k].tx+(x.b.opts[k].ok?' ✅':' ❌')));
+    if(k!==undefined&&!x.b.opts[k].ok) L.push('  - Corretta: '+x.b.opts.find(o=>o.ok).tx);
+  });
+  L.push(''); L.push('## Checklist');
+  allBlocks('checklist').forEach(x=>{
+    const s=store.get('ck.'+x.b.id,[]);
+    L.push(''); L.push('### '+x.m.n+' — '+x.b.title);
+    x.b.items.forEach((it,i)=>L.push('- ['+(s[i]?'x':' ')+'] '+it));
+  });
+  const tr=store.get('triage',null);
+  if(tr && Object.keys(tr).length){
+    L.push(''); L.push('## Esercizio «Ralph o sessione?»');
+    let ok=0, tot=0;
+    TRIAGE.forEach((it,k)=>{ if(tr[k]!==undefined){ tot++; if(tr[k]===it.a) ok++;
+      L.push('- '+(tr[k]===it.a?'✅':'❌')+' '+it.tx+' → hai scelto **'+TR_LB[tr[k]]+'**'+(tr[k]===it.a?'':', corretta: **'+TR_LB[it.a]+'**')); } });
+    L.push('');
+    L.push('**'+ok+'/'+tot+' corrette.**');
+  }
+  const blob=new Blob([L.join('\n')],{type:'text/markdown;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='corso-ralph.md';
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+document.getElementById('timerBtn').addEventListener('click',toggleTimer);
+document.getElementById('exportBtn').addEventListener('click',()=>doExport());
+document.getElementById('themeBtn').addEventListener('click',()=>{
+  const t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',t); store.set('theme',t);
+});
+document.getElementById('resetBtn').addEventListener('click',()=>{
+  if(!confirm('Azzerare tutte le risposte, le checklist e il timer? Non si torna indietro.')) return;
+  store.clearAll(); location.reload();
+});
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return;
+  if(e.key==='ArrowRight') go(current+1);
+  if(e.key==='ArrowLeft') go(current-1);
+});
+if(!store.get('theme',null) && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+  document.documentElement.setAttribute('data-theme','dark');
+else document.documentElement.setAttribute('data-theme', store.get('theme','light'));
+
+renderNav(); renderModule(); paintClock(); refreshStats();
+</script>
+</body>
+</html>
