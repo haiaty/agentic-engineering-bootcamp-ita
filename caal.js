@@ -32,6 +32,7 @@
  *   node caal.jsrun         # run autonomously to the end (or until stop/block/fail)
  *   node caal.jsresume      # sanitize + run to the end
  *   node caal.jsstatus      # print progress (read-only, works anytime)
+ *   node caal.jstasks       # list available task types, deterministic vs agentic (alias: steps)
  *   node caal.jsstop        # request a cooperative halt at the next action boundary
  *   node caal.jsreset [--yes]
  *
@@ -3157,6 +3158,41 @@ function cmdListStepAgents() {
     emitTrace('[finished] cmdListStepAgents', { result: { count: keys.length } });
 }
 
+//=====================
+// cmdListTasks
+// Print the catalog of task templates the workflow can create, with whether
+// each is deterministic (performed directly) or agentic (delegated to the
+// agent). Built from the same backbone/featureGroup/scenarioGroup templates
+// the runner uses, so it stays in sync; <n>/<m> stand for the feature and
+// scenario numbers discovered at runtime. Retry tasks spliced in by
+// handleFailure are listed separately. Works without an initialized workflow.
+//=====================
+function cmdListTasks() {
+    emitTrace('[running] cmdListTasks', { inputs: {} });
+    const retryTasks = [
+        makeTask('feature_<n>.scenario_<m>.debug#<k>', 'DEBUG', 'debug failing scenario test (spliced on failure)', 'agent', {}),
+        makeTask('feature_<n>.scenario_<m>.run_test#<k>', 'RUN_TEST', 're-run scenario test (spliced on failure)', 'deterministic', {}),
+    ];
+    const groups = [
+        ['story', backbone()],
+        ['per feature', featureGroup('<n>')],
+        ['per scenario', scenarioGroup('<n>', '<m>', '')],
+        ['on failure', retryTasks],
+    ];
+    const label = (kind) => (kind === 'agent' ? 'agentic' : kind);
+    const all = groups.flatMap(([, tasks]) => tasks);
+    const keyW = Math.max(...all.map((t) => t.key.length));
+    const typeW = Math.max(...all.map((t) => t.type.length));
+    for (const [name, tasks] of groups) {
+        console.log(`${name}:`);
+        for (const t of tasks) {
+            console.log(`  ${t.key.padEnd(keyW)}  ${label(t.kind).padEnd(13)}  ${t.type.padEnd(typeW)}  ${t.title}`);
+        }
+        console.log('');
+    }
+    emitTrace('[finished] cmdListTasks', { result: { count: all.length } });
+}
+
 function usage() {
     console.log([
         'usage:',
@@ -3192,6 +3228,9 @@ function usage() {
         '                             remove a per-step agent override.',
         '  node caal.js list-step-agents',
         '                             print the global agent and all per-step overrides.',
+        '  node caal.js tasks | steps',
+        '                             list the available task types and whether each is',
+        '                             deterministic or agentic (works without a workflow).',
         '  node caal.js reset --yes',
         '',
         'flags:',
@@ -3343,6 +3382,8 @@ async function main() {
             break;
         }
         case 'list-step-agents': cmdListStepAgents(); break;
+        case 'steps':
+        case 'tasks': cmdListTasks(); break;
         case undefined:
         case '-h':
         case '--help': usage(); break;
