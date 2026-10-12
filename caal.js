@@ -24,6 +24,12 @@
  *                          # 3=mark done and continue, 4=stop the run); after the agent
  *                          # composes the task prompt (so you can read/edit it before execution);
  *                          # and after the step finishes (so you can decide whether to continue).
+ *   node caal.js task (--description "<text>" | --task_file <path>) [--type feature|refactor]
+ *                          [--agent "<cmd>"] [--base-prompt <file>] [--human_in_the_loop true]
+ *                          # single feature or refactor WITHOUT a user story: scaffolds
+ *                          # specs/tasks/<slug>/TASK.md and runs task.plan -> task.implement ->
+ *                          # task.regression (npm run test:tag @done) -> task.finish. Default base
+ *                          # prompt is RALPH_PROMPT_TASK.md; override with --base-prompt.
  *   node caal.jsstep [<task.key>]   # run exactly one action — the next actionable
  *                                        # task by default, or the named task. When a
  *                                        # task key is supplied and the workflow is in
@@ -111,6 +117,20 @@ const SIGNAL_TO_EXIT = {
 // Override per-run with --base-prompt <file> or env WORKFLOW_BASE_PROMPT_FILE.
 //=====================
 const WORKFLOW_BASE_PROMPT = path.join(ROOT, 'RALPH_PROMPT_NEW_USER_STORY.md');
+
+//=====================
+// Single-task mode (`task` command) defaults
+// WORKFLOW_TASK_BASE_PROMPT: default base prompt for a standalone feature or
+//   refactor — the user-story base prompt talks about gherkin/decomposition
+//   and would mislead the agent. Override with --base-prompt as usual.
+// TASK_REGRESSION_TAG: tag expression passed to `npm run test:tag` for the
+//   regression run after a task is implemented.
+// TASK_TYPES: accepted values for --type.
+//=====================
+const WORKFLOW_TASK_BASE_PROMPT = path.join(ROOT, 'RALPH_PROMPT_TASK.md');
+const TASK_REGRESSION_TAG = '@done';
+const TASK_TYPES = ['feature', 'refactor'];
+const TASKS_SPECS_DIR = path.join(ROOT, 'specs', 'tasks');
 
 let state = null;       // in-memory canonical state
 let STOP = false;       // in-process stop flag (SIGINT)
@@ -561,6 +581,106 @@ function setupStorySpecFile(paddedNumber, sectionText, devPart) {
     return file;
 }
 
+//=====================
+// Single-task mode helpers
+// A `task` workflow reuses the whole runner by storing a synthetic "story"
+// (kind: 'task') in state.story. It has no user-story number and no scenario
+// tag; its spec lives in specs/tasks/<slug>/TASK.md and the agent's plan in
+// specs/tasks/<slug>/plan.md.
+//=====================
+function isTaskMode() { return !!(state && state.story && state.story.kind === 'task'); }
+function taskDir() { return path.join(TASKS_SPECS_DIR, state.story.slug); }
+function taskPlanFile() { return path.join(taskDir(), 'plan.md'); }
+
+function defaultBasePrompt(story) {
+    return story && story.kind === 'task' ? WORKFLOW_TASK_BASE_PROMPT : WORKFLOW_BASE_PROMPT;
+}
+
+// Tag expression for the full-suite / regression run.
+function fullSuiteTag() { return isTaskMode() ? TASK_REGRESSION_TAG : state.story.tag; }
+// Key prefix for the full-suite task and its spliced debug/retry pairs.
+function fullSuiteKeyPrefix() { return isTaskMode() ? 'task.regression' : 'story.full_suite'; }
+// Human-readable label used in full-suite errors and debug prompts.
+function fullSuiteLabel() {
+    return isTaskMode()
+        ? `regression suite for ${state.story.id} (tag ${TASK_REGRESSION_TAG})`
+        : `full suite for ${state.story.id} (tag ${state.story.tag})`;
+}
+
+// "Reference materials" lines shared by every meta-prompt phase.
+function workContextLines() {
+    if (isTaskMode()) {
+        return [
+            `- Standalone ${state.story.taskType} task (no user story): ${state.story.id} — ${state.story.title}`,
+            `- Task description file: ${state.story.sourceFile}`,
+            `- Implementation plan file: ${path.relative(ROOT, taskPlanFile())}`,
+            `- Regression test tag: ${TASK_REGRESSION_TAG}`,
+        ];
+    }
+    return [
+        `- User story: ${state.story.id} — ${state.story.title}`,
+        `- Story source file: ${state.story.sourceFile}`,
+        `- Scenario tag for this story: ${state.story.tag}`,
+    ];
+}
+
+function slugify(s) {
+    return String(s).toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 40)
+        .replace(/-+$/g, '') || 'task';
+}
+
+//=====================
+// setupTaskSpec — scaffold specs/tasks/<slug>/TASK.md for the `task` command
+// from --description and/or --task_file, and return the synthetic story.
+// The slug gets a numeric suffix when the folder already exists so an older
+// task's spec and plan are never overwritten.
+//=====================
+function setupTaskSpec(flags) {
+    const taskType = flags.taskType || 'feature';
+    if (!TASK_TYPES.includes(taskType)) die(`--type must be one of: ${TASK_TYPES.join(', ')} (got "${taskType}")`);
+    const description = (flags.description || '').trim();
+    let fileText = '';
+    if (flags.taskFile) {
+        const abs = path.resolve(ROOT, flags.taskFile);
+        const content = readSafe(abs);
+        if (content === null) die('task file not found: ' + abs);
+        fileText = content.trim();
+    }
+    if (!description && !fileText) die('task needs --description "<text>" and/or --task_file <path>');
+
+    const headingMatch = fileText.match(/^#{1,6}\s*(.+?)\s*$/m);
+    const title = (headingMatch ? headingMatch[1] : (description || fileText).split('\n')[0]).trim().slice(0, 100);
+
+    const baseSlug = slugify(title);
+    let slug = baseSlug;
+    for (let i = 2; fs.existsSync(path.join(TASKS_SPECS_DIR, slug)); i++) slug = `${baseSlug}-${i}`;
+    const dir = path.join(TASKS_SPECS_DIR, slug);
+    ensureDir(dir);
+
+    const specFile = path.join(dir, 'TASK.md');
+    const parts = [`# ${title}`, '', `type: ${taskType}`, ''];
+    if (description) parts.push('## Description', '', description, '');
+    if (fileText) parts.push(`## Details (from ${path.relative(ROOT, path.resolve(ROOT, flags.taskFile))})`, '', fileText, '');
+    fs.writeFileSync(specFile, parts.join('\n'));
+
+    return {
+        kind: 'task',
+        taskType,
+        slug,
+        id: `TASK-${slug}`,
+        number: null,
+        padded: null,
+        title,
+        tag: null,
+        sourceFile: path.relative(ROOT, specFile),
+        status: 'pending',
+    };
+}
+
 function storyDir() { return path.join(ROOT, 'specs', `user_story_${state.story.number}`); }
 function sharedFile() { return path.join(storyDir(), 'shared_across_features.md'); }
 function featureSpec(n) { return path.join(storyDir(), `feature_${n}.md`); }
@@ -594,6 +714,21 @@ function backbone() {
     emitTrace('[info] default tasks - backbone', { backboneTasks: backboneTasksSummary });
 
     return backboneTasks;
+}
+
+//=====================
+// taskBackbone — task tree for the `task` command (single feature / refactor
+// without a user story): plan, implement, regression run, finish. A failing
+// regression run splices DEBUG_FULL_SUITE + retry pairs exactly like the
+// story full suite does (see handleFailure).
+//=====================
+function taskBackbone(taskType) {
+    return [
+        makeTask('task.plan', 'TASK_PLAN', `Analyze the codebase and write the ${taskType} plan`, 'agent', {}),
+        makeTask('task.implement', 'TASK_IMPLEMENT', `Implement the ${taskType}`, 'agent', {}),
+        makeTask('task.regression', 'RUN_FULL_SUITE', `Run regression suite (${TASK_REGRESSION_TAG})`, 'deterministic', {}),
+        makeTask('task.finish', 'FINISH', 'Finalize and announce completion', 'deterministic', {}),
+    ];
 }
 
 function featureGroup(n) {
@@ -811,9 +946,7 @@ function renderPrompt(task, instructions, composedPromptPath, phase, resultSpec,
             ``,
             `## Reference materials`,
             basePromptStatus,
-            `- User story: ${state.story.id} — ${state.story.title}`,
-            `- Story source file: ${state.story.sourceFile}`,
-            `- Scenario tag for this story: ${state.story.tag}`,
+            ...workContextLines(),
             ``,
             `## Task description (compose a prompt for this task — do NOT act on it now)`,
             instructions,
@@ -846,9 +979,7 @@ function renderPrompt(task, instructions, composedPromptPath, phase, resultSpec,
             `## Reference materials`,
             `- Composed prompt (authoritative for this invocation): \`${composedPromptRel}\` (also env var WORKFLOW_COMPOSED_PROMPT_FILE). This is the human-approved instruction set; treat it as final.`,
             basePromptStatus,
-            `- User story: ${state.story.id} — ${state.story.title}`,
-            `- Story source file: ${state.story.sourceFile}`,
-            `- Scenario tag for this story: ${state.story.tag}`,
+            ...workContextLines(),
             ``,
             `## Original task description (for context — the composed prompt is authoritative)`,
             instructions,
@@ -887,9 +1018,7 @@ function renderPrompt(task, instructions, composedPromptPath, phase, resultSpec,
         ...fullResultBlock,
         `## Reference materials`,
         basePromptStatus,
-        `- User story: ${state.story.id} — ${state.story.title}`,
-        `- Story source file: ${state.story.sourceFile}`,
-        `- Scenario tag for this story: ${state.story.tag}`,
+        ...workContextLines(),
         ``,
         `## Task description`,
         instructions,
@@ -1785,6 +1914,61 @@ async function _handleInner(task) {
                 `the project conventions in AGENTS.md and docs/architecture/.`);
         }
 
+        case 'TASK_PLAN': {
+            //=====================
+            // First step of a `task` workflow. The agent studies the codebase
+            // and writes plan.md next to TASK.md; nothing is implemented yet,
+            // so with --human_in_the_loop the plan can be reviewed (and
+            // edited) before task.implement runs. We verify the plan exists on
+            // disk because the implement step depends on it.
+            //=====================
+            state.story.status = 'in_progress';
+            const planRel = path.relative(ROOT, taskPlanFile());
+            const refactorRules = state.story.taskType === 'refactor'
+                ? `\n\nThis is a REFACTOR: the plan must preserve observable behaviour (API contracts, ` +
+                  `responses, persisted data). List the existing tests that cover the touched code and ` +
+                  `flag any area with no coverage.`
+                : `\n\nThis is a FEATURE: the plan must include the tests (unit and/or BDD) that will ` +
+                  `cover the new behaviour.`;
+            const res = await runAgent(task,
+                `Read the task description in @${state.story.sourceFile} and analyze the relevant parts of ` +
+                `the codebase (follow AGENTS.md and docs/architecture/). Then write an implementation plan ` +
+                `to ${planRel}: files to touch, step-by-step changes, risks, and how the result will be ` +
+                `verified.${refactorRules}\n\n` +
+                `SCOPE — this step is PLANNING ONLY. Do NOT modify production code, tests, or any file ` +
+                `other than ${planRel}. Do NOT run tests or restart the server.`);
+            if (res && res.ok && !fs.existsSync(taskPlanFile())) {
+                return {
+                    ok: false,
+                    error: `plan step finished but ${planRel} was not created`,
+                    errorDetails: makeErrorDetails(task, {
+                        summary: `TASK_PLAN produced no plan file for ${state.story.id}`,
+                        reason: `expected file missing: ${planRel}`,
+                        suggested_fix: `Write the plan to ${planRel} manually (or fix the agent) and \`resume\`.`,
+                    }),
+                };
+            }
+            return res;
+        }
+
+        case 'TASK_IMPLEMENT': {
+            const planRel = path.relative(ROOT, taskPlanFile());
+            const typeRules = state.story.taskType === 'refactor'
+                ? `This is a REFACTOR: do NOT change observable behaviour (API contracts, responses, ` +
+                  `persisted data) unless the task description explicitly asks for it. Do not weaken, ` +
+                  `skip, or delete existing tests to make them pass.`
+                : `This is a FEATURE: implement the production code and the tests that cover it. If you ` +
+                  `add BDD scenarios, tag them so they are picked up by the regression run ` +
+                  `(${TASK_REGRESSION_TAG}). Use bdd-gherkin-feature-writer for .feature files.`;
+            return runAgent(task,
+                `Implement the task described in @${state.story.sourceFile} following the plan in ` +
+                `@${planRel}. Follow AGENTS.md and the existing architecture.\n\n${typeRules}\n\n` +
+                `SCOPE — do NOT run the full test suite or restart the dev server: the regression run ` +
+                `(npm run test:tag ${TASK_REGRESSION_TAG}) is performed by a separate downstream step. ` +
+                `When composing the task-specific prompt, ignore any sub-steps from the base prompt about ` +
+                `user stories, gherkin decomposition, or running the full suite.`);
+        }
+
         case 'MARK_STORY_IN_PROGRESS': {
             setStoryFlag(state.story.id, 'in_progress', 'true');
             state.story.status = 'in_progress';
@@ -2089,7 +2273,7 @@ async function _handleInner(task) {
         case 'RUN_FULL_SUITE': {
             const restart = restartServer(task);
             if (!restart.ok) return restart;
-            const t = runTaggedTests();
+            const t = runTaggedTests(fullSuiteTag());
             if (t.ok) return { ok: true };
             const reason = t.spawnError
                 ? `failed to spawn test runner: ${t.spawnError}`
@@ -2105,24 +2289,25 @@ async function _handleInner(task) {
 
             return {
                 ok: false,
-                error: `full suite for ${state.story.id} (tag ${state.story.tag}) failed — ${reason}`,
+                error: `${fullSuiteLabel()} failed — ${reason}`,
                 errorDetails: makeErrorDetails(task, {
-                    summary: `Full test suite for ${state.story.id} (tag ${state.story.tag}) failed`,
+                    summary: `${fullSuiteLabel()} failed`,
                     reason,
-                    operation: 'run full BDD suite tagged for the story',
+                    operation: isTaskMode() ? `run regression BDD suite (${TASK_REGRESSION_TAG})` : 'run full BDD suite tagged for the story',
                     command: t.command,
                     exit_code: t.status,
                     signal: t.signal,
                     exit_reason: describeExitStatus(t.status, t.signal),
                     log_file: path.relative(ROOT, t.logFile),
                     log_tail: t.logTail,
-                    story_tag: state.story.tag,
+                    story_tag: fullSuiteTag(),
                     story_id: state.story.id,
                     failed_scenarios: failedScenariosAll,
                     retry: task.meta.retry || 0,
                     max_retries: state.config.maxRetries,
-                    suggested_fix: suggestFixForTestFailure(t.logTail) +
-                        '\n\nNote: this runs after each scenario already passed in isolation, so a failure here typically means scenarios interact (shared state, ordering, dirty database). Read the log to identify which scenario tag failed in the suite run, then fix the cross-scenario assumption.',
+                    suggested_fix: suggestFixForTestFailure(t.logTail) + (isTaskMode()
+                        ? `\n\nNote: this is the regression run after ${state.story.id}. A failure here usually means the ${state.story.taskType} broke existing behaviour — compare the failing scenarios against the files changed by task.implement.`
+                        : '\n\nNote: this runs after each scenario already passed in isolation, so a failure here typically means scenarios interact (shared state, ordering, dirty database). Read the log to identify which scenario tag failed in the suite run, then fix the cross-scenario assumption.'),
                 }),
             };
         }
@@ -2143,7 +2328,9 @@ async function _handleInner(task) {
             // Includes the story tag, failed scenario name, and the full suite log tail
             //=====================
             const debugContext = [
-                `Story: ${state.story.id} (tag ${state.story.tag})`,
+                isTaskMode()
+                    ? `Task: ${state.story.id} (${state.story.taskType}, spec ${state.story.sourceFile}, regression tag ${TASK_REGRESSION_TAG})`
+                    : `Story: ${state.story.id} (tag ${state.story.tag})`,
                 `Failed scenario: ${firstFailed}`,
                 `Retry attempt: ${retryNum} of ${state.config.maxRetries}`,
                 failedList.length > 1 ? `Other failed scenarios: ${failedList.slice(1).join(', ')}` : '',
@@ -2166,7 +2353,7 @@ async function _handleInner(task) {
             // The agent should use @debug_prompt.txt as additional context
             //=====================
             const agentInstructions = [
-                `The full BDD test suite for ${state.story.id} (tag ${state.story.tag}) failed on retry #${retryNum}.`,
+                `The ${fullSuiteLabel()} failed on retry #${retryNum}.`,
                 `The primary failing scenario is: "${firstFailed}".`,
                 failedList.length > 1 ? `Other failing scenarios: ${failedList.slice(1).join(', ')}.` : '',
                 '',
@@ -2174,7 +2361,9 @@ async function _handleInner(task) {
                     ? `A debug prompt has been generated at @debug_prompt.txt — read it for context including request logs and tracing data.`
                     : `Debug context:\n${debugContext}`,
                 '',
-                `Diagnose the root cause and fix the implementation or step definitions.`,
+                isTaskMode() && state.story.taskType === 'refactor'
+                    ? `This failure follows a REFACTOR (${state.story.sourceFile}): the existing tests define the expected behaviour — fix the refactored code, not the tests.`
+                    : `Diagnose the root cause and fix the implementation or step definitions.`,
                 `Do not weaken or skip tests. After fixing, the workflow will re-run the full suite.`,
             ].filter(Boolean).join('\n');
 
@@ -2208,6 +2397,8 @@ async function _handleInner(task) {
             task.finishedAt = now();
             task.error = null;
             task.error_details = null;
+            // task workflows have no MARK_STORY_COMPLETED step (no user_stories.toml entry)
+            if (isTaskMode()) state.story.status = 'completed';
             progress(`COMPLETED ${state.story.id}`);
             progress(`DONE ${task.key}`);
             persist();
@@ -2418,13 +2609,13 @@ function handleFailure(t) {
         const failedScenarios = (t.error_details && t.error_details.failed_scenarios) || [];
         const logTail = (t.error_details && t.error_details.log_tail) || '';
 
-        const dbgKey = `story.full_suite.debug#${k}`;
+        const dbgKey = `${fullSuiteKeyPrefix()}.debug#${k}`;
         const dbg = makeTask(dbgKey, 'DEBUG_FULL_SUITE', `Debug full suite failure (#${k})`, 'agent', {
             retry: k,
             failedScenarios: failedScenarios,
             logTail: logTail,
         });
-        const rt = makeTask(`story.full_suite#${k}`, 'RUN_FULL_SUITE', `Re-run full suite (#${k})`, 'deterministic',
+        const rt = makeTask(`${fullSuiteKeyPrefix()}#${k}`, 'RUN_FULL_SUITE', `Re-run full suite (#${k})`, 'deterministic',
             { retry: k });
         spliceAfter(state.tasks, t.key, [dbg, rt]);
         emitTrace('[finished] handleFailure', { result: { recovered: true, reason: 'full_suite_queued_debug_and_retry', spliced: [dbg.key, rt.key] } });
@@ -2802,24 +2993,41 @@ function parseFlags(args) {
                 flags.humanInTheLoop = true;
             }
         }
+        //=====================
+        // `task` command flags (single feature / refactor without a user story)
+        // --description "<text>": what to build/refactor (inline).
+        // --task_file <path>: markdown file with a longer description; may be
+        //   combined with --description. Both end up in specs/tasks/<slug>/TASK.md.
+        // --type feature|refactor: changes the plan/implement/debug instructions.
+        //=====================
+        else if (a === '--description') flags.description = args[++i];
+        else if (a === '--task_file') flags.taskFile = args[++i];
+        else if (a === '--type') flags.taskType = args[++i];
         else if (a === '--yes') flags.yes = true;
         else rest.push(a);
     }
     return { flags, rest };
 }
 
-function bootstrap(file, flags) {
-    emitTrace('[running] bootstrap', { inputs: { file, flags } });
-    const story = parseStory(file);
+//=====================
+// bootstrap — create state.json. `prebuiltStory` is the synthetic story built
+// by the `task` command; when present the story file is not parsed, nothing
+// is written to user_stories.toml, and the task backbone is used.
+//=====================
+function bootstrap(file, flags, prebuiltStory) {
+    emitTrace('[running] bootstrap', { inputs: { file, flags, prebuiltStory } });
+    const story = prebuiltStory || parseStory(file);
+    const taskMode = story.kind === 'task';
     ensureDir(WF_DIR);
-    ensureStoriesToml(story);
+    if (!taskMode) ensureStoriesToml(story);
     //=====================
     // Resolve the base prompt file path
-    // Precedence: --base-prompt > env WORKFLOW_BASE_PROMPT_FILE > WORKFLOW_BASE_PROMPT.
+    // Precedence: --base-prompt > env WORKFLOW_BASE_PROMPT_FILE > default for
+    // the workflow kind (WORKFLOW_BASE_PROMPT or WORKFLOW_TASK_BASE_PROMPT).
     // We resolve against ROOT so a relative path supplied on the command line
     // remains valid for later resume/step runs regardless of cwd at that time.
     //=====================
-    const rawBasePrompt = flags.basePrompt || process.env.WORKFLOW_BASE_PROMPT_FILE || WORKFLOW_BASE_PROMPT;
+    const rawBasePrompt = flags.basePrompt || process.env.WORKFLOW_BASE_PROMPT_FILE || defaultBasePrompt(story);
     const basePromptFile = path.resolve(ROOT, rawBasePrompt);
 
     //=====================
@@ -2861,13 +3069,15 @@ function bootstrap(file, flags) {
             //=====================
             stepAgents: {},
         },
-        tasks: backbone(),
+        tasks: taskMode ? taskBackbone(story.taskType) : backbone(),
         createdAt: now(),
         updatedAt: now(),
     };
     persist();
     progress(`Bootstrapped ${story.id} — "${story.title}"`);
-    log(`initialized ${story.id} — "${story.title}" (tag ${story.tag})`);
+    log(taskMode
+        ? `initialized ${story.id} — "${story.title}" (${story.taskType}, spec ${story.sourceFile}, regression ${TASK_REGRESSION_TAG})`
+        : `initialized ${story.id} — "${story.title}" (tag ${story.tag})`);
     log(`base prompt: ${path.relative(ROOT, basePromptFile) || basePromptFile}` +
         (fs.existsSync(basePromptFile) ? '' : ' (missing — agent will be warned)'));
     if (!state.config.agentCmd) {
@@ -2898,7 +3108,7 @@ function ensureInitialized(maybeFile, flags) {
         if (flags && flags.basePrompt) {
             state.config.basePromptFile = path.resolve(ROOT, flags.basePrompt);
         } else if (!state.config.basePromptFile) {
-            state.config.basePromptFile = path.resolve(ROOT, process.env.WORKFLOW_BASE_PROMPT_FILE || WORKFLOW_BASE_PROMPT);
+            state.config.basePromptFile = path.resolve(ROOT, process.env.WORKFLOW_BASE_PROMPT_FILE || defaultBasePrompt(state.story));
         }
         //=====================
         // Late override / back-fill of agentIdleTimeoutMs
@@ -3042,9 +3252,17 @@ function cmdStatus() {
     }
     const t = state.tasks;
     const by = (s) => t.filter((x) => x.status === s).length;
-    console.log(`story:    ${state.story.id} — ${state.story.title}`);
-    console.log(`status:   ${state.story.status}    mode: ${state.mode}    tag: ${state.story.tag}`);
-    console.log(`source:   ${state.story.sourceFile}`);
+    if (isTaskMode()) {
+        console.log(`task:     ${state.story.id} — ${state.story.title}`);
+        console.log(`status:   ${state.story.status}    mode: ${state.mode}    type: ${state.story.taskType}    regression: ${TASK_REGRESSION_TAG}`);
+        console.log(`source:   ${state.story.sourceFile}`);
+        console.log(`plan:     ${path.relative(ROOT, taskPlanFile())}${fs.existsSync(taskPlanFile()) ? '' : ' (not written yet)'}`);
+    } else {
+        console.log(`story:    ${state.story.id} — ${state.story.title}`);
+        console.log(`status:   ${state.story.status}    mode: ${state.mode}    tag: ${state.story.tag}`);
+        console.log(`source:   ${state.story.sourceFile}`);
+    }
+    console.log(`base prompt: ${path.relative(ROOT, state.config.basePromptFile || '') || state.config.basePromptFile}`);
     console.log(`agent:    ${state.config.agentCmd ? state.config.agentCmd : '(none — creative steps will block)'}`);
     console.log(`human_in_the_loop: ${state.config.humanInTheLoop ? 'ON (pre-task choice gate, compose-prompt review, post-task continue gate)' : 'off'}`);
     const overrideCount = Object.keys(state.config.stepAgents || {}).length;
@@ -3173,11 +3391,17 @@ function cmdListTasks() {
         makeTask('feature_<n>.scenario_<m>.debug#<k>', 'DEBUG', 'debug failing scenario test (spliced on failure)', 'agent', {}),
         makeTask('feature_<n>.scenario_<m>.run_test#<k>', 'RUN_TEST', 're-run scenario test (spliced on failure)', 'deterministic', {}),
     ];
+    const taskRetryTasks = [
+        makeTask('task.regression.debug#<k>', 'DEBUG_FULL_SUITE', 'debug failing regression run (spliced on failure)', 'agent', {}),
+        makeTask('task.regression#<k>', 'RUN_FULL_SUITE', 're-run regression suite (spliced on failure)', 'deterministic', {}),
+    ];
     const groups = [
         ['story', backbone()],
         ['per feature', featureGroup('<n>')],
         ['per scenario', scenarioGroup('<n>', '<m>', '')],
         ['on failure', retryTasks],
+        ['task (single feature/refactor — `task` command)', taskBackbone('<type>')],
+        ['task on failure', taskRetryTasks],
     ];
     const label = (kind) => (kind === 'agent' ? 'agentic' : kind);
     const all = groups.flatMap(([, tasks]) => tasks);
@@ -3205,6 +3429,13 @@ function usage() {
         '                             "(the part below should be compiled by devs)" block from',
         '                             docs/user_story_template.md, then runs the workflow — whose first',
         '                             task asks the agent to complete that dev block before continuing.',
+        '  node caal.js task (--description "<text>" | --task_file <path>) [--type feature|refactor]',
+        '                          [--agent "<cmd>"] [--base-prompt <file>] [--human_in_the_loop true] ...',
+        '                             Develop a single feature or refactor WITHOUT a user story. Writes',
+        '                             specs/tasks/<slug>/TASK.md, then runs: task.plan (agent writes',
+        '                             specs/tasks/<slug>/plan.md) -> task.implement (agent) ->',
+        `                             task.regression (npm run test:tag ${TASK_REGRESSION_TAG}, debug/retry on failure)`,
+        '                             -> task.finish. step/run/resume/status/done work as usual.',
         '  node caal.js step [<task.key>]',
         '                             run exactly one action and pause. With no argument,',
         '                             runs the next actionable task. With a task key (see',
@@ -3240,11 +3471,17 @@ function usage() {
         '  --user_story_to_run <number>',
         '                      identifier of the story to scaffold (required by `start`). Padded to',
         '                      3 digits internally, so 19, 019, and "US-019" all map to US-019.',
+        '  --description "<text>"',
+        '                      what the `task` command should build or refactor.',
+        '  --task_file <path>  markdown file with a longer task description (`task`; can be combined',
+        '                      with --description).',
+        '  --type feature|refactor',
+        '                      kind of `task` (default: feature). A refactor must preserve behaviour.',
         '  --agent "<cmd>"     shell command that runs your agent. The agent receives env',
         '                      WORKFLOW_PROMPT_FILE and WORKFLOW_TASK; exit 0 = success.',
         '  --base-prompt <f>   path to the base prompt file the agent reads as a reference',
         `                      when composing per-task prompts. Default: ${path.relative(ROOT, WORKFLOW_BASE_PROMPT) || WORKFLOW_BASE_PROMPT}`,
-        '                      (env: WORKFLOW_BASE_PROMPT_FILE).',
+        `                      (${path.relative(ROOT, WORKFLOW_TASK_BASE_PROMPT)} for \`task\`). (env: WORKFLOW_BASE_PROMPT_FILE).`,
         '  --warmup <sec>      seconds to wait after restarting the dev server before tests.',
         '  --max-retries <n>   max debug/retry cycles per failing scenario or full suite.',
         '  --agent-idle-timeout <sec>',
@@ -3305,6 +3542,21 @@ async function main() {
             log(`extracted US-${padded} ("${title}") into ${path.relative(ROOT, specFile)}`);
             emitTrace('[running] start command', { storiesFileAbs, templateFileAbs, devPart, specFile, flags } );
             await execute('run', specFile, flags);
+            break;
+        }
+        case 'task': {
+            //=====================
+            // task scaffolds a standalone feature/refactor (no user story) into
+            // specs/tasks/<slug>/TASK.md, bootstraps the task backbone (plan ->
+            // implement -> regression -> finish) and runs it. All the usual
+            // commands (step/run/resume/status/done/set-step-agent) then work
+            // on it. --base-prompt picks a different base prompt for this task.
+            //=====================
+            if (loadState()) die('a workflow is already initialized here. Use `run`/`step`/`status`, or `reset --yes` first.');
+            const taskStory = setupTaskSpec(flags);
+            log(`created ${taskStory.sourceFile}`);
+            bootstrap(null, flags, taskStory);
+            await execute('run', undefined, flags);
             break;
         }
         case 'step': {
