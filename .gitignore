@@ -4,3 +4,4 @@ app_workshop/node_modules/*
 solutions
 pi-run-debug.log
 reports/*
+app_workshop/.workflow
