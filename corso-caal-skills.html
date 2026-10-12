@@ -539,35 +539,46 @@ MODULES.push({
 MODULES.push({
   id:'m6', n:'06', title:'Laboratorio — Un task con CAAL', min:25,
   blocks:[
-    {t:'p',html:`<p>Facciamo sviluppare all'agente <strong>una feature singola</strong>, senza user story: un export CSV degli ordini. Il comando <code>task</code> vuole due cose: <strong>cosa</strong> fare (<code>--description</code> e/o <code>--task_file</code>) e <strong>come</strong> lavorare (<code>--base-prompt</code>).</p>`},
-    {t:'p',html:`<h3>1. La definizione del task</h3><p>Un file Markdown, per esempio <code>specs/requests/export_csv_ordini.md</code>. CAAL lo copia in <code>specs/tasks/&lt;slug&gt;/TASK.md</code>; lo slug deriva dal primo titolo.</p>`},
-    {t:'code',lang:'markdown',code:`# Export CSV degli ordini
+    {t:'p',html:`<p>Facciamo sviluppare all'agente <strong>una feature singola</strong>, senza user story: un <strong>export CSV dei file con più volatilità</strong>. L'app di <code>app_workshop</code> oggi calcola già la volatilità (US1, <code>node cli/run.js fileVolatility</code>) ma la restituisce solo in JSON: aggiungiamo l'uscita in CSV. Il comando <code>task</code> vuole due cose: <strong>cosa</strong> fare (<code>--description</code> e/o <code>--task_file</code>) e <strong>come</strong> lavorare (<code>--base-prompt</code>).</p>`},
+    {t:'p',html:`<h3>1. La definizione del task</h3><p>Un file Markdown, per esempio <code>tasks/export_csv_volatilita.md</code>. CAAL lo copia in <code>specs/tasks/&lt;slug&gt;/TASK.md</code>; lo slug deriva dal primo titolo.</p>`},
+    {t:'code',lang:'markdown',code:`# Export CSV dei file con più volatilità
 
-Aggiungere un endpoint che esporta gli ordini in CSV.
+Aggiungere al comando fileVolatility la possibilità di esportare
+la lista dei file con più volatilità in formato CSV.
 
 ## Requisiti
-- GET /api/orders/export?from=YYYY-MM-DD&to=YYYY-MM-DD
-- Colonne: id, data, cliente, totale, stato
-- Solo gli utenti con ruolo admin possono esportare (403 altrimenti)
-- Ogni export va registrato nella tabella di audit
+- node cli/run.js fileVolatility --repoPath=<repo> --format=csv
+- Senza --format (o con --format=json) l'output JSON resta identico a oggi
+- Colonne, con riga di intestazione: path,changes
+- Stesso ordinamento della vista JSON: modifiche decrescenti, a parità percorso alfabetico
+- Funziona anche con --range (es. --range=HEAD~2..HEAD)
+- I percorsi che contengono virgole o virgolette sono quotati secondo RFC 4180
+- Se nell'intervallo non ci sono modifiche, il CSV contiene solo l'intestazione
+- Gli errori restano quelli di oggi: { "status": "ERROR", "message": "..." } ed exit code diverso da 0
+- Almeno 3 scenari BDD taggati @done in tests/features/gitAnalysis/
 
 ## Fuori scope
-- Export in altri formati (xlsx, pdf)
-- Modifiche al frontend`},
+- Altri formati (xlsx, html)
+- Cambiare come si calcola la volatilità
+- Scrivere il CSV su file: va su stdout, il redirect lo fa chi lancia il comando`},
     {t:'p',html:`<h3>2. Lancio, con revisione umana</h3>`},
     {t:'code',lang:'bash',code:`cd /Code/app_workshop
 
 node caal.js task \\
   --type feature \\
-  --task_file specs/requests/export_csv_ordini.md \\
+  --task_file tasks/export_csv_volatilita.md \\
   --base-prompt tasks/RALPH_PROMPT_TASK.md \\
   --human_in_the_loop true \\
   --agent 'pi -p "$(cat "$WORKFLOW_PROMPT_FILE")" --provider omlx --model Qwen3.8-27B-8bit --approve --mode json 2>&1 | tee pi-run-debug.log'`},
     {t:'p',html:`<h3>3. Ferma, guarda, riprendi</h3><p>Dopo <code>task.plan</code> scegli <code>(4) stop</code> al gate. Poi:</p>`},
     {t:'code',lang:'bash',code:`node caal.js status                 # task, piano, base prompt, prossimo step
-cat specs/tasks/export-csv-degli-ordini/plan.md
+cat specs/tasks/export-csv-dei-file-con-piu-volatilita/plan.md
 # ...correggi plan.md se serve...
-node caal.js resume`},
+node caal.js resume
+
+# a workflow finito, prova tu il risultato
+node cli/run.js fileVolatility --repoPath=/Code --format=csv
+node cli/run.js fileVolatility --repoPath=/Code --range=HEAD~5..HEAD --format=csv > volatility.csv`},
     {t:'p',html:`<h3>Dove trovare cosa</h3>`},
     {t:'table',head:['File','Contenuto'],rows:[
       ['<code>specs/tasks/&lt;slug&gt;/TASK.md</code>','La definizione del task'],
@@ -581,10 +592,10 @@ node caal.js resume`},
     {t:'promptkit',id:'pk6',title:'Scrivi il tuo TASK.md',
       sub:'Componi la definizione di un task tuo. Il «come» sta nel base prompt: qui scrivi solo il «cosa».',
       fields:[
-        {k:'title',lb:'Titolo',rows:1,ph:'Export CSV degli ordini'},
-        {k:'what',lb:'Cosa va fatto (2-3 righe)',rows:3,ph:'Aggiungere un endpoint che esporta gli ordini in CSV.'},
-        {k:'req',lb:'Requisiti verificabili (uno per riga)',rows:5,ph:'GET /api/orders/export?from=...&to=...\nSolo admin (403 altrimenti)\nOgni export registrato in audit'},
-        {k:'out',lb:'Fuori scope (uno per riga)',rows:3,ph:'Export xlsx/pdf\nModifiche al frontend'}
+        {k:'title',lb:'Titolo',rows:1,ph:'Export CSV dei file con più volatilità'},
+        {k:'what',lb:'Cosa va fatto (2-3 righe)',rows:3,ph:'Aggiungere al comando fileVolatility l\'uscita in CSV.'},
+        {k:'req',lb:'Requisiti verificabili (uno per riga)',rows:5,ph:'--format=csv su fileVolatility\nColonne: path,changes con intestazione\nStesso ordinamento della vista JSON\nLista vuota: solo intestazione'},
+        {k:'out',lb:'Fuori scope (uno per riga)',rows:3,ph:'Altri formati (xlsx, html)\nCambiare il calcolo della volatilità'}
       ],
       build:function(v){
         const lines=s=>(s||'').split('\n').map(x=>x.trim()).filter(Boolean).map(x=>'- '+x).join('\n');
@@ -600,8 +611,9 @@ node caal.js resume`},
         'Hai letto plan.md prima che partisse task.implement',
         'Hai aperto almeno un .composed.md in .workflow/prompts/',
         'Hai fermato il workflow, visto status e fatto resume',
+        'Senza --format l\'output JSON di fileVolatility è identico a prima',
         'task.regression è verde (o hai visto gli step debug#k inseriti)',
-        'Hai letto il diff e i test: verificano davvero 403 e audit?'
+        'Hai letto il diff e i test: verificano davvero ordinamento, quoting dei percorsi e lista vuota?'
       ]}
   ]
 });
@@ -891,16 +903,16 @@ function mountChecklist(id, b){
 const LOOP = [
   {b:'Init', t:'node caal.js task ...',
    d:'Il runner crea TASK.md e lo stato in .workflow/. Quattro step in coda.',
-   log:'$ node caal.js task --type feature --task_file specs/requests/export_csv_ordini.md\n[runner] specs/tasks/export-csv-degli-ordini/TASK.md creato\n[runner] steps: task.plan, task.implement, task.regression, task.finish'},
+   log:'$ node caal.js task --type feature --task_file tasks/export_csv_volatilita.md\n[runner] specs/tasks/export-csv-dei-file-con-piu-volatilita/TASK.md creato\n[runner] steps: task.plan, task.implement, task.regression, task.finish'},
   {b:'task.plan', t:'Agente: compone il prompt e pianifica',
    d:'Legge il base prompt, salva il prompt composto, scrive plan.md. Non tocca il codice.',
-   log:'[agente] .workflow/prompts/task.plan.composed.md salvato\n[agente] specs/tasks/export-csv-degli-ordini/plan.md scritto\n[runner] task.plan ✓'},
+   log:'[agente] .workflow/prompts/task.plan.composed.md salvato\n[agente] specs/tasks/export-csv-dei-file-con-piu-volatilita/plan.md scritto\n[runner] task.plan ✓'},
   {b:'task.implement', t:'Agente: implementa',
    d:'Segue TASK.md e plan.md. Scrive codice e scenari BDD taggati @done.',
-   log:'[agente] src/routes/orders.js, src/services/ordersExport.js\n[agente] features/orders_export.feature (3 scenari @done)\n[runner] task.implement ✓'},
+   log:'[agente] src/jobs/formatVolatilityCsv.js, src/services/fileVolatility.js, cli/run.js\n[agente] tests/features/gitAnalysis/fileVolatilityCsv.feature (3 scenari @done)\n[runner] task.implement ✓'},
   {b:'regression', t:'Runner: lancia i test',
    d:'Deterministico: npm run test:tag @done. Fallisce uno scenario.',
-   log:'[runner] npm run test:tag @done -> 41 passed, 1 failed\n[runner] task.regression ✗'},
+   log:'[runner] npm run test:tag @done -> 8 passed, 1 failed\n[runner] task.regression ✗'},
   {b:'Splice', t:'Runner: inserisce debug#1 e regression#1',
    d:'Il fallimento non ferma tutto: aggiunge due step, con un tetto (--max-retries).',
    log:'[runner] + task.regression.debug#1 (agentico)\n[runner] + task.regression#1 (deterministico)'},
@@ -912,10 +924,10 @@ const LOOP = [
    log:'$ node caal.js status\n  ✓ task.plan\n  ✓ task.implement\n  ✗ task.regression\n  · task.regression.debug#1   <- prossimo\n  · task.regression#1\n  · task.finish'},
   {b:'Resume', t:'Riparte dal punto giusto',
    d:'Non rifà piano e implementazione: riparte da debug#1.',
-   log:'$ node caal.js resume\n[agente] debug#1: il filtro date esclude il giorno "to" -> corretto\n[agente] error_memories.md += "range date: \'to\' è inclusivo"'},
+   log:'$ node caal.js resume\n[agente] debug#1: un percorso con la virgola spezza la riga CSV -> quoting RFC 4180\n[agente] error_memories.md += "CSV: quotare i campi con virgole e virgolette"'},
   {b:'Finish', t:'Regressione verde, workflow chiuso',
    d:'regression#1 passa, task.finish chiude. Tutta la strada presa è tracciata nei file.',
-   log:'[runner] npm run test:tag @done -> 42 passed\n[runner] task.regression#1 ✓\n[runner] task.finish ✓ — workflow completato'}
+   log:'[runner] npm run test:tag @done -> 9 passed\n[runner] task.regression#1 ✓\n[runner] task.finish ✓ — workflow completato'}
 ];
 function mountAgentLoop(id){
   const el = document.getElementById(id);
