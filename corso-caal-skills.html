@@ -731,10 +731,6 @@ console.log(err)`},
  "trace_id":"a81f…","revisions":50,"duration_ms":184}
 {"ts":"2026-10-12T09:14:04Z","level":"info","event":"fileVolatility.completed",
  "trace_id":"a81f…","files":137,"duration_ms":231}`}},
-    {t:'exercise',id:'ex9a',label:'Esercizio 9.1 — Scrivi due scenari (7 minuti)',
-      prompt:'Per la user story 2 («summary degli ultimi commit»), scrivi due scenari Gherkin: uno sul caso normale e uno su un caso limite. Ogni Then deve essere osservabile (lista restituita, ordine, valori, messaggio).',
-      placeholder:'Scenario: ...\n  Given ...\n  When ...\n  Then ...\n  And ...\n\nScenario: ...',
-      solution:'Esempio: «Scenario: gli ultimi N commit sono mostrati dal più recente — Given un progetto con 12 commit — When apro la vista del summary con N = 3 — Then vedo 3 commit, dal più recente al meno recente — And per ognuno vedo hash abbreviato, autore, data e prima riga del messaggio». Caso limite: «Given un progetto con 2 commit — When apro il summary con N = 10 — Then vedo 2 commit — And non c\'è nessun errore». Altro caso limite utile: un repository senza commit → messaggio esplicito e lista vuota. Notare che la forma dell\'output (le chiavi del JSON) non la decide lo scenario: la decide il design del contratto.'},
     {t:'quiz',id:'q9a',q:'Dove dovrebbero stare le decisioni su formato dell\'output, errori e significato dei dati (es. cos\'è una «modifica»), perché l\'agente le rispetti in ogni step di CAAL?',
       opts:[
         {tx:'Nel TASK.md di ogni task',ok:false,why:'Così le ripeti ogni volta, e prima o poi una versione sarà diversa dalle altre.'},
