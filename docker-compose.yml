@@ -1,5 +1,6 @@
 services:
-  # To enter in the container:  docker exec -it agentic_bootcamp-agentic-1 bash
+  # To enter in the container: Se non hai eseguito docker compose up con -d, apri una nuova shell e runna:
+  # docker exec -it agentic_bootcamp-agentic-1 bash
   agentic:
     build: .
     entrypoint: tail -f /dev/null
