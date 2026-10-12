@@ -78,7 +78,7 @@ Aggiungere un endpoint che esporta gli ordini in CSV.
 
 Il prompt base **non** descrive il task: descrive le regole del progetto che l'agente deve rispettare.
 L'agente lo legge e, per ogni step, compone un prompt specifico (salvato in
-`.workflow/prompts/<task.key>.composed.md`).
+`.workflow/prompts/<step-key>.composed.md`).
 
 Se non passi `--base-prompt`, viene usato `RALPH_PROMPT_TASK.md` nella root del progetto.
 Un modello pronto è in `/Code/ralph/RALPH_PROMPT_TASK.md`; puoi copiarlo e personalizzarlo:
@@ -173,7 +173,7 @@ Per ogni step il runner si ferma tre volte:
 
 1. **prima del task**: `(1) execute  (2) skip  (3) mark as done  (4) stop`;
 2. **dopo la composizione del prompt** (solo step agente): l'agente scrive
-   `.workflow/prompts/<task.key>.composed.md` e si ferma. Puoi aprirlo, modificarlo, e poi rispondere `y`:
+   `.workflow/prompts/<step-key>.composed.md` e si ferma. Puoi aprirlo, modificarlo, e poi rispondere `y`:
    la fase di esecuzione usa il file così come l'hai lasciato su disco;
 3. **dopo il task**: confermi se passare al successivo.
 
@@ -225,7 +225,7 @@ oppure con `--human_in_the_loop` scegliendo `stop` al primo gate.
 |---|---|
 | `task.plan` non produce `plan.md` | lo step fallisce e viene ritentato fino a 3 volte; poi viene marcato come saltato (⚠) e il workflow prosegue — controlla `status` ed `error_memories.md` |
 | la regressione `@done` fallisce | vengono aggiunti `task.regression.debug#k` (l'agente diagnostica e corregge) e `task.regression#k` (rilancio), fino a `--max-retries` (default 3) |
-| agente non configurato | gli step agente si bloccano scrivendo il prompt in `.workflow/prompts/`; puoi eseguirli a mano e poi `node ../caal.js done <task.key>` |
+| agente non configurato | gli step agente si bloccano scrivendo il prompt in `.workflow/prompts/`; puoi eseguirli a mano e poi `node ../caal.js done <step-key>` |
 | `--type` diverso da `feature`/`refactor` | errore immediato |
 
 ## Dove trovare cosa
@@ -234,7 +234,7 @@ oppure con `--human_in_the_loop` scegliendo `stop` al primo gate.
 |---|---|
 | `specs/tasks/<slug>/TASK.md` | definizione del task |
 | `specs/tasks/<slug>/plan.md` | piano scritto dall'agente |
-| `.workflow/prompts/<task.key>.md` | meta-prompt inviato all'agente |
-| `.workflow/prompts/<task.key>.composed.md` | prompt specifico composto dall'agente a partire dal prompt base |
+| `.workflow/prompts/<step-key>.md` | meta-prompt inviato all'agente |
+| `.workflow/prompts/<step-key>.composed.md` | prompt specifico composto dall'agente a partire dal prompt base |
 | `.workflow/tests__done.log` | log dell'ultima regressione |
 | `progress.txt`, `error_memories.md`, `learned.md` | avanzamento, errori, cose imparate |

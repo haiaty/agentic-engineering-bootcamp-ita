@@ -88,3 +88,13 @@ Passando il flag --human_in_the_loo l'agente scrive solo il prompt, poi si ferma
 
 - valutazione o pre approvazione umana e commit, deploy
 - qualsiasi cosa vi venga in mente
+
+# Cose interessanti e potenziale.
+
+- se si mette un interfaccia grafica  sopra tipo una pagina web e una piataforma/sdk per gestire il tutto diventa a tutti
+gli effetti una software factory, aka, chiunque non sviluppatore ma con minimi concetti potrebbe sviluppare una nuova feature e deployarla . 
+Per esempio: Luca, Maria, etc..
+
+E non solo: si potrebbero aggiungere degli widget nelle proprie applicazioni che uno scrive la funzionalità che vuole
+in linguaggio naturale e viene creato, eventualmente mergiato e deployato.
+Es: sono sulla pagina web del mio prodotto e scrivo: "aggiungimi una funzionalità per tracciare il click del mouse"

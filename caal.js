@@ -13,7 +13,7 @@
  * feature_*.md files produced, scenarios from the .feature file written. Nothing faked.
  *
  * Commands:
- *   node caal.jsstart --user_stories_file <path> --user_story_to_run <number>
+ *   node caal.js start --user_stories_file <path> --user_story_to_run <number>
  *                          [--agent "<cmd>"] [--base-prompt <file>] [--warmup <sec>] [--max-retries <n>]
  *                          [--human_in_the_loop true]
  *                          # extracts the requested user-story section from <user_stories_file> into
@@ -30,17 +30,17 @@
  *                          # specs/tasks/<slug>/TASK.md and runs task.plan -> task.implement ->
  *                          # task.regression (npm run test:tag @done) -> task.finish. Default base
  *                          # prompt is RALPH_PROMPT_TASK.md; override with --base-prompt.
- *   node caal.jsstep [<task.key>]   # run exactly one action — the next actionable
- *                                        # task by default, or the named task. When a
- *                                        # task key is supplied and the workflow is in
+ *   node caal.js step [<step-key>]   # run exactly one step — the next actionable
+ *                                        # step by default, or the named step. When a
+ *                                        # step key is supplied and the workflow is in
  *                                        # completed state the runner prompts the user
  *                                        # to confirm before executing.
- *   node caal.jsrun         # run autonomously to the end (or until stop/block/fail)
- *   node caal.jsresume      # sanitize + run to the end
- *   node caal.jsstatus      # print progress (read-only, works anytime)
- *   node caal.jstasks       # list available task types, deterministic vs agentic (alias: steps)
- *   node caal.jsstop        # request a cooperative halt at the next action boundary
- *   node caal.jsreset [--yes]
+ *   node caal.js run         # run autonomously to the end (or until stop/block/fail)
+ *   node caal.js resume      # sanitize + run to the end
+ *   node caal.js status      # print progress (read-only, works anytime)
+ *   node caal.js tasks       # list available task types, deterministic vs agentic (alias: steps)
+ *   node caal.js stop        # request a cooperative halt at the next action boundary
+ *   node caal.js reset [--yes]
  *
  * Agent contract: the configured command is spawned with env WORKFLOW_PROMPT_FILE
  * (path to a per-step meta-prompt), WORKFLOW_TASK (the task key), and
@@ -204,8 +204,8 @@ function stripAnsi(s) { return String(s || '').replace(/\x1b\[[0-9;]*m/g, ''); }
 // Returns null when nothing specific is known so callers can fall back to
 // task-type-specific advice.
 function suggestFixForExitCode(status, signal) {
-    if (signal === 'SIGINT' || status === 130) return 'User interrupted with Ctrl-C. Resume with `node worflow.js resume`.';
-    if (signal === 'SIGTERM' || status === 143) return 'Process was terminated by SIGTERM. Check for an outside supervisor sending kill signals, then `node worflow.js resume`.';
+    if (signal === 'SIGINT' || status === 130) return 'User interrupted with Ctrl-C. Resume with `node caal.js resume`.';
+    if (signal === 'SIGTERM' || status === 143) return 'Process was terminated by SIGTERM. Check for an outside supervisor sending kill signals, then `node caal.js resume`.';
     if (status === 127) return 'Command binary not found in PATH. Verify your --agent argument / AGENT_CMD env var; run `which <first-word-of-command>` to confirm the binary exists.';
     if (status === 126) return 'Command file exists but is not executable. Run `chmod +x <command-path>` and retry.';
     if (status === 137) return 'Killed by SIGKILL — usually the OOM killer. Free memory, lower concurrency, or split the prompt into smaller chunks, then `resume`.';
@@ -223,10 +223,10 @@ function suggestFixForAgent(status, signal, logTail) {
     if (codeFix) return codeFix;
     const tail = stripAnsi(logTail).toLowerCase();
     if (/api key|authentication|unauthorized|\b401\b/.test(tail)) {
-        return 'Agent reported an auth error. Check that ANTHROPIC_API_KEY (or whichever credential the agent uses) is exported in the shell that runs worflow.js, then `resume`.';
+        return 'Agent reported an auth error. Check that ANTHROPIC_API_KEY (or whichever credential the agent uses) is exported in the shell that runs caal.js, then `resume`.';
     }
     if (/rate.?limit|\b429\b/.test(tail)) {
-        return 'Agent was rate-limited. Wait a few minutes and `node worflow.js resume`, or lower concurrency.';
+        return 'Agent was rate-limited. Wait a few minutes and `node caal.js resume`, or lower concurrency.';
     }
     if (/econnreset|enotfound|network|fetch failed|getaddrinfo/.test(tail)) {
         return 'Agent hit a network error. Check connectivity and any corporate proxy settings, then `resume`.';
@@ -235,7 +235,7 @@ function suggestFixForAgent(status, signal, logTail) {
         return 'Agent referenced a missing file. The prompt at WORKFLOW_PROMPT_FILE expects artifacts created by prior steps — check that they exist on disk. Re-run the prior step or correct the prompt.';
     }
     if (/permission denied|eacces/.test(tail)) {
-        return 'Permission denied while the agent ran. Check file ownership/perms on the files the agent edits, or run worflow.js as the right user.';
+        return 'Permission denied while the agent ran. Check file ownership/perms on the files the agent edits, or run caal.js as the right user.';
     }
     const codePart = status === null ? `signal ${signal || 'unknown'}` : `exit code ${status}`;
     return `Agent exited with ${codePart}. Read the log tail above — it contains the actual failure reason from the agent itself. Full log is available with \`tail -n200 <log_file>\`. Fix the underlying issue and \`resume\`.`;
@@ -271,9 +271,9 @@ function suggestFixForTestFailure(logTail) {
         hints.push('An audit-table assertion failed. Check that the operation under test actually writes the expected audit row (right table, right action, right payload).');
     }
     if (hints.length === 0) {
-        return 'Read the cucumber output above to identify the failing step and the error message. Common roots: (1) production code does not yet implement the behavior; (2) step definition is missing or matches the wrong regex; (3) database state was not seeded; (4) audit-row assertion is querying the wrong table/column. The workflow will queue a DEBUG task on retry so the agent can diagnose. If you fix it manually, mark the failure done with `node worflow.js done <key>` after fixing.';
+        return 'Read the cucumber output above to identify the failing step and the error message. Common roots: (1) production code does not yet implement the behavior; (2) step definition is missing or matches the wrong regex; (3) database state was not seeded; (4) audit-row assertion is querying the wrong table/column. The workflow will queue a DEBUG task on retry so the agent can diagnose. If you fix it manually, mark the failure done with `node caal.js done <step-key>` after fixing.';
     }
-    hints.push('After fixing, run `node worflow.js resume` — the workflow will retry the test (and queue a DEBUG task automatically if you have retries remaining).');
+    hints.push('After fixing, run `node caal.js resume` — the workflow will retry the test (and queue a DEBUG task automatically if you have retries remaining).');
     return hints.join('\n');
 }
 
@@ -795,7 +795,7 @@ function hasStory(id) {
 }
 function ensureStoriesToml(story) {
     if (!fs.existsSync(STORIES_TOML)) {
-        fs.writeFileSync(STORIES_TOML, '# user stories registry — managed by workflow.js\n');
+        fs.writeFileSync(STORIES_TOML, '# user stories registry — managed by caal.js\n');
     }
     if (hasStory(story.id)) return;
     let t = readSafe(STORIES_TOML) || '';
@@ -1347,7 +1347,7 @@ function _runAgentInner(task, prepared) {
                         `The agent finished its turn but did not write the result JSON the workflow needs. ` +
                         `The prompt at ${path.relative(ROOT, promptPath)} contains a "Result reporting" section that lists the required keys (${(resultSpec.required || []).join(', ')}). ` +
                         `Common causes: (1) the agent ignored the section; (2) the agent wrote the JSON to the wrong path; (3) the composed prompt was edited in HITL mode and the section was removed. ` +
-                        `Inspect the agent log, then either re-run with a clearer prompt or write ${resultRel} by hand and \`node worflow.js resume\`.`,
+                        `Inspect the agent log, then either re-run with a clearer prompt or write ${resultRel} by hand and \`node caal.js resume\`.`,
                 }),
             };
         }
@@ -1368,7 +1368,7 @@ function _runAgentInner(task, prepared) {
                     artifacts_checked: [resultRel],
                     log_tail: readTail(resultFilePath, 40),
                     suggested_fix:
-                        `${resultRel} exists but is not valid JSON. Open it, fix the syntax, then \`node worflow.js resume\`. ` +
+                        `${resultRel} exists but is not valid JSON. Open it, fix the syntax, then \`node caal.js resume\`. ` +
                         `If the file looks corrupted, delete it — the workflow will re-run the agent.`,
                 }),
             };
@@ -1385,7 +1385,7 @@ function _runAgentInner(task, prepared) {
                     log_file: path.relative(ROOT, logFile),
                     prompt_file: path.relative(ROOT, promptPath),
                     artifacts_checked: [resultRel],
-                    suggested_fix: `Rewrite ${resultRel} as a JSON object with the required keys: ${(resultSpec.required || []).join(', ')}. Then \`node worflow.js resume\`.`,
+                    suggested_fix: `Rewrite ${resultRel} as a JSON object with the required keys: ${(resultSpec.required || []).join(', ')}. Then \`node caal.js resume\`.`,
                 }),
             };
         }
@@ -1407,7 +1407,7 @@ function _runAgentInner(task, prepared) {
                     prompt_file: path.relative(ROOT, promptPath),
                     artifacts_checked: [resultRel],
                     suggested_fix:
-                        `Add the missing key(s) (${missing.join(', ')}) to ${resultRel} with a non-empty value, then \`node worflow.js resume\`. ` +
+                        `Add the missing key(s) (${missing.join(', ')}) to ${resultRel} with a non-empty value, then \`node caal.js resume\`. ` +
                         `The prompt's "Result reporting" section describes what each key should contain.`,
                 }),
             };
@@ -1445,7 +1445,7 @@ function _runAgentInner(task, prepared) {
                     stack_trace: e.stack,
                     suggested_fix:
                         'The shell itself could not start the agent. Check that /bin/bash exists and that the agent command is valid shell. ' +
-                        'Try running the command manually in this shell to see what fails first. After fixing, `node worflow.js resume`.',
+                        'Try running the command manually in this shell to see what fails first. After fixing, `node caal.js resume`.',
                 }),
             });
             return;
@@ -1550,7 +1550,7 @@ function _runAgentInner(task, prepared) {
         // Signal forwarding
         // The agent lives in its own process group, so terminal signals
         // (Ctrl-C) do not reach it automatically. Without this, a Ctrl-C of
-        // caal.jswould orphan claude. The existing onSigint handler in
+        // caal.js would orphan claude. The existing onSigint handler in
         // execute() runs in parallel and sets the cooperative STOP flag.
         // Listeners are removed in cleanup() so they do not accumulate
         // across successive agent invocations.
@@ -1585,7 +1585,7 @@ function _runAgentInner(task, prepared) {
                     stack_trace: err.stack,
                     suggested_fix:
                         'The shell itself could not start the agent. Check that /bin/bash exists and that the agent command is valid shell. ' +
-                        'Try running the command manually in this shell to see what fails first. After fixing, `node worflow.js resume`.',
+                        'Try running the command manually in this shell to see what fails first. After fixing, `node caal.js resume`.',
                 }),
             });
         });
@@ -1635,7 +1635,7 @@ function _runAgentInner(task, prepared) {
                             detection: detectionResult,
                             suggested_fix:
                                 'Claude Code finished its turn-loop but flagged the result as an error (often: tool failure, max turns hit, or content policy). ' +
-                                'Read the agent log tail above for the specific reason, then `node worflow.js resume`.',
+                                'Read the agent log tail above for the specific reason, then `node caal.js resume`.',
                         }),
                     });
                     return;
@@ -1686,7 +1686,7 @@ function _runAgentInner(task, prepared) {
                         idle_ms: idleMs,
                         suggested_fix:
                             'The agent stayed silent past the idle watchdog. Common causes: blocked on a network call, an MCP server hung at startup, or the workload genuinely needs more silent time. ' +
-                            'Either raise --agent-idle-timeout (or WORKFLOW_AGENT_IDLE_TIMEOUT_SEC), or investigate why the agent is not making progress. After fixing, `node worflow.js resume`.',
+                            'Either raise --agent-idle-timeout (or WORKFLOW_AGENT_IDLE_TIMEOUT_SEC), or investigate why the agent is not making progress. After fixing, `node caal.js resume`.',
                     }),
                 });
                 return;
@@ -1770,7 +1770,7 @@ function cmdDone(key) {
     emitTrace('[running] cmdDone', { inputs: { key } });
     if (!loadState()) die('no workflow initialized.');
     const task = state.tasks.find((t) => t.key === key);
-    if (!task) die(`task not found: ${key}. Run "status" to see task keys.`);
+    if (!task) die(`step not found: ${key}. Run "status" to see step keys.`);
     if (task.status === 'done') {
         console.log(`already done: ${key}`);
         emitTrace('[finished] cmdDone', { result: { key, noop: true } });
@@ -1812,7 +1812,7 @@ function _restartServerInner(task) {
                 suggested_fix:
                     'Verify that the `start:dev` npm script exists in package.json and that `node_modules/` is populated (run `npm install`). ' +
                     'If a previous instance is still bound to the dev port, run `npm run delete:dev` manually and confirm the port is free with `lsof -i :<port>`. ' +
-                    'After fixing, `node worflow.js resume`.',
+                    'After fixing, `node caal.js resume`.',
             }),
         };
     }
@@ -2006,7 +2006,7 @@ async function _handleInner(task) {
                             `The decompose agent exited 0 but did not write any feature_N.md files in ${path.relative(ROOT, dir)}. ` +
                             `Read the agent log (.workflow/agent_${safeKey}.log) to see what it actually did — common causes: it wrote to the wrong directory, ` +
                             `or it produced commentary without committing files. Either (a) re-run the agent with a sharper prompt, or ` +
-                            `(b) create feature_1.md manually following the feature_template, then \`node worflow.js resume\`.`,
+                            `(b) create feature_1.md manually following the feature_template, then \`node caal.js resume\`.`,
                     }),
                 };
             }
@@ -2028,7 +2028,7 @@ async function _handleInner(task) {
                         artifacts_checked: [path.relative(ROOT, dir)],
                         files_found: fs.existsSync(dir) ? fs.readdirSync(dir) : [],
                         suggested_fix:
-                            `Run \`node worflow.js status\` — the prior step (story.decompose) should have produced feature_N.md files but did not. ` +
+                            `Run \`node caal.js status\` — the prior step (story.decompose) should have produced feature_N.md files but did not. ` +
                             `Re-run decompose (mark it pending in .workflow/state.json then resume), or create the feature files manually following the feature_template.`,
                     }),
                 };
@@ -2126,7 +2126,7 @@ async function _handleInner(task) {
                         suggested_fix:
                             `Open ${gherkinRel} and confirm it contains at least one \`Scenario:\` line tagged ${state.story.tag}. ` +
                             `The skill bdd-gherkin-feature-writer should produce well-formed gherkin — check its output in the agent log under .workflow/. ` +
-                            `After fixing the file, \`node worflow.js resume\`.`,
+                            `After fixing the file, \`node caal.js resume\`.`,
                     }),
                 };
             }
@@ -2428,7 +2428,7 @@ function clearStop() { STOP = false; try { fs.writeFileSync(CONTROL_FILE, JSON.s
 // isWorkflowCompleted
 // Returns true when the story is in completed state OR every task in the tree
 // has reached a terminal status that the loop would otherwise skip ('done',
-// 'superseded', 'failed_continued'). Used by `step <task.key>` so we can warn
+// 'superseded', 'failed_continued'). Used by `step <step-key>` so we can warn
 // the user before re-running a task on a finished workflow — they may be
 // pointing at the wrong directory or have already shipped this story.
 //=====================
@@ -2660,7 +2660,7 @@ async function runLoop(mode, targetTaskKey) {
         //=====================
         // Task selection
         // In targeted mode the caller has chosen a specific task by key (the
-        // `step <task.key>` flow), already validated and reset its status in
+        // `step <step-key>` flow), already validated and reset its status in
         // execute(). We look it up directly instead of asking firstActionable()
         // — the latter would skip it whenever the workflow is completed or the
         // task itself is in a terminal state, which is exactly the situation
@@ -2773,10 +2773,10 @@ async function runLoop(mode, targetTaskKey) {
                     operation: `handle(${task.type})`,
                     stack_trace: stack,
                     suggested_fix:
-                        'An exception was thrown inside the worflow.js handler — this is either a worflow.js bug or an invariant violation ' +
+                        'An exception was thrown inside the caal.js handler — this is either a caal.js bug or an invariant violation ' +
                         '(e.g. a file the handler expected to exist was deleted between runs). Read the stack trace to find the failing line. ' +
                         'Common causes: (1) state.json was edited by hand and is now inconsistent; (2) artifacts from a prior step were removed; ' +
-                        '(3) the agent left files in a half-written state. After fixing, `node worflow.js resume`.',
+                        '(3) the agent left files in a half-written state. After fixing, `node caal.js resume`.',
                 }),
             };
         }
@@ -2923,7 +2923,7 @@ function acquireLock() {
     if (fs.existsSync(LOCK_FILE)) {
         const pid = parseInt(readSafe(LOCK_FILE) || '0', 10);
         if (pid && pid !== process.pid && isAlive(pid)) {
-            die(`another runner is active (pid ${pid}). Use "node caal.jsstop" or wait for it to finish.`);
+            die(`another runner is active (pid ${pid}). Use "node caal.js stop" or wait for it to finish.`);
         }
     }
     fs.writeFileSync(LOCK_FILE, String(process.pid));
@@ -3151,7 +3151,7 @@ function ensureInitialized(maybeFile, flags) {
         emitTrace('[finished] ensureInitialized', { result: { source: 'bootstrapped', storyId: state.story.id } });
         return;
     }
-    die('no workflow initialized. Run: node caal.jsstart <story.md>');
+    die('no workflow initialized. Run: node caal.js start <story.md>');
 }
 
 function finishOutcome(outcome) {
@@ -3182,7 +3182,7 @@ async function execute(mode, maybeFile, flags, opts) {
     persist();
 
     //=====================
-    // Targeted single-task execution (step <task.key>)
+    // Targeted single-task execution (step <step-key>)
     // When the caller specifies a task key we validate it exists, prompt the
     // user for confirmation if the workflow is in completed state, then reset
     // the chosen task to a clean 'pending' status so runLoop can execute it
@@ -3200,7 +3200,7 @@ async function execute(mode, maybeFile, flags, opts) {
 
         if (!task) {
             releaseLock();
-            die(`task not found: ${targetTaskKey}. Run "status" to see task keys.`);
+            die(`step not found: ${targetTaskKey}. Run "status" to see step keys.`);
         }
         //=====================
         // Completed-state confirmation gate
@@ -3326,16 +3326,16 @@ function cmdReset(flags) {
 function cmdSetStepAgent(key, cmd) {
     emitTrace('[running] cmdSetStepAgent', { inputs: { key, cmd } });
     if (!loadState()) die('no workflow initialized.');
-    if (!key) die('set-step-agent needs a task key: node caal.jsset-step-agent <task.key> "<cmd>"');
+    if (!key) die('set-step-agent needs a step key: node caal.js set-step-agent <step-key> "<cmd>"');
     if (!cmd || !String(cmd).trim()) {
-        die('set-step-agent needs a non-empty agent command. To remove an override, use: node caal.jsunset-step-agent <task.key>');
+        die('set-step-agent needs a non-empty agent command. To remove an override, use: node caal.js unset-step-agent <step-key>');
     }
     if (!state.config.stepAgents || typeof state.config.stepAgents !== 'object') {
         state.config.stepAgents = {};
     }
     const known = state.tasks.some((t) => t.key === key);
     if (!known) {
-        logYellow(`warning: task key "${key}" is not currently in the task tree.`);
+        logYellow(`warning: step key "${key}" is not currently in the step tree.`);
         logYellow('The override will be applied if/when that task appears (e.g. after CREATE_GHERKIN expands scenario tasks).');
     }
     state.config.stepAgents[key] = cmd;
@@ -3347,7 +3347,7 @@ function cmdSetStepAgent(key, cmd) {
 function cmdUnsetStepAgent(key) {
     emitTrace('[running] cmdUnsetStepAgent', { inputs: { key } });
     if (!loadState()) die('no workflow initialized.');
-    if (!key) die('unset-step-agent needs a task key: node caal.jsunset-step-agent <task.key>');
+    if (!key) die('unset-step-agent needs a step key: node caal.js unset-step-agent <step-key>');
     const map = state.config.stepAgents || {};
     if (!(key in map)) {
         console.log(`no per-step agent override set for ${key}`);
@@ -3436,26 +3436,26 @@ function usage() {
         '                             specs/tasks/<slug>/plan.md) -> task.implement (agent) ->',
         `                             task.regression (npm run test:tag ${TASK_REGRESSION_TAG}, debug/retry on failure)`,
         '                             -> task.finish. step/run/resume/status/done work as usual.',
-        '  node caal.js step [<task.key>]',
-        '                             run exactly one action and pause. With no argument,',
-        '                             runs the next actionable task. With a task key (see',
-        '                             `status`), re-runs that specific task — even if the',
+        '  node caal.js step [<step-key>]',
+        '                             run exactly one step and pause. With no argument,',
+        '                             runs the next actionable step. With a step key (see',
+        '                             `status`), re-runs that specific step — even if the',
         '                             workflow is completed (the runner will prompt for',
         '                             confirmation before executing on a completed workflow).',
         '  node caal.js run       run autonomously to the end (or until stop/block/fail)',
         '  node caal.js resume    sanitize and run to the end',
         '  node caal.js status    print progress (read-only, anytime)',
         '  node caal.js stop      request a cooperative halt',
-        '  node caal.js done <task.key>      Run "status" to see keys.',
-        '  node caal.js set-step-agent <task.key> "<cmd>"',
+        '  node caal.js done <step-key>      Run "status" to see keys.',
+        '  node caal.js set-step-agent <step-key> "<cmd>"',
         '                             override the agent command for a single step. The override',
         '                             takes precedence over --agent / AGENT_CMD for that step only.',
-        '                             Setting an override for a task key that does not yet exist',
-        '                             (e.g. a scenario task before CREATE_GHERKIN runs) is allowed —',
-        '                             a warning is printed and the override applies when the task',
+        '                             Setting an override for a step key that does not yet exist',
+        '                             (e.g. a scenario step before CREATE_GHERKIN runs) is allowed —',
+        '                             a warning is printed and the override applies when the step',
         '                             is created. Spliced retries (debug#N, run_test#N) do NOT',
         '                             inherit the override automatically.',
-        '  node caal.js unset-step-agent <task.key>',
+        '  node caal.js unset-step-agent <step-key>',
         '                             remove a per-step agent override.',
         '  node caal.js list-step-agents',
         '                             print the global agent and all per-step overrides.',
@@ -3612,7 +3612,7 @@ async function main() {
         case 'reset': cmdReset(flags); break;
         case 'done': {
             const key = rest[0];
-            if (!key) die('done needs a task key: node caal.jsdone <key>\nRun "status" to see keys.');
+            if (!key) die('done needs a step key: node caal.js done <step-key>\nRun "status" to see keys.');
             cmdDone(key);
             break;
         }
@@ -3620,8 +3620,8 @@ async function main() {
             const key = rest[0];
             const stepCmd = rest[1];
             if (!key || !stepCmd) {
-                die('set-step-agent needs both a task key and a command:\n' +
-                    '  node caal.jsset-step-agent <task.key> "<cmd>"\n' +
+                die('set-step-agent needs both a step key and a command:\n' +
+                    '  node caal.js set-step-agent <step-key> "<cmd>"\n' +
                     'Run "status" or "list-step-agents" to see existing keys.');
             }
             cmdSetStepAgent(key, stepCmd);
@@ -3629,7 +3629,7 @@ async function main() {
         }
         case 'unset-step-agent': {
             const key = rest[0];
-            if (!key) die('unset-step-agent needs a task key: node caal.jsunset-step-agent <task.key>');
+            if (!key) die('unset-step-agent needs a step key: node caal.js unset-step-agent <step-key>');
             cmdUnsetStepAgent(key);
             break;
         }
