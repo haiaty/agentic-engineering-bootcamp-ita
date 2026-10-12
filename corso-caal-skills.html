@@ -1,0 +1,1221 @@
+<!doctype html>
+<html lang="it" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CAAL e Skills — Corso</title>
+<style>
+:root{
+  --bg:#f7f7f5; --panel:#ffffff; --panel-2:#f1f1ee; --text:#1c1c1a; --muted:#6b6b63;
+  --line:#e2e2dc; --accent:#c2451f; --accent-soft:#fdefe9; --ok:#1f7a4d; --ok-soft:#e8f5ee;
+  --warn:#8a5a00; --warn-soft:#fdf3e0; --bad:#a52020; --bad-soft:#fbeaea;
+  --code-bg:#1e1e1c; --code-text:#f0efe9; --shadow:0 1px 2px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.05);
+  --radius:12px; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+}
+html[data-theme="dark"]{
+  --bg:#141413; --panel:#1e1e1c; --panel-2:#26261f; --text:#f0efe9; --muted:#a3a39a;
+  --line:#33332c; --accent:#e8825c; --accent-soft:#2e211c; --ok:#5ec48d; --ok-soft:#17281f;
+  --warn:#e0b45f; --warn-soft:#2a2318; --bad:#e88b8b; --bad-soft:#2b1a1a;
+  --code-bg:#0f0f0e; --code-text:#e8e7e1; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;font-size:inherit;cursor:pointer}
+a{color:var(--accent)}
+
+/* ---------- layout ---------- */
+header.top{
+  position:sticky;top:0;z-index:40;background:var(--panel);border-bottom:1px solid var(--line);
+  display:flex;flex-wrap:wrap;align-items:center;gap:14px;padding:10px 18px;
+}
+.brand{font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;gap:9px;font-size:15px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--accent);flex:none}
+.brand small{display:block;font-weight:500;color:var(--muted);font-size:11.5px;letter-spacing:0}
+.spacer{flex:1}
+.pill{
+  border:1px solid var(--line);background:var(--panel-2);color:var(--text);
+  border-radius:999px;padding:6px 12px;font-size:12.5px;font-weight:600;display:inline-flex;align-items:center;gap:7px;
+}
+.pill.ghost{background:transparent}
+.pill:hover{border-color:var(--accent)}
+.clock{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.progress-wrap{width:100%;height:3px;background:var(--panel-2)}
+.progress-bar{height:100%;width:0;background:var(--accent);transition:width .35s ease}
+
+.shell{display:grid;grid-template-columns:274px minmax(0,1fr);gap:0;align-items:start}
+nav.side{
+  position:sticky;top:57px;height:calc(100vh - 57px);overflow-y:auto;
+  border-right:1px solid var(--line);padding:16px 12px 40px;background:var(--bg);
+}
+nav.side h4{font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:6px 8px 8px}
+.navitem{
+  display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;border:0;background:transparent;
+  color:var(--text);padding:8px 10px;border-radius:9px;margin-bottom:2px;line-height:1.35;
+}
+.navitem:hover{background:var(--panel-2)}
+.navitem.active{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.navitem .idx{font-family:var(--mono);font-size:11px;color:var(--muted);width:20px;flex:none;padding-top:2px}
+.navitem.active .idx{color:var(--accent)}
+.navitem .nt{font-size:13.5px}
+.navitem .nm{font-size:11px;color:var(--muted);display:block}
+.navitem .tick{margin-left:auto;color:var(--ok);font-size:12px;flex:none}
+
+main{padding:30px 34px 90px;max-width:920px;margin:0 auto;width:100%}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+h1{font-size:31px;line-height:1.18;letter-spacing:-.02em;margin:0 0 6px}
+h2{font-size:21px;letter-spacing:-.01em;margin:38px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h3{font-size:16px;margin:24px 0 8px}
+.lede{color:var(--muted);font-size:15px;margin:0 0 4px}
+.prose{font-size:15px}
+.prose p{margin:12px 0}
+.prose ul,.prose ol{margin:12px 0;padding-left:22px}
+.prose li{margin:6px 0}
+.prose strong{font-weight:650}
+code{font-family:var(--mono);font-size:.875em;background:var(--panel-2);border:1px solid var(--line);border-radius:5px;padding:1px 5px}
+pre{background:var(--code-bg);color:var(--code-text);padding:14px 16px;border-radius:var(--radius);overflow-x:auto;font-size:12.5px;line-height:1.55;margin:14px 0}
+pre code{background:none;border:0;padding:0;color:inherit;font-size:12.5px}
+
+.callout{border:1px solid var(--line);border-left:3px solid var(--accent);background:var(--panel);border-radius:10px;padding:13px 16px;margin:16px 0;font-size:14px;box-shadow:var(--shadow)}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.callout.ok{border-left-color:var(--ok);background:var(--ok-soft)}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+.callout .ct{display:block;font-weight:700;font-size:12.5px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+
+.grid{display:grid;gap:12px;margin:16px 0}
+.grid.c2{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.grid.c3{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
+.card h5{margin:0 0 5px;font-size:13.5px}
+.card p{margin:0;font-size:13px;color:var(--muted)}
+.card .tag{font-family:var(--mono);font-size:10.5px;color:var(--accent);text-transform:uppercase;letter-spacing:.06em}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin:16px 0}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}
+.tablewrap table{margin:0}
+
+/* ---------- widgets ---------- */
+.widget{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin:20px 0;box-shadow:var(--shadow)}
+.widget-h{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}
+.widget-k{font-family:var(--mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:1px 6px;flex:none}
+.widget-t{font-weight:650;font-size:15px}
+.widget-s{color:var(--muted);font-size:13.5px;margin:2px 0 14px}
+
+.opt{display:block;width:100%;text-align:left;border:1px solid var(--line);background:var(--panel-2);color:var(--text);border-radius:9px;padding:10px 13px;margin-bottom:7px;font-size:14px;transition:.15s}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:disabled{cursor:default}
+.opt.sel-ok{border-color:var(--ok);background:var(--ok-soft)}
+.opt.sel-bad{border-color:var(--bad);background:var(--bad-soft)}
+.opt.reveal-ok{border-color:var(--ok)}
+.opt .mk{font-family:var(--mono);font-weight:700;margin-right:8px;color:var(--muted)}
+.why{font-size:13px;color:var(--muted);margin-top:6px;padding-left:2px;display:none}
+.opt.shown .why{display:block}
+
+.chk{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--panel-2);margin-bottom:6px;cursor:pointer;font-size:14px}
+.chk input{margin-top:4px;flex:none;accent-color:var(--accent);width:15px;height:15px}
+.chk.on{border-color:var(--accent);background:var(--accent-soft)}
+.chk .lb{font-weight:600}
+.chk .ds{display:block;font-size:12.5px;color:var(--muted);font-weight:400}
+
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.pane{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.pane-h{padding:7px 12px;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.pane.bad .pane-h{background:var(--bad-soft);color:var(--bad)}
+.pane.ok .pane-h{background:var(--ok-soft);color:var(--ok)}
+.pane pre{margin:0;border-radius:0;max-height:340px}
+
+.bp{border:1px solid var(--line);border-radius:10px;background:var(--panel-2);padding:14px 16px;margin-bottom:10px}
+.bp-h{display:flex;gap:10px;align-items:baseline;font-weight:700;font-size:15px}
+.bp-n{font-family:var(--mono);font-size:12px;color:var(--accent);flex:none}
+.bp-why{font-size:13.5px;color:var(--muted);margin:6px 0 10px}
+.bp-ex{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.bp-ex>div{border-radius:8px;padding:8px 11px;font-size:13px;line-height:1.5}
+.bp-ex .do{background:var(--ok-soft);border-left:3px solid var(--ok)}
+.bp-ex .dont{background:var(--bad-soft);border-left:3px solid var(--bad)}
+.bp-ex b{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
+.bp-ex .do b{color:var(--ok)}
+.bp-ex .dont b{color:var(--bad)}
+
+.preview{background:var(--code-bg);color:var(--code-text);border-radius:10px;padding:14px 16px;font-family:var(--mono);font-size:12px;line-height:1.6;white-space:pre-wrap;max-height:400px;overflow-y:auto;min-height:80px}
+.meter{height:7px;border-radius:99px;background:var(--panel-2);overflow:hidden;margin:12px 0 6px;border:1px solid var(--line)}
+.meter > i{display:block;height:100%;background:var(--accent);transition:width .3s}
+.scoreline{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);font-family:var(--mono)}
+
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.tab{border:1px solid var(--line);background:var(--panel-2);color:var(--muted);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;font-family:var(--mono)}
+.tab:hover{border-color:var(--accent)}
+.tab.on{border-color:var(--accent);background:var(--accent-soft);color:var(--text)}
+
+textarea,input[type="text"],select{
+  width:100%;font-family:inherit;font-size:14px;color:var(--text);background:var(--panel-2);
+  border:1px solid var(--line);border-radius:9px;padding:10px 12px;resize:vertical;
+}
+textarea:focus,input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+label.fl{display:block;font-size:12px;font-weight:650;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:12px 0 5px}
+.btn{border:1px solid var(--line);background:var(--panel-2);color:var(--text);border-radius:8px;padding:8px 14px;font-size:13.5px;font-weight:600}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{filter:brightness(1.07)}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}
+.hint{font-size:12.5px;color:var(--muted)}
+.saved{font-size:12px;color:var(--ok);opacity:0;transition:.3s}
+.saved.on{opacity:1}
+
+.sorter-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--panel-2);margin-bottom:7px}
+.sorter-row .it{flex:1 1 240px;font-size:13.5px}
+.sorter-row .bs{display:flex;gap:5px;flex:none}
+.bbtn{border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:7px;padding:4px 9px;font-size:11.5px;font-weight:650}
+.bbtn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.sorter-row.ok{border-color:var(--ok);background:var(--ok-soft)}
+.sorter-row.bad{border-color:var(--bad);background:var(--bad-soft)}
+.sorter-row .fb{flex:1 1 100%;font-size:12.5px;color:var(--muted);display:none}
+.sorter-row.done .fb{display:block}
+
+.diag{margin-top:12px;font-size:13.5px}
+.diag div{padding:6px 0;border-top:1px dashed var(--line)}
+
+/* ---------- workflow a step ---------- */
+.loopgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:6px 0 12px}
+.lstep{border:1px solid var(--line);background:var(--panel-2);border-radius:10px;padding:10px 11px;font-size:13px;opacity:.45;transition:.2s}
+.lstep.on{opacity:1;border-color:var(--accent);background:var(--accent-soft)}
+.lstep.past{opacity:.85}
+.lstep b{display:block;font-size:11px;font-family:var(--mono);color:var(--accent);letter-spacing:.05em;text-transform:uppercase;margin-bottom:3px}
+.lstep span{color:var(--muted);font-size:12.5px;display:block;margin-top:3px}
+
+
+.footnav{display:flex;justify-content:space-between;gap:10px;margin-top:46px;padding-top:18px;border-top:1px solid var(--line)}
+.timerbox{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+.mod-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0 24px}
+.badge{font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-radius:6px;padding:3px 8px;color:var(--muted)}
+
+@media (max-width:900px){
+  .shell{grid-template-columns:1fr}
+  nav.side{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);max-height:290px}
+  main{padding:22px 16px 70px}
+  h1{font-size:25px}
+}
+@media print{
+  nav.side,header.top,.footnav,.btnrow{display:none}
+  main{max-width:none;padding:0}
+  .widget,.card,.callout{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand"><span class="dot"></span><span>CAAL &amp; Skills<small>Programma formativo — 3 ore e 30, workflow agentici durevoli e skills per l'era agentica</small></span></div>
+  <div class="spacer"></div>
+  <div class="timerbox">
+    <button class="pill ghost" id="timerBtn">▶ Avvia timer</button>
+    <span class="pill clock" id="clock">00:00:00 / 3:30:00</span>
+  </div>
+  <button class="pill ghost" id="exportBtn" title="Scarica risposte e note in Markdown">⬇ Esporta</button>
+  <button class="pill ghost" id="themeBtn" title="Tema chiaro/scuro">◐</button>
+</header>
+<div class="progress-wrap"><div class="progress-bar" id="pbar"></div></div>
+
+<div class="shell">
+  <nav class="side">
+    <h4>Programma</h4>
+    <div id="nav"></div>
+    <h4 style="margin-top:18px">Avanzamento</h4>
+    <div style="padding:0 10px;font-size:12.5px;color:var(--muted)" id="statsBox"></div>
+    <div style="padding:10px">
+      <button class="btn" id="resetBtn" style="width:100%;font-size:12px">Azzera avanzamento</button>
+    </div>
+  </nav>
+  <main id="main"></main>
+</div>
+
+<script>
+/* ============================================================
+   STATO + PERSISTENZA
+   ============================================================ */
+const NS = 'caalskills.';
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(NS+k); return v===null? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(NS+k, JSON.stringify(v)); }catch(e){} },
+  del(k){ try{ localStorage.removeItem(NS+k); }catch(e){} },
+  clearAll(){ try{ Object.keys(localStorage).filter(k=>k.indexOf(NS)===0).forEach(k=>localStorage.removeItem(k)); }catch(e){} }
+};
+let current = store.get('current', 0);
+let done = store.get('done', {});
+let answers = store.get('answers', {});
+let quizState = store.get('quiz', {});
+
+function saveAll(){ store.set('done', done); store.set('answers', answers); store.set('quiz', quizState); }
+
+/* ============================================================
+   CONTENUTI
+   ============================================================ */
+const MODULES = [];
+
+/* ---------- 0. Apertura ---------- */
+MODULES.push({
+  id:'m0', n:'00', title:'Apertura', min:5,
+  blocks:[
+    {t:'p',html:`<p>Con il Ralph loop hai imparato a dare all'agente un compito scritto bene e a <strong>lasciarlo lavorare da solo</strong>. Funziona, finché il compito è abbastanza corto. Quando diventa una user story intera, con decine di passi, iniziano i problemi: si rompe a metà, va in loop su un test, non sai a che punto è. Oggi vediamo <strong>CAAL</strong>, il «wrapper» del Ralph che risolve questi problemi.</p>
+      <p>Nella seconda parte cambiamo prospettiva: se l'agente scrive il codice, <strong>cosa deve saper fare lo sviluppatore?</strong> Parliamo delle skill che contano nell'era agentica, umane e tecniche.</p>`},
+    {t:'cards',cards:[
+      {tag:'Parte 1',h:'Perché CAAL',p:'I limiti del Ralph su compiti lunghi, e cosa vuol dire esecuzione durevole e governata.'},
+      {tag:'Parte 2',h:'Come funziona',p:'Workflow a step, base prompt e metaprompting, modalità autonoma e human in the loop.'},
+      {tag:'Parte 3',h:'Laboratorio',p:'Un task completo con CAAL: piano, implementazione, regressione, stop e ripresa.'},
+      {tag:'Parte 4',h:'Skills agentic era',p:'Comunicare, delegare, scomporre, decidere. E le basi tecniche che l\'agente non sostituisce.'}
+    ]},
+    {t:'table',head:['Blocco','Durata'],rows:[
+      ['00 · Apertura','5 min'],
+      ['01 · Perché CAAL','20 min'],
+      ['02 · Quando usarlo e quando no','15 min'],
+      ['03 · Workflow e step','20 min'],
+      ['04 · Base prompt e metaprompting','20 min'],
+      ['05 · Autonomo o human in the loop','15 min'],
+      ['— Pausa','10 min'],
+      ['06 · Laboratorio — Un task con CAAL','25 min'],
+      ['07 · Estendere CAAL: verso la software factory','10 min'],
+      ['08 · Skills agentic era','30 min'],
+      ['09 · Skills tecniche','30 min'],
+      ['10 · Chiusura','10 min']
+    ]},
+    {t:'callout',kind:'ok',title:'Come si usa questo materiale',html:`Naviga con la barra a sinistra, con i pulsanti in fondo a ogni modulo o con le frecce della tastiera. Ogni esercizio si salva da solo nel browser (niente esce dal tuo computer). Con <strong>&#8681; Esporta</strong> scarichi tutte le tue risposte e i task che hai composto in un file Markdown.`},
+    {t:'p',html:`<h3>Prerequisiti</h3>
+      <ul>
+        <li>Sapere com'è fatto un buon prompt e come si usa il <strong>metaprompting</strong>.</li>
+        <li>Sapere cos'è un agente AI e come si usa un coding agent.</li>
+        <li>Sapere bene cos'è un <strong>Ralph loop</strong> (corso precedente).</li>
+      </ul>
+      <h3>Cosa devi saper fare a fine giornata</h3>
+      <ol>
+        <li>Spiegare quali problemi del Ralph risolve CAAL e quando non serve.</li>
+        <li>Leggere un workflow CAAL: step deterministici, step agentici, retry inseriti in caso di errore.</li>
+        <li>Scrivere un base prompt e capire come l'agente ne ricava i prompt specifici.</li>
+        <li>Lanciare un task, fermarlo, controllarne lo stato e riprenderlo da uno step preciso.</li>
+        <li>Riconoscere le skill, umane e tecniche, che fanno la differenza quando il codice lo scrive l'agente.</li>
+      </ol>`}
+  ]
+});
+
+/* ---------- 1. Perché CAAL ---------- */
+MODULES.push({
+  id:'m1', n:'01', title:'Perché CAAL', min:20,
+  blocks:[
+    {t:'callout',kind:'',title:'L\'idea',html:`<em>«Make durable execution and governance first-class.»</em> I workflow sopravvivono a errori e pause e <strong>riprendono dall'ultimo checkpoint</strong>; una persona può <strong>ispezionare o modificare lo stato</strong> nei punti di interruzione; il processo si può mettere in pausa e riprendere più tardi, per una revisione o per un lavoro lungo. Il team ha una <strong>traccia di quale strada è stata presa e perché</strong>.`},
+    {t:'p',html:`<p>Detto semplice: CAAL è <strong>una specie di wrapper del Ralph</strong>. L'agente lavora sempre con il contesto pulito e lo stato sta sempre su file, ma il ciclo non è più un <code>for</code> in bash: è un <strong>workflow a step</strong>, con uno stato salvato, che sa dove si trova, cosa è fallito e da dove ripartire.</p>
+      <h3>Le domande a cui il Ralph non risponde</h3>`},
+    {t:'table',head:['Problema con il Ralph','Cosa fa CAAL'],rows:[
+      ['Si rompe a metà dello sviluppo. Come riparto da un punto preciso senza rifare tutto?','Lo stato del workflow è in <code>.workflow/</code>. <code>resume</code> riparte dal primo step non finito; <code>step &lt;key&gt;</code> riesegue uno step specifico.'],
+      ['Ha generato un prompt sbagliato, o sta facendo scelte che non voglio. Come lo fermo?','<code>stop</code> chiede un arresto pulito al prossimo step. Con <code>--human_in_the_loop</code> rivedi (e correggi) il prompt prima che venga eseguito.'],
+      ['A che punto è il loop?','<code>status</code> stampa avanzamento, step corrente, prossimo step, base prompt. In qualunque momento, in sola lettura.'],
+      ['Vorrei step in parallelo, per esempio più audit dopo che i test passano.','Il workflow è una lista di step con un tipo: si può estendere con nuovi step (modulo 07).'],
+      ['Un test fallisce e l\'agente gira a vuoto.','Su un fallimento vengono inseriti uno step <code>debug#k</code> e un <code>run_test#k</code>, fino a <code>--max-retries</code>. Poi si ferma, invece di girare all\'infinito.'],
+      ['Vorrei log e eventi di osservabilità su parti specifiche del flusso.','Ogni step lascia i suoi file: meta-prompt, prompt composto, log dei test, <code>progress.txt</code>, <code>error_memories.md</code>.'],
+      ['Vorrei reagire con hook quando certe fasi finiscono.','Gli step sono punti di aggancio naturali: dopo un certo step se ne può aggiungere uno (notifica, commit, deploy).']
+    ]},
+    {t:'split2',a:{h:'Ralph loop',items:[
+      ['Il ciclo','Un <code>for</code> in bash che rilancia lo stesso prompt.'],
+      ['Lo stato','Quello che l\'agente decide di scrivere in <code>progress.txt</code>.'],
+      ['Se fallisce','Il giro dopo riprova, sperando che legga bene i file.'],
+      ['Il controllo','Solo alla fine, o uccidendo il processo.']
+    ]},b:{h:'CAAL',items:[
+      ['Il ciclo','Un workflow a step con nome e tipo (deterministico o agentico).'],
+      ['Lo stato','Gestito dal runner in <code>.workflow/</code>, non dall\'agente.'],
+      ['Se fallisce','Inserisce step di debug e di retry, con un tetto.'],
+      ['Il controllo','<code>status</code>, <code>stop</code>, <code>step</code>, <code>resume</code>, e gate di revisione umana.']
+    ]}},
+    {t:'callout',kind:'ok',title:'La differenza in una riga',html:`Nel Ralph è <strong>l'agente</strong> che deve ricordarsi dove era arrivato. In CAAL è <strong>il runner</strong>: l'agente esegue uno step alla volta, e la parte deterministica (lanciare i test, segnare uno step come fatto, decidere il prossimo) non passa più dall'LLM.`},
+    {t:'quiz',id:'q1a',q:'Qual è il vantaggio principale di CAAL rispetto a un Ralph loop su una user story lunga?',
+      opts:[
+        {tx:'Usa un modello più potente',ok:false,why:'Il modello è lo stesso: lo decidi tu con <code>--agent</code>.'},
+        {tx:'Lo stato del lavoro è gestito dal runner a step: puoi vedere dove si trova, fermarlo e riprendere da un punto preciso',ok:true,why:'Esatto. Esecuzione durevole (checkpoint e ripresa) e governance (stop, revisione, traccia) diventano parte del sistema.'},
+        {tx:'Non serve più scrivere un prompt',ok:false,why:'Serve ancora: il base prompt. Cambia solo che il prompt specifico di ogni step lo compone l\'agente.'},
+        {tx:'Non serve più la sandbox',ok:false,why:'No. L\'agente gira sempre con i permessi approvati: container, utente non root, zero credenziali di produzione.'}
+      ]}
+  ]
+});
+
+/* ---------- 2. Quando usarlo ---------- */
+MODULES.push({
+  id:'m2', n:'02', title:'Quando usarlo e quando no', min:15,
+  blocks:[
+    {t:'p',html:`<p>CAAL aggiunge struttura, e la struttura ha un costo: più file, più passaggi, più tempo. Ha senso solo quando il compito è <strong>abbastanza lungo da potersi rompere a metà</strong>.</p>`},
+    {t:'split2',a:{h:'Non usarlo se...',items:[
+      ['Prompt singolo','Il task sta in un solo prompt ed è semplice o veloce.'],
+      ['Estrazione strutturata','Per esempio: genera un JSON con lo stato attuale dell\'applicazione.'],
+      ['Basta un retry','Se quando fallisce basta rilanciare il prompt una volta.'],
+      ['Niente multi step','Qualsiasi attività non complessa che non richiede più passaggi.']
+    ]},b:{h:'Usalo se...',items:[
+      ['User story intere','Implementazione completa, dalle feature Gherkin ai test e all\'OpenAPI.'],
+      ['Feature complete','Un endpoint nuovo, un refactor pesante (per esempio un cambio di storage).'],
+      ['Task lunghi e fragili','Qualsiasi compito complesso che richiede più step, dura tanto e potrebbe rompersi nel mentre.']
+    ]}},
+    {t:'triage'},
+    {t:'quiz',id:'q2a',q:'Devi generare un file JSON che descrive gli endpoint esistenti dell\'app. Cosa usi?',
+      opts:[
+        {tx:'CAAL con human in the loop, per sicurezza',ok:false,why:'Troppa struttura per un\'estrazione: plan, implement e regressione non hanno senso qui.'},
+        {tx:'Un prompt singolo (anche lanciato come Ralph)',ok:true,why:'Esatto. È un\'estrazione strutturata in un passo. Se il risultato è sbagliato, lo rilanci.'},
+        {tx:'CAAL con il workflow user story',ok:false,why:'Il workflow user story decompone in feature e scenari: non c\'è niente da decomporre.'},
+        {tx:'Non è un compito per un agente',ok:false,why:'Lo è, ed è anche a basso rischio: legge il codice e scrive un file.'}
+      ]}
+  ]
+});
+
+/* ---------- 3. Workflow e step ---------- */
+MODULES.push({
+  id:'m3', n:'03', title:'Workflow e step', min:20,
+  blocks:[
+    {t:'p',html:`<p>Un workflow CAAL è una <strong>lista di step</strong>. Ogni step ha una chiave (per esempio <code>task.plan</code>) e un tipo:</p>`},
+    {t:'cards',cards:[
+      {tag:'agentic',h:'Step agentico',p:'Lo fa l\'agente: scrivere il piano, il codice, le feature Gherkin, debuggare un test.'},
+      {tag:'deterministic',h:'Step deterministico',p:'Lo fa il runner, senza LLM: lanciare i test, segnare una feature come fatta, chiudere il workflow.'},
+      {tag:'spliced',h:'Step inserito',p:'Aggiunto al volo quando qualcosa fallisce: debug#k e poi run_test#k, fino a --max-retries.'}
+    ]},
+    {t:'p',html:`<h3>Workflow di un task (feature o refactor)</h3>`},
+    {t:'code',lang:'text',code:`task.plan        (agente)  -> scrive specs/tasks/<slug>/plan.md, non tocca il codice
+task.implement   (agente)  -> implementa seguendo TASK.md + plan.md
+task.regression  (runner)  -> npm run test:tag '@done'  (se fallisce: debug#k + retry#k)
+task.finish      (runner)  -> chiude il workflow`},
+    {t:'p',html:`<h3>Workflow di una user story</h3><p>Più lungo, e si espande man mano: la decomposizione genera le feature, ogni feature genera i suoi scenari.</p>`},
+    {t:'table',head:['Livello','Step','Tipo'],rows:[
+      ['Storia','<code>story.complete_dev_parts</code> · <code>story.mark_in_progress</code> · <code>story.decompose</code> · <code>story.expand_features_tasks</code>','agentico / deterministico'],
+      ['Per feature','<code>feature_&lt;n&gt;.gherkin</code> (max 3 scenari) · <code>feature_&lt;n&gt;.mark_done</code>','agentico / deterministico'],
+      ['Per scenario','<code>impl_code</code> · <code>impl_stepdefs</code> · <code>run_test</code>','agentico · agentico · deterministico'],
+      ['Se fallisce','<code>debug#&lt;k&gt;</code> · <code>run_test#&lt;k&gt;</code>','agentico · deterministico'],
+      ['Chiusura','<code>story.openapi</code> · <code>story.mark_completed</code> · <code>story.finish</code>','agentico / deterministico']
+    ]},
+    {t:'agentloop'},
+    {t:'callout',kind:'warn',title:'Perché i test li lancia il runner',html:`Se è l'agente a dire «i test passano», ti stai fidando della sua parola. Se è il runner a lanciare <code>npm run test:tag @done</code> e a leggere il codice di uscita, il risultato è un fatto. Tutto quello che si può fare <strong>senza LLM</strong> conviene farlo senza LLM.`},
+    {t:'quiz',id:'q3a',q:'La regressione @done fallisce. Cosa fa CAAL?',
+      opts:[
+        {tx:'Ricomincia il workflow da capo',ok:false,why:'No: plan e implement sono già fatti e restano fatti. Si riparte solo da dove serve.'},
+        {tx:'Inserisce uno step debug#1 (agente) e uno regression#1 (runner), e ripete fino a --max-retries',ok:true,why:'Esatto. Il debug ha un tetto: se dopo N tentativi non passa, si ferma invece di girare a vuoto.'},
+        {tx:'Chiede all\'agente di modificare i test finché passano',ok:false,why:'È proprio quello da evitare. In un refactor l\'istruzione esplicita è: correggi il codice, mai i test.'},
+        {tx:'Segna il task come completato con un warning',ok:false,why:'Un task con regressione rossa non è finito.'}
+      ]}
+  ]
+});
+
+/* ---------- 4. Base prompt e metaprompting ---------- */
+MODULES.push({
+  id:'m4', n:'04', title:'Base prompt e metaprompting', min:20,
+  blocks:[
+    {t:'p',html:`<p>CAAL <strong>non contiene un template fisso</strong> per ogni step. Invece manda all'agente un meta-prompt breve: <em>«leggi il base prompt, scrivi tu il prompt giusto per questo step, salvalo, poi eseguilo»</em>.</p>
+      <p>Il <strong>base prompt</strong> è un file Markdown che fa da modello di riferimento. Non descrive il task: descrive <strong>come si lavora in questo progetto</strong>, cioè regole, riferimenti, vincoli, come si testa.</p>`},
+    {t:'p',html:`<h3>La procedura dell'agente, a ogni step agentico</h3>
+      <ol>
+        <li>Legge il base prompt e i documenti che cita (riceve solo il <strong>percorso</strong>, non il contenuto).</li>
+        <li>Scrive un prompt specifico per lo step, tenendo solo le parti che servono.</li>
+        <li>Lo salva in <code>.workflow/prompts/&lt;key&gt;.composed.md</code>.</li>
+        <li>Esegue lo step seguendo quel prompt.</li>
+      </ol>`},
+    {t:'table',head:['Quale base prompt viene usato','Priorità'],rows:[
+      ['Il flag <code>--base-prompt &lt;file&gt;</code>','1'],
+      ['La variabile d\'ambiente <code>WORKFLOW_BASE_PROMPT_FILE</code>','2'],
+      ['Il default per tipo di workflow: <code>RALPH_PROMPT_NEW_USER_STORY.md</code> per una user story, <code>RALPH_PROMPT_TASK.md</code> per un task','3']
+    ]},
+    {t:'callout',kind:'',title:'Perché due default diversi',html:`Il prompt delle user story parla di Gherkin e di decomposizione in feature. Su un task singolo (una feature o un refactor) quelle istruzioni <strong>confonderebbero l'agente</strong>. Un base prompt deve contenere solo regole che valgono per quel tipo di lavoro.`},
+    {t:'callout',kind:'warn',title:'Se il base prompt non esiste',html:`Il workflow non si blocca: l'agente riceve un <strong>WARNING</strong> e gli si chiede di ricostruire le regole da <code>AGENTS.md</code>, <code>docs/</code> e <code>specs/</code>, oppure di procedere con il proprio giudizio. Funziona, ma è proprio il tipo di «decidi tu» che vuoi evitare: controlla sempre con <code>status</code> quale base prompt è attivo.`},
+    {t:'reveal',title:'prompts/REFACTOR_RULES.md',sub:'Un base prompt specializzato per i refactor. Nota cosa c\'è e cosa manca: nessun task, solo regole.',
+      text:`You are working inside an existing codebase located in app_workshop/.
+
+Reference files:
+- Agent rules: \`AGENTS.md\`
+- Architecture: \`docs/architecture\`
+- Things learned: \`learned.md\`
+- Errors to avoid: \`error_memories.md\`
+
+Refactor rules:
+- Observable behavior must not change: API contracts, responses, error codes, persisted data, audit rows.
+- The existing tests are the specification. If they fail, fix the code, never the tests.
+- Keep each change small; prefer moving code over rewriting it.
+- Do not rename public endpoints, DB tables or columns.
+- Before starting, list in plan.md the tests that cover the code you will touch.
+
+Tests:
+- Reload the server with: npm run reload:dev
+- Regression: npm run test:tag @done (run by the workflow, not by you, during plan/implement)
+- Debug failures with the skill .claude/skills/agentic-debug`},
+    {t:'practices',title:'Perché il metaprompting',items:[
+      {n:'01',h:'Un prompt per step, non uno per tutto',
+        why:'Il prompt di task.plan e quello di debug#2 hanno bisogno di cose diverse. Mandare tutto a tutti riempie il contesto di regole inutili.',
+        do:'L\'agente tiene dal base prompt solo le parti che servono allo step.',
+        dont:'Incollare l\'intero base prompt in ogni chiamata.'},
+      {n:'02',h:'I prompt composti restano su disco',
+        why:'Puoi vedere esattamente cosa ha ricevuto l\'agente in ogni step, riusarlo, correggerlo e rilanciare.',
+        do:'Apri <code>.workflow/prompts/&lt;key&gt;.composed.md</code> quando uno step fa qualcosa di strano.',
+        dont:'Indovinare cosa «ha capito» l\'agente leggendo solo il diff.'},
+      {n:'03',h:'Base prompt diversi per lavori diversi',
+        why:'Un refactor e una feature hanno regole opposte su test e comportamento.',
+        do:'<code>REFACTOR_RULES.md</code>, <code>FEATURE_RULES.md</code>, e <code>--base-prompt</code> per scegliere.',
+        dont:'Un unico prompt con «se è un refactor fai X, se è una feature fai Y».'}
+    ]},
+    {t:'quiz',id:'q4a',q:'Cosa riceve l\'agente da CAAL all\'inizio di uno step agentico?',
+      opts:[
+        {tx:'Il contenuto completo del base prompt',ok:false,why:'No: riceve il percorso. È lui a leggerlo e a scegliere le parti utili.'},
+        {tx:'Un prompt specifico scritto a mano per quello step',ok:false,why:'Non ci sono template fissi per step in caal.js.'},
+        {tx:'Un meta-prompt con il percorso del base prompt e la procedura: leggi, componi, salva, esegui',ok:true,why:'Esatto. Il prompt specifico lo compone l\'agente e lo salva in <code>.workflow/prompts/</code>.'},
+        {tx:'Solo il TASK.md',ok:false,why:'Il TASK.md dice cosa fare; il base prompt dice come. Servono entrambi.'}
+      ]}
+  ]
+});
+
+/* ---------- 5. Modalità ---------- */
+MODULES.push({
+  id:'m5', n:'05', title:'Autonomo o human in the loop', min:15,
+  blocks:[
+    {t:'split2',a:{h:'Full autonomous',items:[
+      ['Come','<code>node caal.js run</code> (o <code>task</code>/<code>start</code> senza flag).'],
+      ['Cosa succede','Esegue tutti gli step fino alla fine, o finché non viene fermato, bloccato o fallisce.'],
+      ['Quando','Base prompt già collaudati, task simili ad altri già fatti.']
+    ]},b:{h:'Human in the loop',items:[
+      ['Come','Aggiungi <code>--human_in_the_loop true</code>.'],
+      ['Cosa succede','Ogni step si ferma a tre gate di revisione.'],
+      ['Quando','I primi task, un base prompt nuovo, un refactor delicato.']
+    ]}},
+    {t:'p',html:`<h3>I tre gate</h3>`},
+    {t:'table',head:['Gate','Quando','Cosa puoi fare'],rows:[
+      ['<strong>1 · Prima dello step</strong>','Prima di eseguire ogni step','<code>(1) execute</code> · <code>(2) skip</code> · <code>(3) mark as done</code> · <code>(4) stop</code>'],
+      ['<strong>2 · Revisione del prompt</strong>','Solo step agentici, dopo che l\'agente ha composto il prompt','Aprire e <strong>modificare</strong> <code>.composed.md</code>, poi rispondere <code>y</code>: l\'esecuzione usa il file così come l\'hai lasciato.'],
+      ['<strong>3 · Continua</strong>','Dopo ogni step riuscito','Rivedere il lavoro e decidere se andare avanti.']
+    ]},
+    {t:'callout',kind:'ok',title:'Il momento migliore per intervenire',html:`Dopo <code>task.plan</code>: leggi <code>plan.md</code> e correggilo <strong>prima</strong> che parta <code>task.implement</code>. Correggere un piano costa un minuto; correggere un'implementazione fatta sul piano sbagliato costa un altro run.`},
+    {t:'p',html:`<h3>I comandi di controllo</h3>`},
+    {t:'code',lang:'bash',code:`node caal.js status             # dove sono? (sola lettura, sempre)
+node caal.js stop               # da un altro terminale: si ferma al prossimo step
+node caal.js step               # esegue solo il prossimo step e si ferma
+node caal.js step task.plan     # riesegue uno step specifico (es. dopo aver modificato TASK.md)
+node caal.js done <step-key>    # segna a mano uno step come fatto
+node caal.js resume             # riprende fino alla fine
+node caal.js reset --yes        # cancella .workflow/ (non tocca specs/ né il codice)`},
+    {t:'quiz',id:'q5a',q:'Al gate 2 vedi che il prompt composto per task.implement ignora un vincolo importante del base prompt. Cosa fai?',
+      opts:[
+        {tx:'Rispondo y e correggo dopo nel codice',ok:false,why:'Così lo step parte con il prompt sbagliato, e il lavoro da correggere sarà tanto.'},
+        {tx:'Modifico il file .composed.md aggiungendo il vincolo, poi rispondo y',ok:true,why:'Esatto. L\'esecuzione legge il file da disco così come l\'hai lasciato. Poi valuta se aggiungere il vincolo in modo più chiaro al base prompt.'},
+        {tx:'Faccio reset e ricomincio',ok:false,why:'Perdi il piano già fatto. Non serve: il gate esiste proprio per correggere qui.'},
+        {tx:'Rispondo n e cambio modello',ok:false,why:'Il problema è nel prompt, non nel modello.'}
+      ]}
+  ]
+});
+
+/* ---------- Pausa ---------- */
+MODULES.push({
+  id:'brk', n:'—', title:'Pausa', min:10,
+  blocks:[
+    {t:'p',html:`<h1 style="font-size:26px;margin-top:10px">Pausa — 10 minuti</h1>
+      <p class="lede">Al ritorno lanci un task vero con CAAL, lo fermi e lo riprendi.</p>`},
+    {t:'callout',kind:'warn',title:'Prima di tornare',html:`Entra nel container (utente non root), vai in <code>/Code/app_workshop</code>, controlla che <code>git status</code> sia <strong>pulito</strong> e che <code>node caal.js status</code> non mostri workflow già inizializzati. Se c'è, <code>node caal.js reset --yes</code>.`},
+    {t:'callout',kind:'',title:'Domanda su cui pensare',html:`Se domani l'agente scrive il 90% del codice, <strong>su cosa passerai il tuo tempo?</strong> Tieni la risposta: è il tema della seconda parte.`}
+  ]
+});
+
+/* ---------- 6. Laboratorio ---------- */
+MODULES.push({
+  id:'m6', n:'06', title:'Laboratorio — Un task con CAAL', min:25,
+  blocks:[
+    {t:'p',html:`<p>Facciamo sviluppare all'agente <strong>una feature singola</strong>, senza user story: un export CSV degli ordini. Il comando <code>task</code> vuole due cose: <strong>cosa</strong> fare (<code>--description</code> e/o <code>--task_file</code>) e <strong>come</strong> lavorare (<code>--base-prompt</code>).</p>`},
+    {t:'p',html:`<h3>1. La definizione del task</h3><p>Un file Markdown, per esempio <code>specs/requests/export_csv_ordini.md</code>. CAAL lo copia in <code>specs/tasks/&lt;slug&gt;/TASK.md</code>; lo slug deriva dal primo titolo.</p>`},
+    {t:'code',lang:'markdown',code:`# Export CSV degli ordini
+
+Aggiungere un endpoint che esporta gli ordini in CSV.
+
+## Requisiti
+- GET /api/orders/export?from=YYYY-MM-DD&to=YYYY-MM-DD
+- Colonne: id, data, cliente, totale, stato
+- Solo gli utenti con ruolo admin possono esportare (403 altrimenti)
+- Ogni export va registrato nella tabella di audit
+
+## Fuori scope
+- Export in altri formati (xlsx, pdf)
+- Modifiche al frontend`},
+    {t:'p',html:`<h3>2. Il comando agente</h3><p>Qualsiasi comando shell che legge il meta-prompt da <code>$WORKFLOW_PROMPT_FILE</code> ed esce con 0 in caso di successo. Gli <strong>apici singoli</strong> sono importanti: la variabile va espansa quando parte lo step, non quando scrivi il comando.</p>`},
+    {t:'code',lang:'bash',code:`cd /Code/app_workshop
+
+# Con Pi e il modello locale
+export AGENT_CMD='pi -p "$(cat "$WORKFLOW_PROMPT_FILE")" --provider omlx --model Qwen3.8-27B-8bit --approve --mode json 2>&1 | tee -a pi-run-debug.log'
+
+# 3. Lancio, con revisione umana
+node caal.js task \\
+  --type feature \\
+  --task_file specs/requests/export_csv_ordini.md \\
+  --base-prompt tasks/RALPH_PROMPT_TASK.md \\
+  --human_in_the_loop true`},
+    {t:'p',html:`<h3>4. Ferma, guarda, riprendi</h3><p>Dopo <code>task.plan</code> scegli <code>(4) stop</code> al gate. Poi:</p>`},
+    {t:'code',lang:'bash',code:`node caal.js status                 # task, piano, base prompt, prossimo step
+cat specs/tasks/export-csv-degli-ordini/plan.md
+# ...correggi plan.md se serve...
+node caal.js resume`},
+    {t:'p',html:`<h3>Dove trovare cosa</h3>`},
+    {t:'table',head:['File','Contenuto'],rows:[
+      ['<code>specs/tasks/&lt;slug&gt;/TASK.md</code>','La definizione del task'],
+      ['<code>specs/tasks/&lt;slug&gt;/plan.md</code>','Il piano scritto dall\'agente'],
+      ['<code>.workflow/prompts/&lt;key&gt;.md</code>','Il meta-prompt inviato all\'agente'],
+      ['<code>.workflow/prompts/&lt;key&gt;.composed.md</code>','Il prompt specifico composto dall\'agente'],
+      ['<code>.workflow/tests__done.log</code>','Il log dell\'ultima regressione'],
+      ['<code>progress.txt</code>, <code>error_memories.md</code>, <code>learned.md</code>','Avanzamento, errori, cose imparate']
+    ]},
+    {t:'callout',kind:'',title:'Un agente diverso per uno step',html:`Puoi usare un modello più forte solo per il piano: <code>node caal.js set-step-agent task.plan '&lt;comando&gt;'</code>. Verifica con <code>list-step-agents</code>. Attenzione: gli step di retry (<code>debug#k</code>) <strong>non ereditano</strong> l'override.`},
+    {t:'promptkit',id:'pk6',title:'Scrivi il tuo TASK.md',
+      sub:'Componi la definizione di un task tuo. Il «come» sta nel base prompt: qui scrivi solo il «cosa».',
+      fields:[
+        {k:'title',lb:'Titolo',rows:1,ph:'Export CSV degli ordini'},
+        {k:'what',lb:'Cosa va fatto (2-3 righe)',rows:3,ph:'Aggiungere un endpoint che esporta gli ordini in CSV.'},
+        {k:'req',lb:'Requisiti verificabili (uno per riga)',rows:5,ph:'GET /api/orders/export?from=...&to=...\nSolo admin (403 altrimenti)\nOgni export registrato in audit'},
+        {k:'out',lb:'Fuori scope (uno per riga)',rows:3,ph:'Export xlsx/pdf\nModifiche al frontend'}
+      ],
+      build:function(v){
+        const lines=s=>(s||'').split('\n').map(x=>x.trim()).filter(Boolean).map(x=>'- '+x).join('\n');
+        let o='# '+(v.title||'...')+'\n\n';
+        o+=(v.what||'...')+'\n\n';
+        o+='## Requisiti\n'+(lines(v.req)||'- ...')+'\n\n';
+        o+='## Fuori scope\n'+(lines(v.out)||'- ...');
+        return o;
+      }},
+    {t:'checklist',id:'ck6',title:'Laboratorio completato quando...',
+      items:[
+        'Esiste specs/tasks/<slug>/TASK.md con la tua definizione',
+        'Hai letto plan.md prima che partisse task.implement',
+        'Hai aperto almeno un .composed.md in .workflow/prompts/',
+        'Hai fermato il workflow, visto status e fatto resume',
+        'task.regression è verde (o hai visto gli step debug#k inseriti)',
+        'Hai letto il diff e i test: verificano davvero 403 e audit?'
+      ]}
+  ]
+});
+
+/* ---------- 7. Estendere CAAL ---------- */
+MODULES.push({
+  id:'m7', n:'07', title:'Estendere CAAL: verso la software factory', min:10,
+  blocks:[
+    {t:'p',html:`<p>Un workflow è una lista di step. Aggiungere uno step vuol dire aggiungere una capacità al processo, senza toccare l'agente.</p>`},
+    {t:'cards',cards:[
+      {tag:'Gate',h:'Pre-approvazione umana',p:'Uno step che si ferma per una revisione formale prima del merge.'},
+      {tag:'Git',h:'Commit e PR',p:'Uno step deterministico che fa commit e apre la PR a regressione verde.'},
+      {tag:'Ops',h:'Deploy',p:'Deploy su un ambiente di staging, poi smoke test.'},
+      {tag:'Audit',h:'Audit in parallelo',p:'Sicurezza, concorrenza e transazioni, a test passati, un report per tema.'},
+      {tag:'Hook',h:'Notifiche',p:'Un messaggio al team quando una fase finisce o un retry si esaurisce.'},
+      {tag:'…',h:'Qualsiasi cosa',p:'Quello che ti viene in mente: è un workflow, non un prompt.'}
+    ]},
+    {t:'p',html:`<h3>Il potenziale</h3>
+      <p>Metti sopra CAAL un'interfaccia grafica (una pagina web, una piattaforma, un SDK) e diventa a tutti gli effetti una <strong>software factory</strong>: chiunque, anche non sviluppatore ma con concetti minimi, potrebbe chiedere una nuova feature e vederla arrivare in produzione.</p>
+      <p>E non solo: un widget dentro la propria applicazione dove scrivi in linguaggio naturale <em>«aggiungimi una funzionalità per tracciare il click del mouse»</em>, e la funzionalità viene creata, eventualmente mergiata e deployata.</p>`},
+    {t:'callout',kind:'bad',title:'Il rovescio della medaglia',html:`Più il processo è automatico, più contano i gate. Una software factory senza revisione umana, test che verificano davvero e una sandbox seria è una macchina per <strong>mettere in produzione bug più in fretta</strong>. La parte di governance di CAAL non è un accessorio: è quello che rende possibile tutto il resto.`},
+    {t:'exercise',id:'ex7',label:'Esercizio 7.1 — Uno step che aggiungeresti (3 minuti)',
+      prompt:'Pensa al tuo flusso di lavoro. Quale step aggiungeresti al workflow di CAAL? Deterministico o agentico? Dopo quale step? Cosa succede se fallisce?',
+      placeholder:'Step: ...\nTipo: deterministico / agentico\nDopo: ...\nSe fallisce: ...',
+      solution:'Un buon primo step da aggiungere è deterministico: commit su un branch dedicato, apertura di una PR, notifica. Non costa token e non sbaglia. Gli step agentici aggiunti (audit, review) vanno trattati come gli altri: un base prompt adatto, un output su file, un tetto ai retry.'}
+  ]
+});
+
+/* ---------- 8. Skills agentic era ---------- */
+MODULES.push({
+  id:'m8', n:'08', title:'Skills agentic era', min:30,
+  blocks:[
+    {t:'p',html:`<p>Quando l'agente scrive il codice, il collo di bottiglia si sposta: non è più <em>quanto in fretta scrivi</em>, ma <strong>quanto bene spieghi, scomponi, decidi e verifichi</strong>. Sono skill che contavano già prima. Adesso contano di più, perché il tuo «collega» è velocissimo, instancabile, e fa esattamente quello che gli hai detto, anche quando gli hai detto la cosa sbagliata.</p>`},
+    {t:'practices',title:'Le sette skill',items:[
+      {n:'01',h:'Comunicare: essere chiari e precisi',
+        why:'L\'agente non ti può chiedere cosa intendevi (nel Ralph e in CAAL proprio non c\'è nessuno a cui chiederlo). Ogni ambiguità diventa una scelta presa a caso.',
+        do:'«GET /api/orders/export, colonne id, data, cliente, totale, stato. 403 se non admin.»',
+        dont:'«Fai un export degli ordini, fatto bene.»'},
+      {n:'02',h:'Delegare: sapere cosa dare e cosa tenere',
+        why:'Delegare non è «dimenticare». È dare un obiettivo, un contesto, dei vincoli e un modo per verificare, e tenere per sé le decisioni che non si possono delegare.',
+        do:'Delegare l\'implementazione con criteri di accettazione; tenere architettura, modello dati e il «sì, va in produzione».',
+        dont:'Delegare tutto e guardare solo se i test sono verdi.'},
+      {n:'03',h:'Problem/task decomposition',
+        why:'Un problema complesso si risolve bene solo spezzato in sotto-task precisi, ognuno con un risultato definito e verificabile. È esattamente quello che fa il workflow di CAAL.',
+        do:'«Feature 1: endpoint + 403. Feature 2: scrittura audit. Feature 3: filtro date. Ognuna con i suoi scenari.»',
+        dont:'«Implementa l\'export.» come un unico blocco da 2.000 righe di diff.'},
+      {n:'04',h:'Product understanding',
+        why:'L\'agente sa scrivere codice, non sa perché il cliente lo vuole. Se non capisci il prodotto, non sai dire se una soluzione corretta è anche quella giusta.',
+        do:'Chiedersi: chi usa questo export? Quante righe? Ogni quanto? Cosa succede se è lento?',
+        dont:'Implementare alla lettera un requisito che non ha senso per l\'utente.'},
+      {n:'05',h:'Stress / rage managing :)',
+        why:'L\'agente sbaglierà con sicurezza, ripeterà lo stesso errore, «sistemerà» il test invece del codice. Arrabbiarsi non cambia il risultato: cambiare il prompt sì.',
+        do:'Fermarsi, leggere il log, trovare cosa mancava nel prompt o nel base prompt, scriverlo in error_memories.md.',
+        dont:'Rilanciare lo stesso prompt per la quinta volta in MAIUSCOLO.'},
+      {n:'06',h:'Trade-off analysis',
+        why:'Ogni soluzione costa qualcosa: tempo, complessità, performance, manutenzione. L\'agente propone, tu scegli sapendo cosa stai pagando.',
+        do:'«Streaming del CSV: più complesso, ma regge 1M di righe. Tutto in memoria: semplice, va bene sotto 10.000.»',
+        dont:'Accettare la prima soluzione che funziona.'},
+      {n:'07',h:'Critical thinking',
+        why:'Mettere in discussione sia le soluzioni proposte dall\'AI sia le proprie. L\'agente è bravissimo a essere convincente, anche quando ha torto.',
+        do:'«Mostrami un caso in cui questa soluzione fallisce.» E: rompi il codice, controlla che i test falliscano.',
+        dont:'«L\'ha detto l\'AI, sarà giusto.» Oppure: «L\'ho pensato io, sarà giusto.»'}
+    ]},
+    {t:'callout',kind:'ok',title:'Il filo comune',html:`Tutte e sette sono la stessa cosa vista da lati diversi: <strong>essere responsabili del risultato</strong> anche quando non hai scritto tu il codice.`},
+    {t:'exercise',id:'ex8a',label:'Esercizio 8.1 — Scomponi (8 minuti)',
+      prompt:'Prendi questa richiesta: «I clienti devono poter annullare un ordine entro 24 ore». Scomponila in sotto-task precisi, ognuno con un risultato definito e verificabile. Segna quali delegheresti all\'agente e quali decisioni tieni per te.',
+      placeholder:'1. ... → risultato: ... → delego? sì/no\n2. ...\n\nDecisioni che tengo io: ...\nDomande per il prodotto: ...',
+      solution:'Una scomposizione possibile: (1) modello dati: stato «annullato» e data di annullamento, decisione tua; (2) endpoint di annullamento con controllo delle 24 ore, delegabile; (3) controllo permessi: solo il proprietario dell\'ordine, delegabile con criteri chiari; (4) riga di audit, delegabile; (5) cosa succede a pagamento e magazzino, domanda per il prodotto prima di tutto. Il punto 5 è il più importante: se nessuno lo chiede, l\'agente inventerà una risposta.'},
+    {t:'quiz',id:'q8a',q:'L\'agente propone una soluzione elegante e ben spiegata, e i test passano. Cosa fai?',
+      opts:[
+        {tx:'La accetto: test verdi e spiegazione convincente',ok:false,why:'Convincente non vuol dire corretta. E i test potrebbero non verificare niente.'},
+        {tx:'Chiedo un caso in cui fallisce, leggo i test e li faccio fallire rompendo il codice',ok:true,why:'Esatto: critical thinking. Metti alla prova la soluzione e i test che dovrebbero proteggerla.'},
+        {tx:'La riscrivo da zero a modo mio',ok:false,why:'Il critical thinking vale anche per le tue soluzioni: «a modo mio» non è un argomento.'},
+        {tx:'Chiedo a un altro modello se è giusta',ok:false,why:'Può aiutare come seconda opinione, ma non sostituisce la tua verifica.'}
+      ]}
+  ]
+});
+
+/* ---------- 9. Skills tecniche ---------- */
+MODULES.push({
+  id:'m9', n:'09', title:'Skills tecniche', min:30,
+  blocks:[
+    {t:'p',html:`<p>L'agente scrive il codice. Ma <strong>i confini del sistema, i contratti, i dati, le prove e la visibilità</strong> sono decisioni che restano tue, e che finiscono nel base prompt come regole. Se non le sai prendere, l'agente le prende per te, ogni volta in modo diverso.</p>`},
+    {t:'practices',title:'Le cinque basi',items:[
+      {n:'01',h:'System design',
+        why:'Componenti, responsabilità, dipendenze, dove sta lo stato. L\'agente ottimizza il task che ha davanti, non l\'insieme: senza confini chiari ogni task aggiunge un pezzo di architettura diversa.',
+        do:'Decisioni scritte in <code>docs/architecture</code> (ADR) e citate nel base prompt.',
+        dont:'Lasciare che l\'architettura emerga dalla somma dei task.'},
+      {n:'02',h:'API design',
+        why:'Le API sono contratti: una volta usate da qualcuno, cambiarle costa. Formato delle risposte, errori, nomi, versioni vanno decisi una volta e rispettati sempre.',
+        do:'Un formato di risposta standard (come <code>ADR-003-standardized-api-response-format.md</code>) e <code>server/schema.json</code> OpenAPI aggiornato.',
+        dont:'Ogni endpoint con il suo formato di errore, scelto dall\'agente di turno.'},
+      {n:'03',h:'Data modelling',
+        why:'Il modello dati è la parte più difficile da cambiare dopo: migrazioni, dati esistenti, integrazioni. Per questo i prompt dicono «do not invent or modify the data model».',
+        do:'Modello dati deciso da te, in <code>docs/sql_data_model</code>, con vincoli e indici motivati.',
+        dont:'Lasciare che l\'agente aggiunga colonne «perché servivano».'},
+      {n:'04',h:'Testing: BDD + Gherkin',
+        why:'Gli scenari Gherkin sono la specifica che l\'agente deve soddisfare, scritta in un linguaggio che legge anche il prodotto. Ma un test che non verifica niente è peggio di nessun test.',
+        do:'Scenari con esiti osservabili (stato nel DB, riga di audit, codice HTTP) e step definition che li controllano davvero.',
+        dont:'Step vuoti, <code>expect(true)</code>, scenari che descrivono il codice invece del comportamento.'},
+      {n:'05',h:'Observability: logs + tracing',
+        why:'Quando il codice lo scrive un agente e lo leggi solo in parte, in produzione hai bisogno di vedere cosa succede davvero. Log strutturati e tracce sono i tuoi occhi.',
+        do:'Log strutturati (JSON/JSONL) con un id di correlazione per richiesta; <code>trace("msg", {...})</code> nei punti chiave del flusso.',
+        dont:'<code>console.log("qui")</code> sparsi, senza contesto né id.'}
+    ]},
+    {t:'compare',title:'Gherkin: descrivere il comportamento, non il codice',
+      bad:{h:'Non così',code:`Scenario: export
+  Given the function exportOrders is called
+  When it runs
+  Then it returns something
+  And no error is thrown`},
+      good:{h:'Così',code:`@US004-scenario-2
+Scenario: A non-admin user cannot export orders
+  Given a user with role "operator" is logged in
+  When they request GET /api/orders/export?from=2026-01-01&to=2026-01-31
+  Then the response status is 403
+  And the response follows the standard error format
+  And no export row is written in the audit table`}},
+    {t:'compare',title:'Log: frasi o eventi?',
+      bad:{h:'Non così',code:`console.log("export started")
+console.log("done!!")
+console.log(err)`},
+      good:{h:'Così',code:`{"ts":"2026-10-12T09:14:03Z","level":"info","event":"orders.export.started",
+ "trace_id":"a81f…","user_id":42,"from":"2026-01-01","to":"2026-01-31"}
+{"ts":"2026-10-12T09:14:04Z","level":"info","event":"orders.export.completed",
+ "trace_id":"a81f…","rows":1873,"duration_ms":912}`}},
+    {t:'exercise',id:'ex9a',label:'Esercizio 9.1 — Scrivi due scenari (7 minuti)',
+      prompt:'Per la richiesta «i clienti possono annullare un ordine entro 24 ore», scrivi due scenari Gherkin: uno di successo e uno di errore. Ogni Then deve essere osservabile (HTTP, DB, audit).',
+      placeholder:'Scenario: ...\n  Given ...\n  When ...\n  Then ...\n  And ...\n\nScenario: ...',
+      solution:'Esempio: «Scenario: Un cliente annulla un ordine creato 2 ore fa — Given un ordine del cliente creato 2 ore fa — When il cliente chiama POST /api/orders/{id}/cancel — Then la risposta è 200 — And l\'ordine nel DB ha stato "annullato" — And c\'è una riga di audit "order.cancelled"». Errore: stesso scenario con un ordine di 25 ore fa → 409 (o 422, deciso dalle regole API), stato invariato nel DB, nessuna riga di audit. Notare che il codice di errore non lo decide lo scenario: lo decide l\'API design.'},
+    {t:'quiz',id:'q9a',q:'Dove dovrebbero stare le decisioni su formato delle risposte API e modello dati, perché l\'agente le rispetti in ogni step di CAAL?',
+      opts:[
+        {tx:'Nel TASK.md di ogni task',ok:false,why:'Così le ripeti ogni volta, e prima o poi una versione sarà diversa dalle altre.'},
+        {tx:'In documenti di progetto (ADR, modello dati, regole API) citati nel base prompt',ok:true,why:'Esatto. Il base prompt dice come si lavora nel progetto; l\'agente li legge quando compone il prompt di ogni step.'},
+        {tx:'Non serve scriverle: l\'agente le deduce dal codice',ok:false,why:'Le deduce in modo diverso ogni volta, e copia anche gli errori che trova.'},
+        {tx:'In error_memories.md',ok:false,why:'Lì vanno gli errori incontrati, non le decisioni di design.'}
+      ]}
+  ]
+});
+
+/* ---------- 10. Chiusura ---------- */
+MODULES.push({
+  id:'m10', n:'10', title:'Chiusura', min:10,
+  blocks:[
+    {t:'p',html:`<h3>Le otto cose da portarsi a casa</h3>`},
+    {t:'table',head:['#','Regola','Da dove viene'],rows:[
+      ['1','<strong>CAAL = Ralph + esecuzione durevole + governance.</strong> Checkpoint, ripresa, stop, revisione, traccia.','Modulo 01'],
+      ['2','<strong>Non usarlo per compiti semplici.</strong> Un prompt singolo o un Ralph bastano.','Modulo 02'],
+      ['3','<strong>Quello che si può fare senza LLM, fallo senza LLM.</strong> I test li lancia il runner.','Modulo 03'],
+      ['4','<strong>Il base prompt dice come, il TASK.md dice cosa.</strong> I prompt per step li compone l\'agente.','Moduli 04, 06'],
+      ['5','<strong>Human in the loop sui primi task.</strong> Il momento migliore per intervenire è dopo il piano.','Modulo 05'],
+      ['6','<strong>Più è automatico, più contano i gate.</strong>','Modulo 07'],
+      ['7','<strong>Comunicare, delegare, scomporre, decidere, dubitare.</strong> Sei responsabile del risultato.','Modulo 08'],
+      ['8','<strong>Architettura, API, dati, test e osservabilità restano tuoi</strong>, scritti in documenti che l\'agente legge.','Modulo 09']
+    ]},
+    {t:'exercise',id:'ex10',label:'Esercizio 10.1 — Il tuo primo task con CAAL (5 minuti)',
+      prompt:'Scegli un task del tuo lavoro da far girare con CAAL la settimana prossima. Scrivi: feature o refactor, quale base prompt userai (e cosa ci manca oggi), dove ti fermerai a rivedere, e quale skill dell\'era agentica pensi ti servirà di più.',
+      placeholder:'Task: ...\nTipo: feature / refactor\nBase prompt: ... (manca: ...)\nGate dove mi fermo: ...\nSkill su cui lavorare: ...',
+      solution:'Un buon primo task è un refactor piccolo e ben coperto da test: le regole sono chiare (il comportamento non cambia, i test sono la specifica) e la regressione @done ti dice subito se è andato bene. Usalo con --human_in_the_loop e fermati dopo task.plan. Il lavoro vero, la prima volta, è scrivere il base prompt: tienilo, ti servirà per tutti i task dopo.'},
+    {t:'callout',kind:'',title:'Prima di chiudere',html:`Usa <strong>&#8681; Esporta</strong> in alto a destra: scarichi in Markdown le risposte, le checklist e il <code>TASK.md</code> che hai composto nel modulo 06.`}
+  ]
+});
+
+/* ============================================================
+   RENDERER
+   ============================================================ */
+const mounts = [];
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderBlock(b, mid, i){
+  const id = mid+'_'+i;
+  switch(b.t){
+    case 'p': return '<div class="prose">'+b.html+'</div>';
+    case 'code': return '<pre><code>'+esc(b.code)+'</code></pre>';
+    case 'callout':
+      return '<div class="callout '+(b.kind||'')+'"><span class="ct">'+b.title+'</span><div>'+b.html+'</div></div>';
+    case 'cards':
+      return '<div class="grid c3">'+b.cards.map(c=>
+        '<div class="card"><div class="tag">'+c.tag+'</div><h5>'+c.h+'</h5><p>'+c.p+'</p></div>').join('')+'</div>';
+    case 'table':
+    case 'tablewrap':
+      return '<div class="tablewrap"><table><thead><tr>'+b.head.map(h=>'<th>'+h+'</th>').join('')+
+        '</tr></thead><tbody>'+b.rows.map(r=>'<tr>'+r.map(c=>'<td>'+c+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
+    case 'compare':
+      return '<h3>'+b.title+'</h3><div class="split">'+
+        '<div class="pane bad"><div class="pane-h">'+b.bad.h+'</div><pre><code>'+esc(b.bad.code)+'</code></pre></div>'+
+        '<div class="pane ok"><div class="pane-h">'+b.good.h+'</div><pre><code>'+esc(b.good.code)+'</code></pre></div></div>';
+    case 'practices':
+      return (b.title?'<h3>'+b.title+'</h3>':'')+b.items.map(it=>
+        '<div class="bp"><div class="bp-h"><span class="bp-n">'+it.n+'</span><span>'+it.h+'</span></div>'+
+        '<div class="bp-why"><strong>Perché:</strong> '+it.why+'</div>'+
+        '<div class="bp-ex"><div class="do"><b>Fai così</b>'+it.do+'</div><div class="dont"><b>Non così</b>'+it.dont+'</div></div></div>').join('');
+    case 'split2':
+      return '<div class="split">'+[b.a,b.b].map(col=>
+        '<div class="widget" style="margin:0"><div class="widget-t">'+col.h+'</div><div style="margin-top:10px">'+
+        col.items.map(it=>'<div style="padding:8px 0;border-top:1px solid var(--line)"><strong style="font-size:13.5px">'+it[0]+
+        '</strong><div style="font-size:13px;color:var(--muted)">'+it[1]+'</div></div>').join('')+'</div></div>').join('')+'</div>';
+    case 'quiz':      mounts.push(()=>mountQuiz(id,b));      return '<div id="'+id+'"></div>';
+    case 'exercise':  mounts.push(()=>mountExercise(id,b));  return '<div id="'+id+'"></div>';
+    case 'checklist': mounts.push(()=>mountChecklist(id,b)); return '<div id="'+id+'"></div>';
+    case 'agentloop': mounts.push(()=>mountAgentLoop(id));   return '<div id="'+id+'"></div>';
+    case 'triage':    mounts.push(()=>mountTriage(id));      return '<div id="'+id+'"></div>';
+    case 'promptkit': mounts.push(()=>mountPromptKit(id,b)); return '<div id="'+id+'"></div>';
+    case 'reveal':    mounts.push(()=>mountReveal(id,b));    return '<div id="'+id+'"></div>';
+    default: return '';
+  }
+}
+
+function widgetShell(kind,title,sub,body){
+  return '<div class="widget"><div class="widget-h"><span class="widget-k">'+kind+'</span><span class="widget-t">'+title+'</span></div>'+
+    (sub?'<div class="widget-s">'+sub+'</div>':'')+body+'</div>';
+}
+
+/* ---------- quiz ---------- */
+function mountQuiz(id, b){
+  const el = document.getElementById(id);
+  const marks = ['A','B','C','D','E'];
+  const body = '<div id="'+id+'_opts">'+b.opts.map((o,k)=>
+    '<button class="opt" data-k="'+k+'"><span class="mk">'+marks[k]+'</span>'+o.tx+
+    '<div class="why">'+o.why+'</div></button>').join('')+'</div>'+
+    '<div class="hint" id="'+id+'_fb" style="margin-top:8px"></div>';
+  el.innerHTML = widgetShell('Quiz', b.q, '', body);
+  const opts = el.querySelectorAll('.opt');
+  const fb = document.getElementById(id+'_fb');
+  function apply(k){
+    opts.forEach((btn,j)=>{
+      btn.disabled = true; btn.classList.add('shown');
+      if(j===k) btn.classList.add(b.opts[j].ok?'sel-ok':'sel-bad');
+      else if(b.opts[j].ok) btn.classList.add('reveal-ok');
+    });
+    fb.textContent = b.opts[k].ok ? '✓ Risposta corretta.' : '✗ Non corretta — la risposta giusta è evidenziata in verde.';
+    fb.style.color = b.opts[k].ok ? 'var(--ok)' : 'var(--bad)';
+  }
+  opts.forEach(btn=>btn.addEventListener('click',()=>{
+    const k = +btn.dataset.k; quizState[b.id]=k; saveAll(); apply(k); refreshStats();
+  }));
+  if(quizState[b.id]!==undefined) apply(quizState[b.id]);
+}
+
+/* ---------- esercizio ---------- */
+function mountExercise(id, b){
+  const el = document.getElementById(id);
+  const body = '<textarea id="'+id+'_ta" rows="9" placeholder="'+esc(b.placeholder||'')+'"></textarea>'+
+    '<div class="btnrow"><span class="saved" id="'+id+'_sv">salvato</span><span style="flex:1"></span>'+
+    (b.solution?'<button class="btn" id="'+id+'_sol">Mostra nota del docente</button>':'')+'</div>'+
+    (b.solution?'<div id="'+id+'_solbox" class="callout ok" style="display:none"><span class="ct"></span><div class="prose" style="font-size:14px">'+b.solution+'</div></div>':'');
+  el.innerHTML = widgetShell('Esercizio', b.label, b.prompt, body);
+  const ta = document.getElementById(id+'_ta');
+  const sv = document.getElementById(id+'_sv');
+  ta.value = answers[b.id] || '';
+  let t;
+  ta.addEventListener('input',()=>{
+    answers[b.id]=ta.value; clearTimeout(t);
+    t=setTimeout(()=>{ saveAll(); sv.classList.add('on'); setTimeout(()=>sv.classList.remove('on'),1200); refreshStats(); },400);
+  });
+  if(b.solution){
+    const btn=document.getElementById(id+'_sol'), box=document.getElementById(id+'_solbox');
+    btn.addEventListener('click',()=>{
+      const open = box.style.display!=='none';
+      box.style.display = open?'none':'block';
+      btn.textContent = open?'Mostra nota del docente':'Nascondi nota';
+    });
+  }
+}
+
+/* ---------- checklist ---------- */
+function mountChecklist(id, b){
+  const el = document.getElementById(id);
+  const saved = store.get('ck.'+b.id, []);
+  const body = b.items.map((it,k)=>
+    '<label class="chk'+(saved[k]?' on':'')+'" data-k="'+k+'"><input type="checkbox" '+(saved[k]?'checked':'')+
+    '><span class="lb" style="font-weight:500">'+it+'</span></label>').join('')+
+    '<div class="scoreline" style="margin-top:8px"><span id="'+id+'_c"></span><span></span></div>';
+  el.innerHTML = widgetShell('Checklist', b.title, 'Le spunte si salvano nel browser e finiscono nell’export.', body);
+  const rows = el.querySelectorAll('.chk');
+  const cnt = document.getElementById(id+'_c');
+  function upd(){
+    let n=0; rows.forEach((r,k)=>{ const c=r.querySelector('input').checked; saved[k]=c; if(c)n++; r.classList.toggle('on',c); });
+    cnt.textContent = n+'/'+b.items.length+' completati';
+    store.set('ck.'+b.id, saved); refreshStats();
+  }
+  rows.forEach(r=>r.querySelector('input').addEventListener('change',upd));
+  upd();
+}
+
+/* ---------- il workflow di CAAL ---------- */
+const LOOP = [
+  {b:'Init', t:'node caal.js task ...',
+   d:'Il runner crea TASK.md e lo stato in .workflow/. Quattro step in coda.',
+   log:'$ node caal.js task --type feature --task_file specs/requests/export_csv_ordini.md\n[runner] specs/tasks/export-csv-degli-ordini/TASK.md creato\n[runner] steps: task.plan, task.implement, task.regression, task.finish'},
+  {b:'task.plan', t:'Agente: compone il prompt e pianifica',
+   d:'Legge il base prompt, salva il prompt composto, scrive plan.md. Non tocca il codice.',
+   log:'[agente] .workflow/prompts/task.plan.composed.md salvato\n[agente] specs/tasks/export-csv-degli-ordini/plan.md scritto\n[runner] task.plan ✓'},
+  {b:'task.implement', t:'Agente: implementa',
+   d:'Segue TASK.md e plan.md. Scrive codice e scenari BDD taggati @done.',
+   log:'[agente] src/routes/orders.js, src/services/ordersExport.js\n[agente] features/orders_export.feature (3 scenari @done)\n[runner] task.implement ✓'},
+  {b:'regression', t:'Runner: lancia i test',
+   d:'Deterministico: npm run test:tag @done. Fallisce uno scenario.',
+   log:'[runner] npm run test:tag @done -> 41 passed, 1 failed\n[runner] task.regression ✗'},
+  {b:'Splice', t:'Runner: inserisce debug#1 e regression#1',
+   d:'Il fallimento non ferma tutto: aggiunge due step, con un tetto (--max-retries).',
+   log:'[runner] + task.regression.debug#1 (agentico)\n[runner] + task.regression#1 (deterministico)'},
+  {b:'Stop', t:'Il processo si interrompe',
+   d:'Hai lanciato stop da un altro terminale (o è caduta la connessione). Lo stato resta su disco.',
+   log:'$ node caal.js stop\n[runner] stop richiesto: mi fermo dopo lo step corrente'},
+  {b:'Status', t:'Dove sono?',
+   d:'Sola lettura, in qualunque momento: cosa è fatto, cosa è fallito, cosa viene dopo.',
+   log:'$ node caal.js status\n  ✓ task.plan\n  ✓ task.implement\n  ✗ task.regression\n  · task.regression.debug#1   <- prossimo\n  · task.regression#1\n  · task.finish'},
+  {b:'Resume', t:'Riparte dal punto giusto',
+   d:'Non rifà piano e implementazione: riparte da debug#1.',
+   log:'$ node caal.js resume\n[agente] debug#1: il filtro date esclude il giorno "to" -> corretto\n[agente] error_memories.md += "range date: \'to\' è inclusivo"'},
+  {b:'Finish', t:'Regressione verde, workflow chiuso',
+   d:'regression#1 passa, task.finish chiude. Tutta la strada presa è tracciata nei file.',
+   log:'[runner] npm run test:tag @done -> 42 passed\n[runner] task.regression#1 ✓\n[runner] task.finish ✓ — workflow completato'}
+];
+function mountAgentLoop(id){
+  const el = document.getElementById(id);
+  let i = 0, timer = null;
+  const body =
+    '<div class="loopgrid" id="'+id+'_g"></div>'+
+    '<div class="preview" id="'+id+'_lg"></div>'+
+    '<div class="btnrow">'+
+      '<button class="btn primary" id="'+id+'_nx">Passo successivo</button>'+
+      '<button class="btn" id="'+id+'_au">▶ Automatico</button>'+
+      '<button class="btn" id="'+id+'_rs">Riavvia</button>'+
+      '<span class="hint" id="'+id+'_c" style="margin-left:auto"></span>'+
+    '</div>';
+  el.innerHTML = widgetShell('Lab 3.1','Un task CAAL, step per step',
+    'Un task che fallisce la regressione, viene fermato e ripreso. Guarda come il runner sa sempre dove si trova.', body);
+  const g = document.getElementById(id+'_g'), lg = document.getElementById(id+'_lg');
+  function draw(){
+    g.innerHTML = LOOP.map((s,k)=>
+      '<div class="lstep'+(k===i?' on':(k<i?' past':''))+'"><b>'+s.b+'</b>'+s.t+'<span>'+s.d+'</span></div>').join('');
+    lg.textContent = LOOP.slice(0,i+1).map(s=>s.log).join('\n');
+    lg.scrollTop = lg.scrollHeight;
+    document.getElementById(id+'_c').textContent = 'passo '+(i+1)+' di '+LOOP.length;
+  }
+  function next(){ if(i<LOOP.length-1){ i++; draw(); } else stop(); }
+  function stop(){ if(timer){ clearInterval(timer); timer=null; document.getElementById(id+'_au').textContent='▶ Automatico'; } }
+  document.getElementById(id+'_nx').addEventListener('click',()=>{ stop(); next(); });
+  document.getElementById(id+'_rs').addEventListener('click',()=>{ stop(); i=0; draw(); });
+  document.getElementById(id+'_au').addEventListener('click',()=>{
+    if(timer){ stop(); return; }
+    if(i>=LOOP.length-1) i=0;
+    document.getElementById(id+'_au').textContent='⏸ Pausa';
+    timer = setInterval(next, 1600); draw();
+  });
+  draw();
+}
+
+/* ---------- triage: dove lo metti? ---------- */
+const TRIAGE = [
+  {tx:'Implementare la user story 4 completa: feature Gherkin, codice, test, OpenAPI', a:'c',
+   why:'CAAL: tanti step, lunga durata, può rompersi a metà. È il caso per cui è nato.'},
+  {tx:'Generare un JSON con lo stato attuale dell\'applicazione', a:'p',
+   why:'Prompt singolo: estrazione strutturata in un passo. Se sbaglia, basta rilanciarlo.'},
+  {tx:'Cambiare lo storage da file system a S3 in tutto il servizio documenti', a:'c',
+   why:'CAAL (task di tipo refactor): pesante, multi step, con una regressione che deve restare verde.'},
+  {tx:'Rinominare una variabile in un file', a:'p',
+   why:'Prompt singolo, o lo fai tu. Un workflow a step qui è solo burocrazia.'},
+  {tx:'Aggiungere un endpoint nuovo con permessi, audit e test', a:'c',
+   why:'CAAL (task di tipo feature): piano, implementazione, regressione. Vale la pena rivedere il piano.'},
+  {tx:'Scrivere un report sulla qualità del codice di src/', a:'p',
+   why:'Prompt singolo lanciato come Ralph: lungo ma in un solo passo, sola lettura, nessun test da far passare.'},
+  {tx:'Decidere se passare da PostgreSQL a MongoDB', a:'x',
+   why:'Né l\'uno né l\'altro: è una decisione di architettura (trade-off analysis). L\'agente può raccogliere informazioni, non decidere.'},
+  {tx:'Applicare in automatico una migrazione al DB di produzione a fine workflow', a:'x',
+   why:'No. Un agente con permessi approvati non deve poter raggiungere la produzione. Se mai, uno step di deploy con gate umano e credenziali fuori dalla sandbox.'},
+  {tx:'Un fix che si risolve rilanciando il prompt una volta', a:'p',
+   why:'Prompt singolo: se basta un retry, non serve un runner che gestisce i retry.'}
+];
+const TR_LB = {c:'CAAL', p:'Prompt singolo', x:'Non all\'agente'};
+function mountTriage(id){
+  const el = document.getElementById(id);
+  const saved = store.get('triage', {});
+  const body = TRIAGE.map((it,k)=>
+    '<div class="sorter-row" data-k="'+k+'"><span class="it">'+it.tx+'</span><span class="bs">'+
+    ['c','p','x'].map(c=>'<button class="bbtn" data-c="'+c+'">'+TR_LB[c]+'</button>').join('')+
+    '</span><span class="fb"></span></div>').join('')+
+    '<div class="scoreline" style="margin-top:10px"><span id="'+id+'_s"></span><button class="btn" id="'+id+'_rs" style="padding:3px 10px;font-size:12px">Azzera</button></div>';
+  el.innerHTML = widgetShell('Lab 2.1','CAAL o prompt singolo?',
+    'Per ogni compito: serve un workflow CAAL, basta un prompt singolo (anche come Ralph), o non va affidato all\'agente?', body);
+  const rows = el.querySelectorAll('.sorter-row');
+  function paint(){
+    let ok=0, tot=0;
+    rows.forEach((r,k)=>{
+      const ch = saved[k];
+      r.querySelectorAll('.bbtn').forEach(b=>b.classList.toggle('on', b.dataset.c===ch));
+      r.classList.remove('ok','bad','done');
+      if(ch){ tot++; const good = ch===TRIAGE[k].a; if(good) ok++;
+        r.classList.add('done', good?'ok':'bad');
+        r.querySelector('.fb').textContent = (good?'✓ ':'✗ ')+TRIAGE[k].why;
+      } else r.querySelector('.fb').textContent='';
+    });
+    document.getElementById(id+'_s').textContent = tot? ok+'/'+tot+' corrette ('+TRIAGE.length+' in tutto)' : 'nessuna risposta';
+    refreshStats();
+  }
+  rows.forEach(r=>r.querySelectorAll('.bbtn').forEach(b=>b.addEventListener('click',()=>{
+    saved[r.dataset.k]=b.dataset.c; store.set('triage',saved); paint();
+  })));
+  document.getElementById(id+'_rs').addEventListener('click',()=>{
+    Object.keys(saved).forEach(k=>delete saved[k]); store.set('triage',saved); paint();
+  });
+  paint();
+}
+
+/* ---------- compositore di compiti ---------- */
+const PKS = [];
+function mountPromptKit(id, b){
+  PKS.push(b);
+  const el = document.getElementById(id);
+  const body = '<div class="split"><div>'+
+    b.fields.map(f=>'<label class="fl">'+f.lb+'</label><textarea data-k="'+f.k+'" rows="'+f.rows+'" placeholder="'+esc(f.ph)+'"></textarea>').join('')+
+    '</div><div><label class="fl">Compito pronto da copiare</label>'+
+    '<div class="preview" id="'+id+'_pv" style="max-height:560px"></div>'+
+    '<div class="btnrow"><button class="btn primary" id="'+id+'_cp">Copia il compito</button>'+
+    '<span class="saved" id="'+id+'_sv">copiato</span></div></div></div>';
+  el.innerHTML = widgetShell('Compito', b.title, b.sub, body);
+  const tas = el.querySelectorAll('textarea');
+  const pv = document.getElementById(id+'_pv');
+  let last='';
+  function upd(save){
+    const v = {};
+    tas.forEach(ta=>{ v[ta.dataset.k]=ta.value.trim(); answers[b.id+'.'+ta.dataset.k]=ta.value; });
+    last = b.build(v);
+    pv.textContent = last;
+    if(save){ saveAll(); refreshStats(); }
+  }
+  tas.forEach(ta=>{
+    ta.value = answers[b.id+'.'+ta.dataset.k] || '';
+    let t; ta.addEventListener('input',()=>{ upd(false); clearTimeout(t); t=setTimeout(()=>upd(true),400); });
+  });
+  document.getElementById(id+'_cp').addEventListener('click',()=>{
+    navigator.clipboard && navigator.clipboard.writeText(last);
+    const sv=document.getElementById(id+'_sv'); sv.classList.add('on'); setTimeout(()=>sv.classList.remove('on'),1400);
+  });
+  upd(false);
+}
+
+/* ---------- soluzione di riferimento nascosta ---------- */
+function mountReveal(id, b){
+  const el = document.getElementById(id);
+  const body = '<div class="btnrow"><button class="btn" id="'+id+'_show">Mostra soluzione di riferimento</button></div>'+
+    '<div id="'+id+'_out" style="display:none"><label class="fl">Soluzione di riferimento</label>'+
+    '<div class="preview" id="'+id+'_pv" style="max-height:560px"></div>'+
+    '<div class="btnrow"><button class="btn primary" id="'+id+'_cp">Copia il compito</button>'+
+    '<span class="saved" id="'+id+'_sv">copiato</span></div></div>';
+  el.innerHTML = widgetShell('Compito', b.title, b.sub, body);
+  document.getElementById(id+'_pv').textContent = b.text;
+  const out = document.getElementById(id+'_out'), btn = document.getElementById(id+'_show');
+  btn.addEventListener('click',()=>{
+    const open = out.style.display==='none';
+    out.style.display = open?'':'none';
+    btn.textContent = open?'Nascondi soluzione di riferimento':'Mostra soluzione di riferimento';
+  });
+  document.getElementById(id+'_cp').addEventListener('click',()=>{
+    navigator.clipboard && navigator.clipboard.writeText(b.text);
+    const sv=document.getElementById(id+'_sv'); sv.classList.add('on'); setTimeout(()=>sv.classList.remove('on'),1400);
+  });
+}
+
+/* ============================================================
+   NAVIGAZIONE
+   ============================================================ */
+function renderNav(){
+  const nav=document.getElementById('nav');
+  nav.innerHTML=MODULES.map((m,i)=>
+    '<button class="navitem'+(i===current?' active':'')+'" data-i="'+i+'">'+
+    '<span class="idx">'+m.n+'</span><span><span class="nt">'+m.title+'</span><span class="nm">'+m.min+' minuti</span></span>'+
+    (done[m.id]?'<span class="tick">●</span>':'')+'</button>').join('');
+  nav.querySelectorAll('.navitem').forEach(b=>b.addEventListener('click',()=>go(+b.dataset.i)));
+}
+
+function renderModule(){
+  const m=MODULES[current];
+  mounts.length=0;
+  const main=document.getElementById('main');
+  const isBreak = m.id==='brk';
+  let html='';
+  if(!isBreak){
+    html+='<div class="eyebrow">Modulo '+m.n+' · '+m.min+' minuti</div><h1>'+m.title+'</h1>';
+    html+='<div class="mod-meta"><span class="badge">'+(current+1)+' di '+MODULES.length+'</span>'+
+      '<span class="badge" id="modTimer">⏱ --:--</span>'+
+      '<label class="chk" style="margin:0;padding:6px 11px"><input type="checkbox" id="modDone" '+(done[m.id]?'checked':'')+'><span class="lb" style="font-weight:600;font-size:13px">Modulo completato</span></label></div>';
+  }
+  html+=m.blocks.map((b,i)=>renderBlock(b,m.id,i)).join('');
+  html+='<div class="footnav">'+
+    (current>0?'<button class="btn" id="prevBtn">← '+MODULES[current-1].title+'</button>':'<span></span>')+
+    (current<MODULES.length-1?'<button class="btn primary" id="nextBtn">'+MODULES[current+1].title+' →</button>':'<span></span>')+
+    '</div>';
+  main.innerHTML=html;
+  mounts.forEach(f=>f());
+  const pb=document.getElementById('prevBtn'); if(pb) pb.addEventListener('click',()=>go(current-1));
+  const nb=document.getElementById('nextBtn'); if(nb) nb.addEventListener('click',()=>{
+    if(!isBreak && !done[m.id]){ done[m.id]=true; saveAll(); }
+    go(current+1);
+  });
+  const md=document.getElementById('modDone');
+  if(md) md.addEventListener('change',()=>{ if(md.checked) done[m.id]=true; else delete done[m.id]; saveAll(); renderNav(); refreshStats(); });
+  window.scrollTo({top:0,behavior:'instant'});
+  updModTimer();
+}
+
+function go(i){
+  if(i<0||i>=MODULES.length) return;
+  current=i; store.set('current',i); renderNav(); renderModule(); refreshStats();
+}
+
+/* ============================================================
+   TIMER
+   ============================================================ */
+const TOTAL=MODULES.reduce((s,m)=>s+m.min,0)*60;
+let elapsed=store.get('elapsed',0), running=false, tick=null;
+let modStart=null;
+function fmt(s){ s=Math.max(0,Math.floor(s)); const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(x).padStart(2,'0'); }
+function paintClock(){
+  const c=document.getElementById('clock');
+  c.textContent=fmt(elapsed)+' / '+fmt(TOTAL);
+  c.style.color = elapsed>TOTAL?'var(--bad)': elapsed>TOTAL*0.9?'var(--warn)':'';
+}
+function updModTimer(){
+  const e=document.getElementById('modTimer'); if(!e) return;
+  const m=MODULES[current];
+  const spent = modStart!==null? Math.floor((elapsed-modStart)) : 0;
+  e.textContent='⏱ '+Math.floor(spent/60)+' / '+m.min+' min';
+  e.style.color = spent/60>m.min?'var(--warn)':'';
+}
+function toggleTimer(){
+  running=!running;
+  const b=document.getElementById('timerBtn');
+  b.textContent = running?'⏸ Pausa timer':'▶ Avvia timer';
+  if(running){ if(modStart===null) modStart=elapsed;
+    tick=setInterval(()=>{ elapsed++; store.set('elapsed',elapsed); paintClock(); updModTimer(); },1000); }
+  else clearInterval(tick);
+}
+
+/* ============================================================
+   STATS / EXPORT / TEMA
+   ============================================================ */
+function allBlocks(t){ return MODULES.flatMap(m=>m.blocks.filter(b=>b.t===t).map(b=>({m:m,b:b}))); }
+
+function refreshStats(){
+  const quizzes = allBlocks('quiz');
+  const aQ=Object.keys(quizState).length;
+  const okQ=quizzes.filter(x=>quizState[x.b.id]!==undefined && x.b.opts[quizState[x.b.id]].ok).length;
+  const exIds=allBlocks('exercise').map(x=>x.b.id);
+  const aE=exIds.filter(k=>(answers[k]||'').trim().length>20).length;
+  const kits=allBlocks('promptkit');
+  const aK=kits.filter(x=>x.b.fields.some(f=>(answers[x.b.id+'.'+f.k]||'').trim().length>10)).length;
+  const dM=Object.keys(done).length;
+  const nM=MODULES.filter(m=>m.id!=='brk').length;
+  document.getElementById('statsBox').innerHTML=
+    'Moduli completati <strong>'+dM+'/'+nM+'</strong><br>'+
+    'Quiz risposti <strong>'+aQ+'/'+quizzes.length+'</strong>'+(aQ?' · corretti <strong>'+okQ+'</strong>':'')+'<br>'+
+    'Esercizi svolti <strong>'+aE+'/'+exIds.length+'</strong><br>'+
+    'Compiti composti <strong>'+aK+'/'+kits.length+'</strong>';
+  const tot=nM+quizzes.length+exIds.length+kits.length;
+  document.getElementById('pbar').style.width=((dM+aQ+aE+aK)/tot*100)+'%';
+}
+
+function doExport(){
+  const L=[];
+  const d=new Date();
+  const stamp=d.toLocaleDateString('it-IT')+' '+d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+  L.push('# CAAL e Skills agentic era — 3 ore e 30');
+  L.push('');
+  L.push('Esportato il '+stamp+'  ·  tempo d’aula registrato: '+fmt(elapsed));
+  L.push('');
+  L.push('## Risposte agli esercizi');
+  allBlocks('exercise').forEach(x=>{
+    const v=(answers[x.b.id]||'').trim();
+    L.push(''); L.push('### '+x.m.n+' — '+x.b.label);
+    L.push(''); L.push('> '+x.b.prompt);
+    L.push(''); L.push(v||'_(non compilato)_');
+  });
+  L.push(''); L.push('## Compiti composti (da riusare)');
+  allBlocks('promptkit').forEach(x=>{
+    const v={}; let any=false;
+    x.b.fields.forEach(f=>{ v[f.k]=(answers[x.b.id+'.'+f.k]||'').trim(); if(v[f.k]) any=true; });
+    L.push(''); L.push('### '+x.m.n+' — '+x.b.title);
+    L.push('');
+    if(!any){ L.push('_(non compilato)_'); }
+    else { L.push('```'); L.push(x.b.build(v)); L.push('```'); }
+  });
+  L.push(''); L.push('## Quiz');
+  allBlocks('quiz').forEach(x=>{
+    const k=quizState[x.b.id];
+    L.push('- **'+x.b.q.replace(/<[^>]+>/g,'')+'**');
+    L.push('  - Risposta data: '+(k===undefined?'_nessuna_':x.b.opts[k].tx+(x.b.opts[k].ok?' ✅':' ❌')));
+    if(k!==undefined&&!x.b.opts[k].ok) L.push('  - Corretta: '+x.b.opts.find(o=>o.ok).tx);
+  });
+  L.push(''); L.push('## Checklist');
+  allBlocks('checklist').forEach(x=>{
+    const s=store.get('ck.'+x.b.id,[]);
+    L.push(''); L.push('### '+x.m.n+' — '+x.b.title);
+    x.b.items.forEach((it,i)=>L.push('- ['+(s[i]?'x':' ')+'] '+it));
+  });
+  const tr=store.get('triage',null);
+  if(tr && Object.keys(tr).length){
+    L.push(''); L.push('## Esercizio «CAAL o prompt singolo?»');
+    let ok=0, tot=0;
+    TRIAGE.forEach((it,k)=>{ if(tr[k]!==undefined){ tot++; if(tr[k]===it.a) ok++;
+      L.push('- '+(tr[k]===it.a?'✅':'❌')+' '+it.tx+' → hai scelto **'+TR_LB[tr[k]]+'**'+(tr[k]===it.a?'':', corretta: **'+TR_LB[it.a]+'**')); } });
+    L.push('');
+    L.push('**'+ok+'/'+tot+' corrette.**');
+  }
+  const blob=new Blob([L.join('\n')],{type:'text/markdown;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='corso-caal-skills.md';
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+document.getElementById('timerBtn').addEventListener('click',toggleTimer);
+document.getElementById('exportBtn').addEventListener('click',()=>doExport());
+document.getElementById('themeBtn').addEventListener('click',()=>{
+  const t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',t); store.set('theme',t);
+});
+document.getElementById('resetBtn').addEventListener('click',()=>{
+  if(!confirm('Azzerare tutte le risposte, le checklist e il timer? Non si torna indietro.')) return;
+  store.clearAll(); location.reload();
+});
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return;
+  if(e.key==='ArrowRight') go(current+1);
+  if(e.key==='ArrowLeft') go(current-1);
+});
+if(!store.get('theme',null) && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+  document.documentElement.setAttribute('data-theme','dark');
+else document.documentElement.setAttribute('data-theme', store.get('theme','light'));
+
+renderNav(); renderModule(); paintClock(); refreshStats();
+</script>
+</body>
+</html>
