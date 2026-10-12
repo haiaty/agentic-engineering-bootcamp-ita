@@ -442,7 +442,6 @@ MODULES.push({
       ['Il default per tipo di workflow: <code>RALPH_PROMPT_NEW_USER_STORY.md</code> per una user story, <code>RALPH_PROMPT_TASK.md</code> per un task','3']
     ]},
     {t:'callout',kind:'',title:'Perché due default diversi',html:`Il prompt delle user story parla di Gherkin e di decomposizione in feature. Su un task singolo (una feature o un refactor) quelle istruzioni <strong>confonderebbero l'agente</strong>. Un base prompt deve contenere solo regole che valgono per quel tipo di lavoro.`},
-    {t:'callout',kind:'warn',title:'Se il base prompt non esiste',html:`Il workflow non si blocca: l'agente riceve un <strong>WARNING</strong> e gli si chiede di ricostruire le regole da <code>AGENTS.md</code>, <code>docs/</code> e <code>specs/</code>, oppure di procedere con il proprio giudizio. Funziona, ma è proprio il tipo di «decidi tu» che vuoi evitare: controlla sempre con <code>status</code> quale base prompt è attivo.`},
     {t:'reveal',title:'prompts/REFACTOR_RULES.md',sub:'Un base prompt specializzato per i refactor. Nota cosa c\'è e cosa manca: nessun task, solo regole.',
       text:`You are working inside an existing codebase located in app_workshop/.
 
