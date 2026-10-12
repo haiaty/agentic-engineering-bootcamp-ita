@@ -279,7 +279,7 @@ MODULES.push({
       ['09 · Skills tecniche','30 min'],
       ['10 · Chiusura','10 min']
     ]},
-    {t:'callout',kind:'ok',title:'Come si usa questo materiale',html:`Naviga con la barra a sinistra, con i pulsanti in fondo a ogni modulo o con le frecce della tastiera. Ogni esercizio si salva da solo nel browser (niente esce dal tuo computer). Con <strong>&#8681; Esporta</strong> scarichi tutte le tue risposte e i task che hai composto in un file Markdown.`},
+    {t:'callout',kind:'ok',title:'Come si usa questo materiale',html:`Naviga con la barra a sinistra, con i pulsanti in fondo a ogni modulo o con le frecce della tastiera. Ogni esercizio si salva da solo nel browser (niente esce dal tuo computer). Con <strong>&#8681; Esporta</strong> scarichi tutte le tue risposte e le checklist in un file Markdown.`},
     {t:'p',html:`<h3>Prerequisiti</h3>
       <ul>
         <li>Sapere com'è fatto un buon prompt e come si usa il <strong>metaprompting</strong>.</li>
@@ -327,14 +327,14 @@ MODULES.push({
     {t:'callout',kind:'ok',title:'La differenza in una riga',html:`Nel Ralph è <strong>l'agente</strong> che deve ricordarsi dove era arrivato. In CAAL è <strong>il runner</strong>: l'agente esegue uno step alla volta, e la parte deterministica (lanciare i test, segnare uno step come fatto, decidere il prossimo) non passa più dall'LLM.`},
     {t:'p',html:`<h3>CAAL da linea di comando</h3>
       <p>CAAL è uno script Node.js, <code>caal.js</code>, che si lancia dalla cartella del progetto (<code>/Code/app_workshop</code> nel container).</p>`},
-    {t:'p',html:`<h3>1. Far partire una user story</h3><p>Prende la storia US-004 dal file delle user story <code>app_workshop/user_stories.md</code> e lancia il workflow completo: decomposizione, feature Gherkin, codice, test, OpenAPI.</p>`},
+    {t:'p',html:`<h3>1. Far partire una user story</h3><p>Prende la storia US-002 (summary degli ultimi commit) dal file delle user story <code>app_workshop/user_stories.md</code>, la scrive in <code>specs/user_story_002/US002.md</code> e lancia il workflow completo: decomposizione, feature Gherkin, codice, test, OpenAPI.</p>`},
     {t:'code',lang:'bash',code:`node caal.js start \\
   --user_stories_file ./user_stories.md \\
-  --user_story_to_run 4`},
+  --user_story_to_run 2`},
     {t:'p',html:`<h3>2. Far partire un task (feature o refactor)</h3><p>Una sola funzionalità o un refactor, senza user story. Il workflow è <code>task.plan</code> → <code>task.implement</code> → <code>task.regression</code> → <code>task.finish</code>.</p>`},
     {t:'code',lang:'bash',code:`node caal.js task \\
   --type refactor \\
-  --description "Estrarre la validazione degli ordini da src/routes/orders.js in src/services/orderValidation.js, senza cambiare il comportamento delle API." \\
+  --description "Rendere il driver git (src/drivers/git.js) riutilizzabile anche per il summary dei commit, senza cambiare l'output di fileVolatility." \\
   --base-prompt prompts/REFACTOR_RULES.md`},
     {t:'p',html:`<h3>3. Far ripartire uno step</h3><p>Con una chiave riesegue proprio quello step e si ferma (anche a workflow completato, chiedendo conferma). Le chiavi le trovi in <code>status</code>.</p>`},
     {t:'code',lang:'bash',code:`# rifà il piano, per esempio dopo aver corretto TASK.md
@@ -374,11 +374,11 @@ MODULES.push({
       ['Niente multi step','Qualsiasi attività non complessa che non richiede più passaggi.']
     ]},b:{h:'Usalo se...',items:[
       ['User story intere','Implementazione completa, dalle feature Gherkin ai test e all\'OpenAPI.'],
-      ['Feature complete','Un endpoint nuovo, un refactor pesante (per esempio un cambio di storage).'],
+      ['Feature complete','Un comando nuovo (per esempio l\'export CSV della volatilità), un refactor pesante (per esempio sostituire la CLI git con una libreria).'],
       ['Task lunghi e fragili','Qualsiasi compito complesso che richiede più step, dura tanto e potrebbe rompersi nel mentre.']
     ]}},
     {t:'triage'},
-    {t:'quiz',id:'q2a',q:'Devi generare un file JSON che descrive gli endpoint esistenti dell\'app. Cosa usi?',
+    {t:'quiz',id:'q2a',q:'Devi generare un file JSON che descrive i comandi della CLI dell\'app e i loro flag. Cosa usi?',
       opts:[
         {tx:'CAAL con human in the loop, per sicurezza',ok:false,why:'Troppa struttura per un\'estrazione: plan, implement e regressione non hanno senso qui.'},
         {tx:'Un prompt singolo (anche lanciato come Ralph)',ok:true,why:'Esatto. È un\'estrazione strutturata in un passo. Se il risultato è sbagliato, lo rilanci.'},
@@ -447,19 +447,18 @@ MODULES.push({
 
 Reference files:
 - Agent rules: \`AGENTS.md\`
-- Architecture: \`docs/architecture\`
+- Architecture: \`LUMINOUS_ARCHITECTURE.md\`
 - Things learned: \`learned.md\`
 - Errors to avoid: \`error_memories.md\`
 
 Refactor rules:
-- Observable behavior must not change: API contracts, responses, error codes, persisted data, audit rows.
+- Observable behavior must not change: CLI output (JSON keys and order), error format { "status": "ERROR", "message": "..." }, exit codes.
 - The existing tests are the specification. If they fail, fix the code, never the tests.
 - Keep each change small; prefer moving code over rewriting it.
-- Do not rename public endpoints, DB tables or columns.
+- Do not rename CLI commands, --key=value flags or service input/output keys.
 - Before starting, list in plan.md the tests that cover the code you will touch.
 
 Tests:
-- Reload the server with: npm run reload:dev
 - Regression: npm run test:tag @done (run by the workflow, not by you, during plan/implement)
 - Debug failures with the skill .claude/skills/agentic-debug`},
     {t:'practices',title:'Perché il metaprompting',items:[
@@ -589,25 +588,9 @@ node cli/run.js fileVolatility --repoPath=/Code --range=HEAD~5..HEAD --format=cs
       ['<code>progress.txt</code>, <code>error_memories.md</code>, <code>learned.md</code>','Avanzamento, errori, cose imparate']
     ]},
     {t:'callout',kind:'',title:'Un agente diverso per uno step',html:`Puoi usare un modello più forte solo per il piano: <code>node caal.js set-step-agent task.plan '&lt;comando&gt;'</code>. Verifica con <code>list-step-agents</code>. Attenzione: gli step di retry (<code>debug#k</code>) <strong>non ereditano</strong> l'override.`},
-    {t:'promptkit',id:'pk6',title:'Scrivi il tuo TASK.md',
-      sub:'Componi la definizione di un task tuo. Il «come» sta nel base prompt: qui scrivi solo il «cosa».',
-      fields:[
-        {k:'title',lb:'Titolo',rows:1,ph:'Export CSV dei file con più volatilità'},
-        {k:'what',lb:'Cosa va fatto (2-3 righe)',rows:3,ph:'Aggiungere al comando fileVolatility l\'uscita in CSV.'},
-        {k:'req',lb:'Requisiti verificabili (uno per riga)',rows:5,ph:'--format=csv su fileVolatility\nColonne: path,changes con intestazione\nStesso ordinamento della vista JSON\nLista vuota: solo intestazione'},
-        {k:'out',lb:'Fuori scope (uno per riga)',rows:3,ph:'Altri formati (xlsx, html)\nCambiare il calcolo della volatilità'}
-      ],
-      build:function(v){
-        const lines=s=>(s||'').split('\n').map(x=>x.trim()).filter(Boolean).map(x=>'- '+x).join('\n');
-        let o='# '+(v.title||'...')+'\n\n';
-        o+=(v.what||'...')+'\n\n';
-        o+='## Requisiti\n'+(lines(v.req)||'- ...')+'\n\n';
-        o+='## Fuori scope\n'+(lines(v.out)||'- ...');
-        return o;
-      }},
     {t:'checklist',id:'ck6',title:'Laboratorio completato quando...',
       items:[
-        'Esiste specs/tasks/<slug>/TASK.md con la tua definizione',
+        'Esiste specs/tasks/export-csv-dei-file-con-piu-volatilita/TASK.md',
         'Hai letto plan.md prima che partisse task.implement',
         'Hai aperto almeno un .composed.md in .workflow/prompts/',
         'Hai fermato il workflow, visto status e fatto resume',
@@ -650,19 +633,19 @@ MODULES.push({
     {t:'practices',title:'Le sette skill',items:[
       {n:'01',h:'Comunicare: essere chiari e precisi',
         why:'L\'agente non ti può chiedere cosa intendevi (nel Ralph e in CAAL proprio non c\'è nessuno a cui chiederlo). Ogni ambiguità diventa una scelta presa a caso.',
-        do:'«GET /api/orders/export, colonne id, data, cliente, totale, stato. 403 se non admin.»',
-        dont:'«Fai un export degli ordini, fatto bene.»'},
+        do:'«fileVolatility --format=csv: colonne path,changes con intestazione, stesso ordinamento del JSON, solo intestazione se non ci sono modifiche.»',
+        dont:'«Fai un export della volatilità, fatto bene.»'},
       {n:'02',h:'Delegare: sapere cosa dare e cosa tenere',
         why:'Delegare non è «dimenticare». È dare un obiettivo, un contesto, dei vincoli e un modo per verificare, e tenere per sé le decisioni che non si possono delegare.',
-        do:'Delegare l\'implementazione con criteri di accettazione; tenere architettura, modello dati e il «sì, va in produzione».',
+        do:'Delegare l\'implementazione del summary dei commit con i criteri di accettazione della US2; tenere l\'architettura (Luminous), il formato dell\'output e il «sì, va in main».',
         dont:'Delegare tutto e guardare solo se i test sono verdi.'},
       {n:'03',h:'Problem/task decomposition',
         why:'Un problema complesso si risolve bene solo spezzato in sotto-task precisi, ognuno con un risultato definito e verificabile. È esattamente quello che fa il workflow di CAAL.',
-        do:'«Feature 1: endpoint + 403. Feature 2: scrittura audit. Feature 3: filtro date. Ognuna con i suoi scenari.»',
-        dont:'«Implementa l\'export.» come un unico blocco da 2.000 righe di diff.'},
+        do:'«Feature 1: ultimi N commit con hash, autore, data, messaggio. Feature 2: righe aggiunte/rimosse per commit. Feature 3: riepilogo aggregato. Feature 4: commit di merge. Ognuna con i suoi scenari.»',
+        dont:'«Implementa il summary dei commit.» come un unico blocco da 2.000 righe di diff.'},
       {n:'04',h:'Product understanding',
-        why:'L\'agente sa scrivere codice, non sa perché il cliente lo vuole. Se non capisci il prodotto, non sai dire se una soluzione corretta è anche quella giusta.',
-        do:'Chiedersi: chi usa questo export? Quante righe? Ogni quanto? Cosa succede se è lento?',
+        why:'L\'agente sa scrivere codice, non sa perché l\'utente lo vuole. Se non capisci il prodotto, non sai dire se una soluzione corretta è anche quella giusta.',
+        do:'Chiedersi: chi usa la lista dei file volatili, e per decidere cosa? Su repository di che dimensione? Va bene contare i file rinominati come file nuovi?',
         dont:'Implementare alla lettera un requisito che non ha senso per l\'utente.'},
       {n:'05',h:'Stress / rage managing :)',
         why:'L\'agente sbaglierà con sicurezza, ripeterà lo stesso errore, «sistemerà» il test invece del codice. Arrabbiarsi non cambia il risultato: cambiare il prompt sì.',
@@ -670,7 +653,7 @@ MODULES.push({
         dont:'Rilanciare lo stesso prompt per la quinta volta in MAIUSCOLO.'},
       {n:'06',h:'Trade-off analysis',
         why:'Ogni soluzione costa qualcosa: tempo, complessità, performance, manutenzione. L\'agente propone, tu scegli sapendo cosa stai pagando.',
-        do:'«Streaming del CSV: più complesso, ma regge 1M di righe. Tutto in memoria: semplice, va bene sotto 10.000.»',
+        do:'«Leggere git log in streaming: più complesso, ma regge repository con milioni di commit. Tutto in memoria con execFile: semplice, va bene per i repository del team.»',
         dont:'Accettare la prima soluzione che funziona.'},
       {n:'07',h:'Critical thinking',
         why:'Mettere in discussione sia le soluzioni proposte dall\'AI sia le proprie. L\'agente è bravissimo a essere convincente, anche quando ha torto.',
@@ -679,9 +662,9 @@ MODULES.push({
     ]},
     {t:'callout',kind:'ok',title:'Il filo comune',html:`Tutte e sette sono la stessa cosa vista da lati diversi: <strong>essere responsabili del risultato</strong> anche quando non hai scritto tu il codice.`},
     {t:'exercise',id:'ex8a',label:'Esercizio 8.1 — Scomponi (8 minuti)',
-      prompt:'Prendi questa richiesta: «I clienti devono poter annullare un ordine entro 24 ore». Scomponila in sotto-task precisi, ognuno con un risultato definito e verificabile. Segna quali delegheresti all\'agente e quali decisioni tieni per te.',
+      prompt:'Prendi la user story 2 di app_workshop/user_stories.md: «Creare un summary degli ultimi commit». Scomponila in sotto-task precisi, ognuno con un risultato definito e verificabile. Segna quali delegheresti all\'agente e quali decisioni tieni per te.',
       placeholder:'1. ... → risultato: ... → delego? sì/no\n2. ...\n\nDecisioni che tengo io: ...\nDomande per il prodotto: ...',
-      solution:'Una scomposizione possibile: (1) modello dati: stato «annullato» e data di annullamento, decisione tua; (2) endpoint di annullamento con controllo delle 24 ore, delegabile; (3) controllo permessi: solo il proprietario dell\'ordine, delegabile con criteri chiari; (4) riga di audit, delegabile; (5) cosa succede a pagamento e magazzino, domanda per il prodotto prima di tutto. Il punto 5 è il più importante: se nessuno lo chiede, l\'agente inventerà una risposta.'},
+      solution:'Una scomposizione possibile: (1) forma dell\'output (chiavi del JSON, riepilogo in testa), decisione tua; (2) driver git: leggere hash, autore, data, messaggio e statistiche dei file, delegabile; (3) job che calcola righe aggiunte/rimosse per commit, delegabile; (4) job del riepilogo aggregato (commit, autori distinti, file distinti, intervallo di date), delegabile con criteri chiari; (5) parametro N con default 10 e N maggiore dei commit disponibili, delegabile; (6) repository senza commit: messaggio esplicito, delegabile; (7) commit di merge: come mostrarli senza contarli due volte, domanda per il prodotto prima di tutto, e anche «autori distinti» per nome o per email? I punti 7 sono i più importanti: se nessuno li chiede, l\'agente inventerà una risposta.'},
     {t:'quiz',id:'q8a',q:'L\'agente propone una soluzione elegante e ben spiegata, e i test passano. Cosa fai?',
       opts:[
         {tx:'La accetto: test verdi e spiegazione convincente',ok:false,why:'Convincente non vuol dire corretta. E i test potrebbero non verificare niente.'},
@@ -700,54 +683,62 @@ MODULES.push({
     {t:'practices',title:'Le cinque basi',items:[
       {n:'01',h:'System design',
         why:'Componenti, responsabilità, dipendenze, dove sta lo stato. L\'agente ottimizza il task che ha davanti, non l\'insieme: senza confini chiari ogni task aggiunge un pezzo di architettura diversa.',
-        do:'Decisioni scritte in <code>docs/architecture</code> (ADR) e citate nel base prompt.',
+        do:'Le regole di <code>LUMINOUS_ARCHITECTURE.md</code> (services → operations → jobs → drivers, mai verso lo stesso livello o verso l\'alto) citate nel base prompt.',
         dont:'Lasciare che l\'architettura emerga dalla somma dei task.'},
       {n:'02',h:'API design',
-        why:'Le API sono contratti: una volta usate da qualcuno, cambiarle costa. Formato delle risposte, errori, nomi, versioni vanno decisi una volta e rispettati sempre.',
-        do:'Un formato di risposta standard (come <code>ADR-003-standardized-api-response-format.md</code>) e <code>server/schema.json</code> OpenAPI aggiornato.',
-        dont:'Ogni endpoint con il suo formato di errore, scelto dall\'agente di turno.'},
+        why:'Le interfacce sono contratti: una volta usate da qualcuno (uno script, una pipeline, una route HTTP), cambiarle costa. Nomi, input, output ed errori vanno decisi una volta e rispettati sempre.',
+        do:'Un contratto unico per ogni service: i flag <code>--key=value</code> sono le chiavi dell\'input, l\'output è <code>{ analyzedRevisions, files, message }</code>, gli errori sono sempre <code>{ "status": "ERROR", "message": "..." }</code>. Così lo stesso service funziona da CLI e da HTTP.',
+        dont:'Ogni comando con i suoi nomi e il suo formato di errore, scelti dall\'agente di turno.'},
       {n:'03',h:'Data modelling',
-        why:'Il modello dati è la parte più difficile da cambiare dopo: migrazioni, dati esistenti, integrazioni. Per questo i prompt dicono «do not invent or modify the data model».',
-        do:'Modello dati deciso da te, in <code>docs/sql_data_model</code>, con vincoli e indici motivati.',
-        dont:'Lasciare che l\'agente aggiunga colonne «perché servivano».'},
+        why:'Il modello dei dati è la parte più difficile da cambiare dopo: chi consuma l\'output, i test, le altre feature dipendono da lui. Cos\'è una revisione? Un file rinominato è lo stesso file? Una modifica è un commit o una riga?',
+        do:'Entità e regole decise da te: una revisione ha hash, autore, data e file toccati; una modifica conta una volta per revisione; la volatilità è frequenza, non righe cambiate.',
+        dont:'Lasciare che l\'agente aggiunga campi o cambi il significato di <code>changes</code> «perché servivano».'},
       {n:'04',h:'Testing: BDD + Gherkin',
         why:'Gli scenari Gherkin sono la specifica che l\'agente deve soddisfare, scritta in un linguaggio che legge anche il prodotto. Ma un test che non verifica niente è peggio di nessun test.',
-        do:'Scenari con esiti osservabili (stato nel DB, riga di audit, codice HTTP) e step definition che li controllano davvero.',
+        do:'Scenari con esiti osservabili (la lista restituita, l\'ordine, il messaggio, l\'exit code) su un repository git vero creato dal test, e step definition che li controllano davvero.',
         dont:'Step vuoti, <code>expect(true)</code>, scenari che descrivono il codice invece del comportamento.'},
       {n:'05',h:'Observability: logs + tracing',
         why:'Quando il codice lo scrive un agente e lo leggi solo in parte, in produzione hai bisogno di vedere cosa succede davvero. Log strutturati e tracce sono i tuoi occhi.',
-        do:'Log strutturati (JSON/JSONL) con un id di correlazione per richiesta; <code>trace("msg", {...})</code> nei punti chiave del flusso.',
+        do:'Log strutturati (JSON/JSONL) con un id di correlazione per esecuzione; <code>trace("msg", {...})</code> nei punti chiave: lettura di git log, conteggio, ordinamento.',
         dont:'<code>console.log("qui")</code> sparsi, senza contesto né id.'}
     ]},
     {t:'compare',title:'Gherkin: descrivere il comportamento, non il codice',
-      bad:{h:'Non così',code:`Scenario: export
-  Given the function exportOrders is called
+      bad:{h:'Non così',code:`Scenario: volatility
+  Given the function rankFileVolatility is called
   When it runs
-  Then it returns something
+  Then it returns an array
   And no error is thrown`},
-      good:{h:'Così',code:`@US004-scenario-2
-Scenario: A non-admin user cannot export orders
-  Given a user with role "operator" is logged in
-  When they request GET /api/orders/export?from=2026-01-01&to=2026-01-31
-  Then the response status is 403
-  And the response follows the standard error format
-  And no export row is written in the audit table`}},
+      good:{h:'Così',code:`@US1-feature-1-scenario-4
+Scenario: files with the same number of changes are ordered by path
+  Given a project with the following git history:
+    """
+    r1: src/b.js, src/a.js
+    r2: src/c.js
+    """
+  When I open the file volatility view
+  Then the volatility list should contain exactly these files in order:
+    | path     | changes |
+    | src/a.js | 1       |
+    | src/b.js | 1       |
+    | src/c.js | 1       |`}},
     {t:'compare',title:'Log: frasi o eventi?',
-      bad:{h:'Non così',code:`console.log("export started")
+      bad:{h:'Non così',code:`console.log("volatility started")
 console.log("done!!")
 console.log(err)`},
-      good:{h:'Così',code:`{"ts":"2026-10-12T09:14:03Z","level":"info","event":"orders.export.started",
- "trace_id":"a81f…","user_id":42,"from":"2026-01-01","to":"2026-01-31"}
-{"ts":"2026-10-12T09:14:04Z","level":"info","event":"orders.export.completed",
- "trace_id":"a81f…","rows":1873,"duration_ms":912}`}},
+      good:{h:'Così',code:`{"ts":"2026-10-12T09:14:03Z","level":"info","event":"fileVolatility.started",
+ "trace_id":"a81f…","repoPath":"/Code","range":"HEAD~50..HEAD"}
+{"ts":"2026-10-12T09:14:03Z","level":"info","event":"git.log.loaded",
+ "trace_id":"a81f…","revisions":50,"duration_ms":184}
+{"ts":"2026-10-12T09:14:04Z","level":"info","event":"fileVolatility.completed",
+ "trace_id":"a81f…","files":137,"duration_ms":231}`}},
     {t:'exercise',id:'ex9a',label:'Esercizio 9.1 — Scrivi due scenari (7 minuti)',
-      prompt:'Per la richiesta «i clienti possono annullare un ordine entro 24 ore», scrivi due scenari Gherkin: uno di successo e uno di errore. Ogni Then deve essere osservabile (HTTP, DB, audit).',
+      prompt:'Per la user story 2 («summary degli ultimi commit»), scrivi due scenari Gherkin: uno sul caso normale e uno su un caso limite. Ogni Then deve essere osservabile (lista restituita, ordine, valori, messaggio).',
       placeholder:'Scenario: ...\n  Given ...\n  When ...\n  Then ...\n  And ...\n\nScenario: ...',
-      solution:'Esempio: «Scenario: Un cliente annulla un ordine creato 2 ore fa — Given un ordine del cliente creato 2 ore fa — When il cliente chiama POST /api/orders/{id}/cancel — Then la risposta è 200 — And l\'ordine nel DB ha stato "annullato" — And c\'è una riga di audit "order.cancelled"». Errore: stesso scenario con un ordine di 25 ore fa → 409 (o 422, deciso dalle regole API), stato invariato nel DB, nessuna riga di audit. Notare che il codice di errore non lo decide lo scenario: lo decide l\'API design.'},
-    {t:'quiz',id:'q9a',q:'Dove dovrebbero stare le decisioni su formato delle risposte API e modello dati, perché l\'agente le rispetti in ogni step di CAAL?',
+      solution:'Esempio: «Scenario: gli ultimi N commit sono mostrati dal più recente — Given un progetto con 12 commit — When apro la vista del summary con N = 3 — Then vedo 3 commit, dal più recente al meno recente — And per ognuno vedo hash abbreviato, autore, data e prima riga del messaggio». Caso limite: «Given un progetto con 2 commit — When apro il summary con N = 10 — Then vedo 2 commit — And non c\'è nessun errore». Altro caso limite utile: un repository senza commit → messaggio esplicito e lista vuota. Notare che la forma dell\'output (le chiavi del JSON) non la decide lo scenario: la decide il design del contratto.'},
+    {t:'quiz',id:'q9a',q:'Dove dovrebbero stare le decisioni su formato dell\'output, errori e significato dei dati (es. cos\'è una «modifica»), perché l\'agente le rispetti in ogni step di CAAL?',
       opts:[
         {tx:'Nel TASK.md di ogni task',ok:false,why:'Così le ripeti ogni volta, e prima o poi una versione sarà diversa dalle altre.'},
-        {tx:'In documenti di progetto (ADR, modello dati, regole API) citati nel base prompt',ok:true,why:'Esatto. Il base prompt dice come si lavora nel progetto; l\'agente li legge quando compone il prompt di ogni step.'},
+        {tx:'In documenti di progetto (AGENTS.md, LUMINOUS_ARCHITECTURE.md, user story, regole sul contratto) citati nel base prompt',ok:true,why:'Esatto. Il base prompt dice come si lavora nel progetto; l\'agente li legge quando compone il prompt di ogni step.'},
         {tx:'Non serve scriverle: l\'agente le deduce dal codice',ok:false,why:'Le deduce in modo diverso ogni volta, e copia anche gli errori che trova.'},
         {tx:'In error_memories.md',ok:false,why:'Lì vanno gli errori incontrati, non le decisioni di design.'}
       ]}
@@ -773,7 +764,7 @@ MODULES.push({
       prompt:'Scegli un task del tuo lavoro da far girare con CAAL la settimana prossima. Scrivi: feature o refactor, quale base prompt userai (e cosa ci manca oggi), dove ti fermerai a rivedere, e quale skill dell\'era agentica pensi ti servirà di più.',
       placeholder:'Task: ...\nTipo: feature / refactor\nBase prompt: ... (manca: ...)\nGate dove mi fermo: ...\nSkill su cui lavorare: ...',
       solution:'Un buon primo task è un refactor piccolo e ben coperto da test: le regole sono chiare (il comportamento non cambia, i test sono la specifica) e la regressione @done ti dice subito se è andato bene. Usalo con --human_in_the_loop e fermati dopo task.plan. Il lavoro vero, la prima volta, è scrivere il base prompt: tienilo, ti servirà per tutti i task dopo.'},
-    {t:'callout',kind:'',title:'Prima di chiudere',html:`Usa <strong>&#8681; Esporta</strong> in alto a destra: scarichi in Markdown le risposte, le checklist e il <code>TASK.md</code> che hai composto nel modulo 06.`}
+    {t:'callout',kind:'',title:'Prima di chiudere',html:`Usa <strong>&#8681; Esporta</strong> in alto a destra: scarichi in Markdown le risposte, e le checklist.`}
   ]
 });
 
@@ -966,22 +957,22 @@ function mountAgentLoop(id){
 
 /* ---------- triage: dove lo metti? ---------- */
 const TRIAGE = [
-  {tx:'Implementare la user story 4 completa: feature Gherkin, codice, test, OpenAPI', a:'c',
+  {tx:'Implementare la user story 2 completa (summary degli ultimi commit): feature Gherkin, codice, test', a:'c',
    why:'CAAL: tanti step, lunga durata, può rompersi a metà. È il caso per cui è nato.'},
   {tx:'Generare un JSON con lo stato attuale dell\'applicazione', a:'p',
    why:'Prompt singolo: estrazione strutturata in un passo. Se sbaglia, basta rilanciarlo.'},
-  {tx:'Cambiare lo storage da file system a S3 in tutto il servizio documenti', a:'c',
+  {tx:'Sostituire le chiamate alla CLI git con una libreria in tutto il progetto, senza cambiare l\'output', a:'c',
    why:'CAAL (task di tipo refactor): pesante, multi step, con una regressione che deve restare verde.'},
   {tx:'Rinominare una variabile in un file', a:'p',
    why:'Prompt singolo, o lo fai tu. Un workflow a step qui è solo burocrazia.'},
-  {tx:'Aggiungere un endpoint nuovo con permessi, audit e test', a:'c',
-   why:'CAAL (task di tipo feature): piano, implementazione, regressione. Vale la pena rivedere il piano.'},
+  {tx:'Esporre fileVolatility anche come route HTTP, con test', a:'c',
+   why:'CAAL (task di tipo feature): piano, implementazione, regressione. Vale la pena rivedere il piano prima che l\'agente scelga framework e formato.'},
   {tx:'Scrivere un report sulla qualità del codice di src/', a:'p',
    why:'Prompt singolo lanciato come Ralph: lungo ma in un solo passo, sola lettura, nessun test da far passare.'},
-  {tx:'Decidere se passare da PostgreSQL a MongoDB', a:'x',
-   why:'Né l\'uno né l\'altro: è una decisione di architettura (trade-off analysis). L\'agente può raccogliere informazioni, non decidere.'},
-  {tx:'Applicare in automatico una migrazione al DB di produzione a fine workflow', a:'x',
-   why:'No. Un agente con permessi approvati non deve poter raggiungere la produzione. Se mai, uno step di deploy con gate umano e credenziali fuori dalla sandbox.'},
+  {tx:'Decidere se misurare la volatilità per numero di commit o per righe cambiate', a:'x',
+   why:'Non all\'agente: è una decisione di prodotto (trade-off analysis). L\'agente può mostrarti i due risultati sullo stesso repository, non decidere.'},
+  {tx:'Fare push su main e pubblicare una release in automatico a fine workflow', a:'x',
+   why:'No. Un agente con permessi approvati non deve avere credenziali per main o per le release. Se mai, uno step che apre una PR, con un gate umano e le credenziali fuori dalla sandbox.'},
   {tx:'Un fix che si risolve rilanciando il prompt una volta', a:'p',
    why:'Prompt singolo: se basta un retry, non serve un runner che gestisce i retry.'}
 ];
@@ -1169,8 +1160,8 @@ function refreshStats(){
   document.getElementById('statsBox').innerHTML=
     'Moduli completati <strong>'+dM+'/'+nM+'</strong><br>'+
     'Quiz risposti <strong>'+aQ+'/'+quizzes.length+'</strong>'+(aQ?' · corretti <strong>'+okQ+'</strong>':'')+'<br>'+
-    'Esercizi svolti <strong>'+aE+'/'+exIds.length+'</strong><br>'+
-    'Compiti composti <strong>'+aK+'/'+kits.length+'</strong>';
+    'Esercizi svolti <strong>'+aE+'/'+exIds.length+'</strong>'+
+    (kits.length?'<br>Compiti composti <strong>'+aK+'/'+kits.length+'</strong>':'');
   const tot=nM+quizzes.length+exIds.length+kits.length;
   document.getElementById('pbar').style.width=((dM+aQ+aE+aK)/tot*100)+'%';
 }
@@ -1190,7 +1181,7 @@ function doExport(){
     L.push(''); L.push('> '+x.b.prompt);
     L.push(''); L.push(v||'_(non compilato)_');
   });
-  L.push(''); L.push('## Compiti composti (da riusare)');
+  if(allBlocks('promptkit').length){ L.push(''); L.push('## Compiti composti (da riusare)'); }
   allBlocks('promptkit').forEach(x=>{
     const v={}; let any=false;
     x.b.fields.forEach(f=>{ v[f.k]=(answers[x.b.id+'.'+f.k]||'').trim(); if(v[f.k]) any=true; });
