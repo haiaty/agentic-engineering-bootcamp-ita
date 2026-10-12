@@ -260,14 +260,14 @@ MODULES.push({
     {t:'p',html:`<p>Con il Ralph loop hai imparato a dare all'agente un compito scritto bene e a <strong>lasciarlo lavorare da solo</strong>. Funziona, finché il compito è abbastanza corto. Quando diventa una user story intera, con decine di passi, iniziano i problemi: si rompe a metà, va in loop su un test, non sai a che punto è. Oggi vediamo <strong>CAAL</strong>, il «wrapper» del Ralph che risolve questi problemi.</p>
       <p>Nella seconda parte cambiamo prospettiva: se l'agente scrive il codice, <strong>cosa deve saper fare lo sviluppatore?</strong> Parliamo delle skill che contano nell'era agentica, umane e tecniche.</p>`},
     {t:'cards',cards:[
-      {tag:'Parte 1',h:'Perché CAAL',p:'I limiti del Ralph su compiti lunghi, e cosa vuol dire esecuzione durevole e governata.'},
+      {tag:'Parte 1',h:'CAAL - Controllable Autonomous Agentic Loop. Perché?',p:'I limiti del Ralph su compiti lunghi, e cosa vuol dire esecuzione durevole e governata.'},
       {tag:'Parte 2',h:'Come funziona',p:'Workflow a step, base prompt e metaprompting, modalità autonoma e human in the loop.'},
       {tag:'Parte 3',h:'Laboratorio',p:'Un task completo con CAAL: piano, implementazione, regressione, stop e ripresa.'},
       {tag:'Parte 4',h:'Skills agentic era',p:'Comunicare, delegare, scomporre, decidere. E le basi tecniche che l\'agente non sostituisce.'}
     ]},
     {t:'table',head:['Blocco','Durata'],rows:[
       ['00 · Apertura','5 min'],
-      ['01 · Perché CAAL','20 min'],
+      ['01 · CAAL - Controllable Autonomous Agentic Loop. Perché?','20 min'],
       ['02 · Quando usarlo e quando no','15 min'],
       ['03 · Workflow e step','20 min'],
       ['04 · Base prompt e metaprompting','20 min'],
@@ -297,11 +297,11 @@ MODULES.push({
   ]
 });
 
-/* ---------- 1. Perché CAAL ---------- */
+/* ---------- 1. CAAL - Controllable Autonomous Agentic Loop. Perché? ---------- */
 MODULES.push({
-  id:'m1', n:'01', title:'Perché CAAL', min:20,
+  id:'m1', n:'01', title:'CAAL - Controllable Autonomous Agentic Loop. Perché?', min:20,
   blocks:[
-    {t:'callout',kind:'',title:'L\'idea',html:`<em>«Make durable execution and governance first-class.»</em> I workflow sopravvivono a errori e pause e <strong>riprendono dall'ultimo checkpoint</strong>; una persona può <strong>ispezionare o modificare lo stato</strong> nei punti di interruzione; il processo si può mettere in pausa e riprendere più tardi, per una revisione o per un lavoro lungo. Il team ha una <strong>traccia di quale strada è stata presa e perché</strong>.`},
+    {t:'callout',kind:'',title:'La definizione',html:`<em>«A controllable autonomous agentic loop/workflow to make durable execution and governance first-class. Workflows can persist through failures and pauses and resume from the last checkpoint; humans can inspect or modify state at interrupt points; the process can pause and resume later, especially for human review or long-running work. The team needs a trace of which route was taken and why; or multiple tools or model calls must share a durable state object.»</em>`},
     {t:'p',html:`<p>Detto semplice: CAAL è <strong>una specie di wrapper del Ralph</strong>. L'agente lavora sempre con il contesto pulito e lo stato sta sempre su file, ma il ciclo non è più un <code>for</code> in bash: è un <strong>workflow a step</strong>, con uno stato salvato, che sa dove si trova, cosa è fallito e da dove ripartire.</p>
       <h3>Le domande a cui il Ralph non risponde</h3>`},
     {t:'table',head:['Problema con il Ralph','Cosa fa CAAL'],rows:[
