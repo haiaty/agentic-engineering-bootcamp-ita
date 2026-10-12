@@ -325,6 +325,37 @@ MODULES.push({
       ['Il controllo','<code>status</code>, <code>stop</code>, <code>step</code>, <code>resume</code>, e gate di revisione umana.']
     ]}},
     {t:'callout',kind:'ok',title:'La differenza in una riga',html:`Nel Ralph è <strong>l'agente</strong> che deve ricordarsi dove era arrivato. In CAAL è <strong>il runner</strong>: l'agente esegue uno step alla volta, e la parte deterministica (lanciare i test, segnare uno step come fatto, decidere il prossimo) non passa più dall'LLM.`},
+    {t:'p',html:`<h3>CAAL da linea di comando</h3>
+      <p>CAAL è uno script Node.js, <code>caal.js</code>, che si lancia dalla cartella del progetto (<code>/Code/app_workshop</code> nel container). L'agente si configura una volta, con <code>--agent</code> o con la variabile <code>AGENT_CMD</code>: è un comando shell che legge il prompt dal file in <code>$WORKFLOW_PROMPT_FILE</code>. Usa gli <strong>apici singoli</strong>, così la variabile viene espansa quando parte lo step.</p>`},
+    {t:'code',lang:'bash',code:`cd /Code/app_workshop
+node caal.js --help
+
+export AGENT_CMD='pi -p "$(cat "$WORKFLOW_PROMPT_FILE")" --provider omlx --model Qwen3.8-27B-8bit --approve --mode json 2>&1 | tee -a pi-run-debug.log'`},
+    {t:'p',html:`<h3>1. Far partire una user story</h3><p>Estrae la storia US-004 dal file delle user story in <code>specs/user_story_004/US004.md</code> e lancia il workflow completo: decomposizione, feature Gherkin, codice, test, OpenAPI.</p>`},
+    {t:'code',lang:'bash',code:`node caal.js start \\
+  --user_stories_file docs/requirements/user_stories.md \\
+  --user_story_to_run 4`},
+    {t:'p',html:`<h3>2. Far partire un task (feature o refactor)</h3><p>Una sola funzionalità o un refactor, senza user story. Il workflow è <code>task.plan</code> → <code>task.implement</code> → <code>task.regression</code> → <code>task.finish</code>.</p>`},
+    {t:'code',lang:'bash',code:`node caal.js task \\
+  --type refactor \\
+  --description "Estrarre la validazione degli ordini da src/routes/orders.js in src/services/orderValidation.js, senza cambiare il comportamento delle API." \\
+  --base-prompt prompts/REFACTOR_RULES.md`},
+    {t:'p',html:`<h3>3. Far ripartire uno step</h3><p>Con una chiave riesegue proprio quello step e si ferma (anche a workflow completato, chiedendo conferma). Le chiavi le trovi in <code>status</code>.</p>`},
+    {t:'code',lang:'bash',code:`# rifà il piano, per esempio dopo aver corretto TASK.md
+node caal.js step task.plan
+
+# rifà il codice di un singolo scenario di una user story
+node caal.js step feature_1.scenario_2.impl_code
+
+# poi riprende fino alla fine
+node caal.js resume`},
+    {t:'p',html:`<h3>4. Cambiare l'agente di uno step</h3><p>L'override vale solo per quello step e ha la precedenza su <code>--agent</code> / <code>AGENT_CMD</code>. Per esempio un modello più forte solo per il piano. Gli step di retry (<code>debug#k</code>) non lo ereditano.</p>`},
+    {t:'code',lang:'bash',code:`node caal.js set-step-agent task.plan 'claude -p "$(cat "$WORKFLOW_PROMPT_FILE")" --model opus --output-format stream-json --verbose --dangerously-skip-permissions'
+
+node caal.js list-step-agents          # agente globale e override per step
+node caal.js unset-step-agent task.plan  # torna all'agente globale`},
+    {t:'p',html:`<h3>5. Vedere lo stato del workflow</h3><p>Sola lettura, in qualunque momento, anche mentre il workflow gira in un altro terminale: step fatti, falliti, prossimo step, base prompt attivo.</p>`},
+    {t:'code',lang:'bash',code:`node caal.js status`},
     {t:'quiz',id:'q1a',q:'Qual è il vantaggio principale di CAAL rispetto a un Ralph loop su una user story lunga?',
       opts:[
         {tx:'Usa un modello più potente',ok:false,why:'Il modello è lo stesso: lo decidi tu con <code>--agent</code>.'},
