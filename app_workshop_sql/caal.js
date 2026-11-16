@@ -148,6 +148,33 @@ function logRed(msg) { console.log(C_RED + msg + C_RESET); }
 function logRedBold(msg) { console.log(C_RED_BOLD + msg + C_RESET); }
 function logYellow(msg) { console.log(C_YELLOW + msg + C_RESET); }
 function logYellowBold(msg) { console.log(C_YELLOW_BOLD + msg + C_RESET); }
+
+//=====================
+// printBanner — ASCII-art logo shown once at launch, above the config output.
+//=====================
+const C_CYAN_BOLD = COLOR_ENABLED ? '\x1b[1;36m' : '';
+// Idempotent: commands that log before execute() (e.g. `task`, `start`) print
+// the banner first, so execute()'s own call must not print it a second time.
+let bannerPrinted = false;
+function printBanner() {
+    if (bannerPrinted) return;
+    bannerPrinted = true;
+    const art = [
+        '   ██████╗  █████╗   █████╗  ██╗     ',
+        '  ██╔════╝ ██╔══██╗ ██╔══██╗ ██║     ',
+        '  ██║      ███████║ ███████║ ██║     ',
+        '  ██║      ██╔══██║ ██╔══██║ ██║     ',
+        '  ╚██████╗ ██║  ██║ ██║  ██║ ███████╗',
+        '   ╚═════╝ ╚═╝  ╚═╝ ╚═╝  ╚═╝ ╚══════╝',
+    ];
+    console.log('');
+    for (const line of art) console.log(C_CYAN_BOLD + line + C_RESET);
+    console.log('');
+    console.log('    🏁 ' + C_CYAN_BOLD + "IT'S GO TIME" + C_RESET + ' 🤖🔥');
+    console.log('');
+    console.log('  CAAL - Controllable Autonomous Agentic Loop');
+    console.log('');
+}
 function logErrorBlock(header, body) {
     logRedBold(header);
     for (const line of String(body || '').split('\n')) logRed('    ' + line);
@@ -3097,18 +3124,9 @@ function bootstrap(file, flags, prebuiltStory) {
     };
     persist();
     progress(`Bootstrapped ${story.id} — "${story.title}"`);
-    log(taskMode
-        ? `initialized ${story.id} — "${story.title}" (${story.taskType}, spec ${story.sourceFile}, regression ${TASK_REGRESSION_TAG})`
-        : `initialized ${story.id} — "${story.title}" (tag ${story.tag})`);
-    log(`base prompt: ${path.relative(ROOT, basePromptFile) || basePromptFile}` +
-        (fs.existsSync(basePromptFile) ? '' : ' (missing — agent will be warned)'));
+    if (!taskMode) logYellow(`${story.id} — "${story.title}" (tag ${story.tag})`);
     if (!state.config.agentCmd) {
         logRedBold('✗ no agent configured — the first creative step will stop and show how to configure one.');
-    }
-    if (state.config.humanInTheLoop) {
-        log('human-in-the-loop: ON — before each task you choose execute/skip/mark-done/stop;');
-        log('                   each agent step then runs in two phases (compose, execute) with a review gate');
-        log('                   between them, and the runner asks before advancing to the next task.');
     }
     emitTrace('[finished] bootstrap', { result: { storyId: story.id, storyTitle: story.title, storyTag: story.tag, taskCount: state.tasks.length, agentCmd: state.config.agentCmd, humanInTheLoop: state.config.humanInTheLoop } });
 }
@@ -3238,6 +3256,12 @@ async function confirmFirstStart(flags) {
 
     logYellowBold('');
     logYellowBold(`First start of ${state.story.id} — "${state.story.title}"`);
+    if (isTaskMode()) log(`created ${state.story.sourceFile}`);
+    if (state.config.humanInTheLoop) {
+        log('human-in-the-loop: ON — before each task you choose execute/skip/mark-done/stop;');
+        log('                   each agent step then runs in two phases (compose, execute) with a review gate');
+        log('                   between them, and the runner asks before advancing to the next task.');
+    }
     log('base prompt file(s):');
     for (const f of basePromptFiles) {
         log(`  - ${f}${fs.existsSync(f) ? '' : '  (MISSING)'}`);
@@ -3289,6 +3313,7 @@ async function confirmFirstStart(flags) {
 
 async function execute(mode, maybeFile, flags, opts) {
     emitTrace('[running] execute', { inputs: { mode, maybeFile, flags, opts } });
+    printBanner();
     ensureInitialized(maybeFile, flags);
 
     //=====================
@@ -4335,6 +4360,7 @@ async function main() {
             const padded = normalizeStoryNumber(flags.userStoryToRun);
             const storiesFileAbs = path.resolve(ROOT, flags.userStoriesFile);
             const templateFileAbs = path.resolve(ROOT, 'docs', 'user_story_template.md');
+            printBanner();
             const { title, sectionText } = extractStorySection(storiesFileAbs, padded);
             const devPart = extractTemplateDevPart(templateFileAbs);
             const specFile = setupStorySpecFile(padded, sectionText, devPart);
@@ -4352,8 +4378,8 @@ async function main() {
             // on it. --base-prompt picks a different base prompt for this task.
             //=====================
             if (loadState()) die('a workflow is already initialized here. Use `run`/`step`/`status`, or `reset --yes` first.');
+            printBanner();
             const taskStory = setupTaskSpec(flags);
-            log(`created ${taskStory.sourceFile}`);
             bootstrap(null, flags, taskStory);
             await execute('run', undefined, flags);
             break;
