@@ -12,35 +12,16 @@
  * The task tree expands from real artifacts on disk: features are discovered from the
  * feature_*.md files produced, scenarios from the .feature file written. Nothing faked.
  *
- * Commands:
- *   node caal.js start --user_stories_file <path> --user_story_to_run <number>
- *                          [--agent "<cmd>"] [--base-prompt <file>] [--warmup <sec>] [--max-retries <n>]
- *                          [--human_in_the_loop true]
- *                          # extracts the requested user-story section from <user_stories_file> into
- *                          # specs/user_story_XXX/USXXX.md (appending the dev block from
- *                          # docs/user_story_template.md), then runs the workflow.
- *                          # --human_in_the_loop pauses every step for review at three gates:
- *                          # before each task starts (1=execute, 2=skip and leave pending,
- *                          # 3=mark done and continue, 4=stop the run); after the agent
- *                          # composes the task prompt (so you can read/edit it before execution);
- *                          # and after the step finishes (so you can decide whether to continue).
- *   node caal.js task (--description "<text>" | --task_file <path>) [--type feature|refactor]
- *                          [--agent "<cmd>"] [--base-prompt <file>] [--human_in_the_loop true]
- *                          # single feature or refactor WITHOUT a user story: scaffolds
- *                          # specs/tasks/<slug>/TASK.md and runs task.plan -> task.implement ->
- *                          # task.regression (npm run test:tag @done) -> task.finish. Default base
- *                          # prompt is RALPH_PROMPT_TASK.md; override with --base-prompt.
- *   node caal.js step [<step-key>]   # run exactly one step — the next actionable
- *                                        # step by default, or the named step. When a
- *                                        # step key is supplied and the workflow is in
- *                                        # completed state the runner prompts the user
- *                                        # to confirm before executing.
- *   node caal.js run         # run autonomously to the end (or until stop/block/fail)
- *   node caal.js resume      # sanitize + run to the end
- *   node caal.js status      # print progress (read-only, works anytime)
- *   node caal.js tasks       # list available task types, deterministic vs agentic (alias: steps)
- *   node caal.js stop        # request a cooperative halt at the next action boundary
- *   node caal.js reset [--yes]
+ * Commands: start, task, step, run, resume, status, stop, done, set-step-agent,
+ *   unset-step-agent, list-step-agents, tasks|steps, reset.
+ *
+ * User-facing documentation is NOT duplicated here — it lives in the help system
+ * at the bottom of this file and is printed by the tool itself, which keeps the
+ * two from drifting apart:
+ *   node caal.js                        # short help: command signatures only
+ *   node caal.js <command> --how-to-use # what that command is for, with examples
+ *   node caal.js --how-to-use           # general guide, env vars, typical session
+ * Edit COMMAND_SIGNATURES / FLAG_HELP / COMMAND_HELP when a command or flag changes.
  *
  * Agent contract: the configured command is spawned with env WORKFLOW_PROMPT_FILE
  * (path to a per-step meta-prompt), WORKFLOW_TASK (the task key), and
@@ -127,7 +108,7 @@ const WORKFLOW_BASE_PROMPT = path.join(ROOT, 'RALPH_PROMPT_NEW_USER_STORY.md');
 //   regression run after a task is implemented.
 // TASK_TYPES: accepted values for --type.
 //=====================
-const WORKFLOW_TASK_BASE_PROMPT = path.join(ROOT, 'RALPH_PROMPT_TASK.md');
+const WORKFLOW_TASK_BASE_PROMPT = path.join(ROOT, 'PROMPT_TASK.md');
 const TASK_REGRESSION_TAG = '@done';
 const TASK_TYPES = ['feature', 'refactor'];
 const TASKS_SPECS_DIR = path.join(ROOT, 'specs', 'tasks');
@@ -635,7 +616,7 @@ function slugify(s) {
 
 //=====================
 // setupTaskSpec — scaffold specs/tasks/<slug>/TASK.md for the `task` command
-// from --description and/or --task_file, and return the synthetic story.
+// from --description and/or --task-file, and return the synthetic story.
 // The slug gets a numeric suffix when the folder already exists so an older
 // task's spec and plan are never overwritten.
 //=====================
@@ -650,7 +631,7 @@ function setupTaskSpec(flags) {
         if (content === null) die('task file not found: ' + abs);
         fileText = content.trim();
     }
-    if (!description && !fileText) die('task needs --description "<text>" and/or --task_file <path>');
+    if (!description && !fileText) die('task needs --description "<text>" and/or --task-file <path>');
 
     const headingMatch = fileText.match(/^#{1,6}\s*(.+?)\s*$/m);
     const title = (headingMatch ? headingMatch[1] : (description || fileText).split('\n')[0]).trim().slice(0, 100);
@@ -1120,7 +1101,7 @@ async function runAgent(task, instructions, resultSpec) {
 
 //=====================
 // runAgentWithHumanInTheLoop
-// Two-phase orchestration triggered by the --human_in_the_loop flag:
+// Two-phase orchestration triggered by the --human-in-the-loop flag:
 //   1. Compose phase — the agent is told to author the task-specific prompt
 //      and exit without acting on the task. Failure here propagates as a
 //      normal agent failure.
@@ -1282,11 +1263,19 @@ function _runAgentInner(task, prepared) {
 
     const { cmd, source: agentSource } = resolveAgentCmd(task);
     if (!cmd) {
+        //=====================
+        // noAgent lets the run loop print the red ✗ error + configuration
+        // guide instead of the generic "⏸ blocked" line. The message is kept
+        // for task.error / status output.
+        //=====================
         return Promise.resolve({
             blocked: true,
+            noAgent: true,
+            promptRel: path.relative(ROOT, promptPath),
+            composedRel: path.relative(ROOT, composedPromptPath),
             message:
                 `No agent configured for step "${task.key}".\n` +
-                `Complete it manually (or set --agent / AGENT_CMD / \`set-step-agent ${task.key} "<cmd>"\`), then run \`resume\`.\n` +
+                `Complete it manually (or set --agent / AGENT_CMD / \`set-step-agent ${task.key} '<cmd>'\`), then run \`resume\`.\n` +
                 `Prompt written to: ${path.relative(ROOT, promptPath)}\n` +
                 `If you compose your own task-specific prompt, save it to: ${path.relative(ROOT, composedPromptPath)}`,
         });
@@ -1918,7 +1907,7 @@ async function _handleInner(task) {
             //=====================
             // First step of a `task` workflow. The agent studies the codebase
             // and writes plan.md next to TASK.md; nothing is implemented yet,
-            // so with --human_in_the_loop the plan can be reviewed (and
+            // so with --human-in-the-loop the plan can be reviewed (and
             // edited) before task.implement runs. We verify the plan exists on
             // disk because the implement step depends on it.
             //=====================
@@ -2788,7 +2777,8 @@ async function runLoop(mode, targetTaskKey) {
             progress(`BLOCKED ${task.key}`);
             state.mode = 'idle';
             persist();
-            log('\n⏸ blocked: ' + res.message);
+            if (res.noAgent) logNoAgentError(task.key, res.promptRel, res.composedRel);
+            else log('\n⏸ blocked: ' + res.message);
             emitTrace('[finished] runLoop iteration', { result: { taskKey: task.key, status: 'blocked' } });
             emitTrace('[finished] runLoop', { result: { outcome: 'BLOCKED', taskKey: task.key } });
             return 'BLOCKED';
@@ -2941,6 +2931,13 @@ function onSigint() {
 /* ------------------------------- commands --------------------------------- */
 
 function parseFlags(args) {
+    //=====================
+    // Flag spelling convention: every multi-word flag is kebab-case
+    // (--user-stories-file, --task-file, --human-in-the-loop, ...).
+    // The old snake_case spellings are still parsed as hidden aliases (never
+    // shown in help): an unrecognised flag would fall into `rest` and be
+    // silently ignored, so old scripts would run with the wrong options.
+    //=====================
     const flags = {};
     const rest = [];
     for (let i = 0; i < args.length; i++) {
@@ -2963,28 +2960,31 @@ function parseFlags(args) {
         //=====================
         else if (a === '--agent-idle-timeout') flags.agentIdleTimeout = parseFloat(args[++i]);
         //=====================
-        // --user_stories_file <path>: path to the full user-stories markdown
+        // --user-stories-file <path>: path to the full user-stories markdown
         // file (e.g. docs/requirements/user_stories.md) that contains all
-        // user-story sections. Combined with --user_story_to_run, the start
+        // user-story sections. Combined with --user-story-to-run, the start
         // command extracts the requested section into a per-story spec file.
         //=====================
-        else if (a === '--user_stories_file') flags.userStoriesFile = args[++i];
+        else if (a === '--user-stories-file' || a === '--user_stories_file') flags.userStoriesFile = args[++i];
         //=====================
-        // --user_story_to_run <number>: numeric identifier of the user story
+        // --user-story-to-run <number>: numeric identifier of the user story
         // to scaffold (e.g. 019, 7, 134). Normalised to a 3-digit padded
         // string at bootstrap so the spec folder/file are always named
         // user_story_XXX / USXXX.md regardless of how the user typed it.
         //=====================
-        else if (a === '--user_story_to_run') flags.userStoryToRun = args[++i];
+        else if (a === '--user-story-to-run' || a === '--user_story_to_run') flags.userStoryToRun = args[++i];
         //=====================
-        // --human_in_the_loop [true|false]: when true, every step pauses twice
+        // --human-in-the-loop [true|false]: when true, every step pauses twice
         // for user review — once after the agent composes the task-specific
         // prompt (so the user can read/edit it before the agent executes), and
         // once after the step completes (so the user can decide whether to
         // continue to the next task). Accepts an explicit "true" / "false" or
         // a bare flag (treated as true). Defaults to false / off.
+        // The old underscore spelling is still parsed as a hidden alias: an
+        // unknown flag would land in `rest` and be silently ignored, so an old
+        // command line would run WITHOUT the review gates the user asked for.
         //=====================
-        else if (a === '--human_in_the_loop') {
+        else if (a === '--human-in-the-loop' || a === '--human_in_the_loop') {
             const next = args[i + 1];
             if (next === 'true' || next === 'false') {
                 flags.humanInTheLoop = next === 'true';
@@ -2996,14 +2996,29 @@ function parseFlags(args) {
         //=====================
         // `task` command flags (single feature / refactor without a user story)
         // --description "<text>": what to build/refactor (inline).
-        // --task_file <path>: markdown file with a longer description; may be
+        // --task-file <path>: markdown file with a longer description; may be
         //   combined with --description. Both end up in specs/tasks/<slug>/TASK.md.
         // --type feature|refactor: changes the plan/implement/debug instructions.
         //=====================
         else if (a === '--description') flags.description = args[++i];
-        else if (a === '--task_file') flags.taskFile = args[++i];
+        else if (a === '--task-file' || a === '--task_file') flags.taskFile = args[++i];
         else if (a === '--type') flags.taskType = args[++i];
         else if (a === '--yes') flags.yes = true;
+        //=====================
+        // --how-to-use: documentation switch, never an execution flag.
+        // `node caal.js <cmd> --how-to-use` prints the long help for <cmd> and
+        // exits without touching .workflow/ — see the gate at the top of main().
+        // The underscore spelling is accepted as a hidden alias, like for every
+        // other multi-word flag (see the note in front of this loop).
+        //=====================
+        else if (a === '--how-to-use' || a === '--how_to_use') flags.howToUse = true;
+        //=====================
+        // --help / -h after a command: same documentation path as --how-to-use.
+        // Without this, `node caal.js task --help` pushed `--help` into `rest`
+        // and the `task` case went on to scaffold and RUN a workflow — asking
+        // for help must never execute anything.
+        //=====================
+        else if (a === '--help' || a === '-h') flags.help = true;
         else rest.push(a);
     }
     return { flags, rest };
@@ -3068,6 +3083,13 @@ function bootstrap(file, flags, prebuiltStory) {
             // set-step-agent / unset-step-agent / list-step-agents commands.
             //=====================
             stepAgents: {},
+            //=====================
+            // startConfirmed — false until the user approves the base prompt
+            // and agent shown by confirmFirstStart. Persisted so that if the
+            // user says "no", the next run/resume asks again (possibly with
+            // --base-prompt/--agent overrides) instead of silently proceeding.
+            //=====================
+            startConfirmed: false,
         },
         tasks: taskMode ? taskBackbone(story.taskType) : backbone(),
         createdAt: now(),
@@ -3081,8 +3103,7 @@ function bootstrap(file, flags, prebuiltStory) {
     log(`base prompt: ${path.relative(ROOT, basePromptFile) || basePromptFile}` +
         (fs.existsSync(basePromptFile) ? '' : ' (missing — agent will be warned)'));
     if (!state.config.agentCmd) {
-        log('note: no agent configured. Creative steps will block with a written prompt until you set');
-        log('      --agent "<cmd>" or AGENT_CMD, or complete them manually and `resume`.');
+        logRedBold('✗ no agent configured — the first creative step will stop and show how to configure one.');
     }
     if (state.config.humanInTheLoop) {
         log('human-in-the-loop: ON — before each task you choose execute/skip/mark-done/stop;');
@@ -3097,6 +3118,13 @@ function ensureInitialized(maybeFile, flags) {
     if (loadState()) {
         // allow late agent/config overrides on subsequent commands
         if (flags && flags.agent) state.config.agentCmd = flags.agent;
+        //=====================
+        // Back-fill from AGENT_CMD when the saved workflow has no agent.
+        // Without this, `export AGENT_CMD=...; resume` (option 2 of the
+        // no-agent guide) would be ignored, because the env var was only read
+        // at bootstrap. A saved agent is never overwritten by the env.
+        //=====================
+        else if (!state.config.agentCmd && process.env.AGENT_CMD) state.config.agentCmd = process.env.AGENT_CMD;
         if (flags && Number.isFinite(flags.warmup)) state.config.warmupMs = Math.round(flags.warmup * 1000);
         if (flags && Number.isInteger(flags.maxRetries)) state.config.maxRetries = flags.maxRetries;
         //=====================
@@ -3143,6 +3171,14 @@ function ensureInitialized(maybeFile, flags) {
         if (!state.config.stepAgents || typeof state.config.stepAgents !== 'object') {
             state.config.stepAgents = {};
         }
+        //=====================
+        // Back-fill startConfirmed for state files saved before this feature
+        // existed: those workflows already ran, so they count as confirmed and
+        // must not be interrupted by the first-start gate.
+        //=====================
+        if (typeof state.config.startConfirmed !== 'boolean') {
+            state.config.startConfirmed = true;
+        }
         emitTrace('[finished] ensureInitialized', { result: { source: 'loaded_state', storyId: state.story.id } });
         return;
     }
@@ -3172,9 +3208,98 @@ function finishOutcome(outcome) {
     process.exit(exit);
 }
 
+//=====================
+// confirmFirstStart
+// First-start gate: before the workflow runs for the first time, show the
+// base prompt file(s) and the agent command that will be used, and ask the
+// user to approve. Returns true to proceed, false to stop.
+// Runs before acquireLock, so a "no" leaves no stale lock behind. The
+// approval is persisted in state.config.startConfirmed, so later
+// run/resume/step commands skip the gate. --yes skips it for scripted use;
+// a non-interactive stdin (EOF) counts as "no", like promptUserConfirmation.
+//=====================
+async function confirmFirstStart(flags) {
+    emitTrace('[running] confirmFirstStart', { inputs: { flags, startConfirmed: state.config.startConfirmed } });
+    if (state.config.startConfirmed) {
+        emitTrace('[finished] confirmFirstStart', { result: { proceed: true, reason: 'already_confirmed' } });
+        return true;
+    }
+
+    //=====================
+    // Collect the base prompt files
+    // The global base prompt is always used; per-step agents share it, so the
+    // list is normally one file. Each path is shown absolute (unambiguous)
+    // with a marker when it does not exist, because a missing base prompt is
+    // the most common reason to say "no" here.
+    //=====================
+    const basePromptFiles = [state.config.basePromptFile];
+    const agentCmd = state.config.agentCmd;
+    const stepAgents = state.config.stepAgents || {};
+
+    logYellowBold('');
+    logYellowBold(`First start of ${state.story.id} — "${state.story.title}"`);
+    log('base prompt file(s):');
+    for (const f of basePromptFiles) {
+        log(`  - ${f}${fs.existsSync(f) ? '' : '  (MISSING)'}`);
+    }
+    log(`base agent: ${agentCmd ? agentCmd : '(none — creative steps will block with a written prompt)'}`);
+    for (const [key, cmd] of Object.entries(stepAgents)) {
+        log(`  override for ${key}: ${cmd}`);
+    }
+
+    //=====================
+    // --yes bypass — lets scripts/CI start without a TTY. The summary above
+    // is still printed so the log records what was used.
+    //=====================
+    const confirmed = flags && flags.yes
+        ? true
+        : await promptUserConfirmation('Proceed with this configuration? (yes/no): ');
+
+    if (!confirmed) {
+        log('stopped by user. Nothing was executed.');
+        log('To change the configuration: `node caal.js run --base-prompt <file> --agent \'<cmd>\'`');
+        log('(you will be asked again), or `node caal.js reset --yes` to start over.');
+        emitTrace('[finished] confirmFirstStart', { result: { proceed: false } });
+        return false;
+    }
+
+    //=====================
+    // Base prompt existence check — runs only after a "yes".
+    // The agent cannot compose meaningful prompts without the base prompt, so
+    // a missing file is a hard stop (exit 1) rather than a warning. The
+    // confirmation is NOT persisted, so after fixing the path the next
+    // run/resume shows the gate again.
+    //=====================
+    const missingBasePrompts = basePromptFiles.filter((f) => !fs.existsSync(f));
+    if (missingBasePrompts.length) {
+        logRedBold('✗ error: the base prompt file(s) do not exist:');
+        for (const f of missingBasePrompts) logRed(`    ${f}`);
+        logRed('Create them, or point to an existing file with');
+        logRed('`node caal.js run --base-prompt <file>` (you will be asked again).');
+        emitTrace('[finished] confirmFirstStart', { result: { proceed: false, reason: 'base_prompt_missing', missingBasePrompts } });
+        process.exit(1);
+    }
+
+    state.config.startConfirmed = true;
+    persist();
+    progress(`User confirmed first start (base prompt: ${basePromptFiles.join(', ')}; agent: ${agentCmd || 'none'})`);
+    emitTrace('[finished] confirmFirstStart', { result: { proceed: true, reason: flags && flags.yes ? 'flag_yes' : 'user_yes' } });
+    return true;
+}
+
 async function execute(mode, maybeFile, flags, opts) {
     emitTrace('[running] execute', { inputs: { mode, maybeFile, flags, opts } });
     ensureInitialized(maybeFile, flags);
+
+    //=====================
+    // First-start confirmation gate — see confirmFirstStart. A "no" exits
+    // cleanly (code 0) before the lock is taken or any task runs.
+    //=====================
+    if (!(await confirmFirstStart(flags))) {
+        emitTrace('[finished] execute', { result: { mode, outcome: 'ABORTED_AT_FIRST_START' } });
+        process.exit(0);
+    }
+
     acquireLock();
     process.on('SIGINT', onSigint);
     clearStop();
@@ -3264,7 +3389,7 @@ function cmdStatus() {
     }
     console.log(`base prompt: ${path.relative(ROOT, state.config.basePromptFile || '') || state.config.basePromptFile}`);
     console.log(`agent:    ${state.config.agentCmd ? state.config.agentCmd : '(none — creative steps will block)'}`);
-    console.log(`human_in_the_loop: ${state.config.humanInTheLoop ? 'ON (pre-task choice gate, compose-prompt review, post-task continue gate)' : 'off'}`);
+    console.log(`human-in-the-loop: ${state.config.humanInTheLoop ? 'ON (pre-task choice gate, compose-prompt review, post-task continue gate)' : 'off'}`);
     const overrideCount = Object.keys(state.config.stepAgents || {}).length;
     if (overrideCount > 0) {
         console.log(`agent overrides: ${overrideCount} per-step (run \`list-step-agents\` to see)`);
@@ -3326,7 +3451,7 @@ function cmdReset(flags) {
 function cmdSetStepAgent(key, cmd) {
     emitTrace('[running] cmdSetStepAgent', { inputs: { key, cmd } });
     if (!loadState()) die('no workflow initialized.');
-    if (!key) die('set-step-agent needs a step key: node caal.js set-step-agent <step-key> "<cmd>"');
+    if (!key) die("set-step-agent needs a step key: node caal.js set-step-agent <step-key> '<cmd>'");
     if (!cmd || !String(cmd).trim()) {
         die('set-step-agent needs a non-empty agent command. To remove an override, use: node caal.js unset-step-agent <step-key>');
     }
@@ -3417,97 +3542,755 @@ function cmdListTasks() {
     emitTrace('[finished] cmdListTasks', { result: { count: all.length } });
 }
 
-function usage() {
-    console.log([
-        'usage:',
-        '  node caal.js start --user_stories_file <path> --user_story_to_run <number>',
-        '                          [--agent "<cmd>"] [--base-prompt <file>] [--warmup <sec>]',
-        '                          [--max-retries <n>] [--agent-idle-timeout <sec>]',
-        '                          [--human_in_the_loop true]',
-        '                             Extracts US-<number> from <user_stories_file> (a full user-stories',
-        '                             markdown file) into specs/user_story_XXX/USXXX.md, appends the',
-        '                             "(the part below should be compiled by devs)" block from',
-        '                             docs/user_story_template.md, then runs the workflow — whose first',
-        '                             task asks the agent to complete that dev block before continuing.',
-        '  node caal.js task (--description "<text>" | --task_file <path>) [--type feature|refactor]',
-        '                          [--agent "<cmd>"] [--base-prompt <file>] [--human_in_the_loop true] ...',
-        '                             Develop a single feature or refactor WITHOUT a user story. Writes',
-        '                             specs/tasks/<slug>/TASK.md, then runs: task.plan (agent writes',
-        '                             specs/tasks/<slug>/plan.md) -> task.implement (agent) ->',
-        `                             task.regression (npm run test:tag ${TASK_REGRESSION_TAG}, debug/retry on failure)`,
-        '                             -> task.finish. step/run/resume/status/done work as usual.',
-        '  node caal.js step [<step-key>]',
-        '                             run exactly one step and pause. With no argument,',
-        '                             runs the next actionable step. With a step key (see',
-        '                             `status`), re-runs that specific step — even if the',
-        '                             workflow is completed (the runner will prompt for',
-        '                             confirmation before executing on a completed workflow).',
-        '  node caal.js run       run autonomously to the end (or until stop/block/fail)',
-        '  node caal.js resume    sanitize and run to the end',
-        '  node caal.js status    print progress (read-only, anytime)',
-        '  node caal.js stop      request a cooperative halt',
-        '  node caal.js done <step-key>      Run "status" to see keys.',
-        '  node caal.js set-step-agent <step-key> "<cmd>"',
-        '                             override the agent command for a single step. The override',
-        '                             takes precedence over --agent / AGENT_CMD for that step only.',
-        '                             Setting an override for a step key that does not yet exist',
-        '                             (e.g. a scenario step before CREATE_GHERKIN runs) is allowed —',
-        '                             a warning is printed and the override applies when the step',
-        '                             is created. Spliced retries (debug#N, run_test#N) do NOT',
-        '                             inherit the override automatically.',
-        '  node caal.js unset-step-agent <step-key>',
-        '                             remove a per-step agent override.',
-        '  node caal.js list-step-agents',
-        '                             print the global agent and all per-step overrides.',
-        '  node caal.js tasks | steps',
-        '                             list the available task types and whether each is',
-        '                             deterministic or agentic (works without a workflow).',
-        '  node caal.js reset --yes',
+//=====================
+// Help system — two levels, one source of truth
+// usage()        : the SHORT help, printed by `node caal.js`, `-h` and `--help`.
+//                  Deliberately nothing but command signatures + their options:
+//                  the first screen must be a reference card, not an essay.
+// cmdHowToUse(x) : the LONG help, printed by `node caal.js <command> --how-to-use`
+//                  (or `node caal.js --how-to-use` for the general guide). It
+//                  explains what the command is for, documents ONLY the options
+//                  that command accepts, and walks through commented examples.
+// Both read the registries below (COMMAND_SIGNATURES / FLAG_HELP / COMMAND_HELP)
+// so a flag is described exactly once and the two levels cannot drift apart.
+//=====================
+
+//=====================
+// AGENT_CMD_EXAMPLE — the one agent command every example in the help uses.
+// Written once here because it is the single thing a user is most likely to
+// copy, and a wrong copy makes the whole tool look broken.
+// Why it looks like this:
+//   - the agent is spawned with `/bin/bash -c <cmd>` (see _runAgentInner), and
+//     caal passes the prompt by EXPORTING WORKFLOW_PROMPT_FILE — it does not
+//     append anything to the command line. So the command must read the file
+//     itself: "$(cat "$WORKFLOW_PROMPT_FILE")".
+//   - the inner double quotes are mandatory: the prompt is multi-line and
+//     contains spaces, and the path could too.
+//   - the whole thing is wrapped in SINGLE quotes wherever it is shown, so the
+//     shell the user types into does not expand $WORKFLOW_PROMPT_FILE — that
+//     variable only exists inside the agent process caal spawns.
+// AGENT_CMD_EXAMPLE_OPUS: same command with a model override appended, used by
+// the per-step examples (`step --agent`, `set-step-agent`) where the point is
+// giving one hard step a stronger model.
+//=====================
+const AGENT_CMD_EXAMPLE = `claude -p "$(cat "$WORKFLOW_PROMPT_FILE")"  --output-format stream-json --verbose --dangerously-skip-permissions`;
+const AGENT_CMD_EXAMPLE_OPUS = `${AGENT_CMD_EXAMPLE} --model opus`;
+
+//=====================
+// AGENT_CMD_EXAMPLE_PI — the same contract as AGENT_CMD_EXAMPLE, for the `pi`
+// coding agent. `-p` runs it non-interactively (process prompt and exit) and
+// `--mode json` streams events while it works, mirroring claude's stream-json
+// so the agent log fills up live instead of only at the end.
+//=====================
+const AGENT_CMD_EXAMPLE_PI = `pi -p "$(cat "$WORKFLOW_PROMPT_FILE")" --mode json`;
+
+//=====================
+// renderNoAgentHelp — numbered list of every way to configure the agent, each
+// with a Claude Code and a pi example, ready to copy.
+// Why: a missing agent is the most common first-run stumble; listing all the
+// options (flag, env, state file, per-step override) in one place avoids a
+// trip to --help. Returns plain lines; the caller decides colors.
+// Note on 3): AGENT_CMD is only read when the workflow is bootstrapped (and
+// back-filled on later commands when the saved agent is empty), so editing
+// state.json is the way to change it for an existing workflow without flags.
+// JSON.stringify produces the escaped form the user must paste into JSON.
+//=====================
+function renderNoAgentHelp(stepKey) {
+    const key = stepKey || '<step-key>';
+    const stateRel = path.relative(ROOT, STATE_FILE);
+    return [
+        'Configure an agent in one of these ways, then run `node caal.js resume`:',
         '',
-        'flags:',
-        '  --user_stories_file <path>',
-        '                      path to the full user-stories markdown file (required by `start`).',
-        '                      Example: docs/requirements/user_stories.md',
-        '  --user_story_to_run <number>',
-        '                      identifier of the story to scaffold (required by `start`). Padded to',
-        '                      3 digits internally, so 19, 019, and "US-019" all map to US-019.',
-        '  --description "<text>"',
-        '                      what the `task` command should build or refactor.',
-        '  --task_file <path>  markdown file with a longer task description (`task`; can be combined',
-        '                      with --description).',
-        '  --type feature|refactor',
-        '                      kind of `task` (default: feature). A refactor must preserve behaviour.',
-        '  --agent "<cmd>"     shell command that runs your agent. The agent receives env',
-        '                      WORKFLOW_PROMPT_FILE and WORKFLOW_TASK; exit 0 = success.',
-        '  --base-prompt <f>   path to the base prompt file the agent reads as a reference',
-        `                      when composing per-task prompts. Default: ${path.relative(ROOT, WORKFLOW_BASE_PROMPT) || WORKFLOW_BASE_PROMPT}`,
-        `                      (${path.relative(ROOT, WORKFLOW_TASK_BASE_PROMPT)} for \`task\`). (env: WORKFLOW_BASE_PROMPT_FILE).`,
-        '  --warmup <sec>      seconds to wait after restarting the dev server before tests.',
-        '  --max-retries <n>   max debug/retry cycles per failing scenario or full suite.',
-        '  --agent-idle-timeout <sec>',
-        '                      kill the agent if it produces no output (stdout or stderr) for this many',
-        '                      seconds. 0 (default) disables the watchdog. Stream-json result detection',
-        '                      is always on — claude exits as soon as it emits the result event.',
-        '                      (env: WORKFLOW_AGENT_IDLE_TIMEOUT_SEC).',
-        '  --human_in_the_loop [true|false]',
-        '                      when true, every step pauses for user review at three gates.',
-        '                      (1) Pre-task gate, before the task starts: the runner prints',
-        '                          "I\'m going to execute the task: <key> — <title>." and prompts',
-        '                          "What do you want to do?  (1) execute  (2) skip  (3) mark as done',
-        '                          (4) stop". "skip" leaves the task pending and moves on to the next',
-        '                          actionable one for this run; "mark as done" sets it done and advances',
-        '                          (a warning is printed if the task would have spliced child tasks);',
-        '                          "stop" halts cleanly (run `resume` to continue).',
-        '                      (2) Compose-review gate, for agent steps: the agent first composes a',
-        '                          task-specific prompt and exits, then the runner prints the path and',
-        '                          prompts "Review the composed prompt and tell me: it\'s ok to proceed?',
-        '                          You can change it if you want (y/n)". You may edit the file before',
-        '                          answering — the execute phase reads whatever is on disk.',
-        '                      (3) Continue gate, after each successful task: the runner prompts',
-        '                          "Review the work done. Is it ok to go ahead to the next task? (y/n)".',
-        '                      A "no" / "stop" at any gate halts the workflow cleanly (run `resume` to',
-        '                      continue). Off by default. The bare flag (no value) is treated as true.',
-    ].join('\n'));
+        '1) --agent flag (saved in the workflow, valid for every step)',
+        '   Claude Code:',
+        `     node caal.js resume --agent '${AGENT_CMD_EXAMPLE}'`,
+        '   pi:',
+        `     node caal.js resume --agent '${AGENT_CMD_EXAMPLE_PI}'`,
+        '',
+        '2) AGENT_CMD environment variable (used when --agent is not passed)',
+        '   Claude Code:',
+        `     export AGENT_CMD='${AGENT_CMD_EXAMPLE}'`,
+        '     node caal.js resume',
+        '   pi:',
+        `     export AGENT_CMD='${AGENT_CMD_EXAMPLE_PI}'`,
+        '     node caal.js resume',
+        '',
+        `3) Directly in the config file ${stateRel} — set "config.agentCmd" (JSON-escaped)`,
+        '   Claude Code:',
+        `     "agentCmd": ${JSON.stringify(AGENT_CMD_EXAMPLE)},`,
+        '   pi:',
+        `     "agentCmd": ${JSON.stringify(AGENT_CMD_EXAMPLE_PI)},`,
+        '',
+        `4) Only for this step (overrides 1-3 for "${key}")`,
+        '   Claude Code:',
+        `     node caal.js set-step-agent ${key} '${AGENT_CMD_EXAMPLE}'`,
+        '   pi:',
+        `     node caal.js set-step-agent ${key} '${AGENT_CMD_EXAMPLE_PI}'`,
+        '',
+        'Keep the single quotes: $WORKFLOW_PROMPT_FILE must be expanded inside the agent process, not by your shell.',
+    ];
+}
+
+//=====================
+// logNoAgentError — print the "no agent configured" error with a red ✗, the
+// configuration guide, and the manual fallback (prompt files to complete the
+// step by hand). Goes to stdout like the rest of the runner output.
+//=====================
+function logNoAgentError(stepKey, promptRel, composedRel) {
+    log('');
+    logRedBold(`✗ error: no agent configured for step "${stepKey}".`);
+    log('');
+    for (const line of renderNoAgentHelp(stepKey)) log('  ' + line);
+    log('');
+    log('  Or complete the step manually, then run `node caal.js resume`.');
+    if (promptRel) log(`  Prompt written to: ${promptRel}`);
+    if (composedRel) log(`  If you compose your own task-specific prompt, save it to: ${composedRel}`);
+}
+
+//=====================
+// Options shared by every command that actually runs steps (start/task/run/
+// resume/step). Kept in one array so the signature list stays consistent.
+//=====================
+const RUN_OPTIONS_SIGNATURE = [
+    "[--agent '<cmd>'] [--base-prompt <file>] [--warmup <sec>] [--max-retries <n>]",
+    '[--agent-idle-timeout <sec>] [--human-in-the-loop [true|false]]',
+];
+const RUN_OPTION_KEYS = [
+    "--agent '<cmd>'",
+    '--base-prompt <file>',
+    '--warmup <sec>',
+    '--max-retries <n>',
+    '--agent-idle-timeout <sec>',
+    '--human-in-the-loop [true|false]',
+];
+
+//=====================
+// COMMAND_SIGNATURES — [name, [first line of options, ...continuation lines]]
+// This is the entire content of the short help. Order = the order a user meets
+// the commands: create a workflow, advance it, inspect it, fix it, throw it away.
+//=====================
+const COMMAND_SIGNATURES = [
+    ['start', ['--user-stories-file <path> --user-story-to-run <number> [--yes]', ...RUN_OPTIONS_SIGNATURE]],
+    ['task', ['(--description "<text>" | --task-file <path>) [--type feature|refactor] [--yes]', ...RUN_OPTIONS_SIGNATURE]],
+    ['step', ['[<step-key>] ' + RUN_OPTIONS_SIGNATURE[0], RUN_OPTIONS_SIGNATURE[1]]],
+    ['run', [...RUN_OPTIONS_SIGNATURE]],
+    ['resume', [...RUN_OPTIONS_SIGNATURE]],
+    ['status', ['']],
+    ['stop', ['']],
+    ['done', ['<step-key>']],
+    ['set-step-agent', ["<step-key> '<cmd>'"]],
+    ['unset-step-agent', ['<step-key>']],
+    ['list-step-agents', ['']],
+    // The third element is the name to DISPLAY when it differs from the lookup
+    // key — `tasks` and `steps` are the same command and must read as one line.
+    ['tasks', [''], 'tasks | steps'],
+    ['reset', ['[--yes]']],
+];
+
+//=====================
+// FLAG_HELP — one entry per flag: what it is for, then a concrete `e.g.` line.
+// Printed by cmdHowToUse under "options:", filtered per command, so a user
+// reading `start --how-to-use` is never shown `--type` or `--yes`.
+//=====================
+const FLAG_HELP = {
+    '--user-stories-file <path>': [
+        'The markdown file holding ALL your user stories. caal reads it and extracts',
+        'just the one you ask for — the file itself is never modified.',
+        'e.g. --user-stories-file docs/requirements/user_stories.md',
+    ],
+    '--user-story-to-run <number>': [
+        'Which story to work on. Padded to 3 digits internally, so 19, 019 and',
+        '"US-019" all mean US-019.',
+        'e.g. --user-story-to-run 19',
+    ],
+    '--description "<text>"': [
+        'What the task should build or refactor, in one line. It also becomes the task',
+        'title and the name of the specs/tasks/<slug>/ folder.',
+        'e.g. --description "revoke a consent from the admin dashboard"',
+    ],
+    '--task-file <path>': [
+        'A markdown file with a longer description, for when one line is not enough:',
+        'acceptance criteria, payload examples, edge cases. Its first heading becomes',
+        'the task title. Can be combined with --description.',
+        'e.g. --task-file docs/tasks/consent_invalidation.md',
+    ],
+    '--type feature|refactor': [
+        'What kind of task this is (default: feature). "refactor" tells the agent the',
+        'behaviour must NOT change — the regression suite is what proves it.',
+        'e.g. --type refactor',
+    ],
+    "--agent '<cmd>'": [
+        'The shell command that runs your agent — this is what does the thinking parts',
+        '(decompose, write gherkin, write code, debug). Without it those steps do not',
+        'fake work: they stop and leave you a prompt file to run by hand.',
+        'It is run with `bash -c`, and caal passes the prompt by exporting',
+        'WORKFLOW_PROMPT_FILE — nothing is appended to your command line, so the command',
+        'must read that file itself. Exit code 0 means the step succeeded.',
+        'Wrap it in SINGLE quotes: that way your own shell leaves $WORKFLOW_PROMPT_FILE',
+        'alone, and it gets expanded later, inside the agent process. (env: AGENT_CMD)',
+        `e.g. --agent '${AGENT_CMD_EXAMPLE}'`,
+    ],
+    '--base-prompt <file>': [
+        'The file the agent reads to learn the project rules and conventions before it',
+        'composes the prompt for each step. Change it to drive the agent differently.',
+        `Default: ${path.relative(ROOT, WORKFLOW_BASE_PROMPT) || WORKFLOW_BASE_PROMPT} ` +
+            `(${path.relative(ROOT, WORKFLOW_TASK_BASE_PROMPT) || WORKFLOW_TASK_BASE_PROMPT} for \`task\`).`,
+        '(env: WORKFLOW_BASE_PROMPT_FILE)',
+        'e.g. --base-prompt docs/prompts/my_base_prompt.md',
+    ],
+    '--warmup <sec>': [
+        'How long to wait after restarting the dev server before running the tests.',
+        `Raise it when tests fail with ECONNREFUSED because the server is still booting. Default: ${DEFAULT_WARMUP_MS / 1000}.`,
+        'e.g. --warmup 25',
+    ],
+    '--max-retries <n>': [
+        'How many debug/retry cycles a failing scenario (or the regression suite) gets.',
+        'One cycle = "the agent debugs the failure" + "run the test again". Higher means',
+        `more patient and more expensive. Default: ${DEFAULT_MAX_RETRIES}.`,
+        'e.g. --max-retries 5',
+    ],
+    '--agent-idle-timeout <sec>': [
+        'Safety net against an agent stuck forever: kill it when it prints nothing at',
+        'all for this many seconds. 0 (default) disables the watchdog. Independent of',
+        'the stream-json result detection, which is always on.',
+        '(env: WORKFLOW_AGENT_IDLE_TIMEOUT_SEC)',
+        'e.g. --agent-idle-timeout 600      (10 minutes of silence = hung)',
+    ],
+    '--human-in-the-loop [true|false]': [
+        'Pause for your review at three gates on every step. Off by default; the bare',
+        'flag with no value means true.',
+        '  (1) before the task starts  -> (1) execute  (2) skip  (3) mark as done  (4) stop',
+        '  (2) after the agent composes the step prompt -> read it, edit it, then y/n',
+        '      (the execute phase reads whatever is on disk when you answer)',
+        '  (3) after the task succeeds -> y/n to go on to the next one',
+        'Answering "no"/"stop" at any gate halts cleanly; `resume` picks it back up.',
+        'e.g. --human-in-the-loop true      (or just --human-in-the-loop)',
+    ],
+    '--yes': [
+        'Confirm without being asked. On `reset` it actually deletes (without it, reset',
+        'only tells you what it would delete). On `start`/`task` it skips the first-start',
+        'question that shows the base prompt file(s) and the agent and asks to proceed —',
+        'needed when stdin is not a terminal (scripts, CI), where no answer means "no".',
+        'e.g. node caal.js reset --yes',
+    ],
+    '--how-to-use': [
+        'Print this explanation instead of running the command.',
+        'e.g. node caal.js start --how-to-use',
+    ],
+};
+
+//=====================
+// COMMAND_HELP — the long per-command help.
+// about:    what the command is FOR, in plain words (the "why would I type this").
+// options:  keys into FLAG_HELP, in the order they matter for that command.
+// examples: ready-to-paste lines; every example carries a `#` comment saying
+//           what situation it is for, because a bare command teaches nothing.
+//=====================
+const COMMAND_HELP = {
+    start: {
+        about: [
+            'Take ONE user story from your user-stories file and drive it all the way to',
+            'tested code.',
+            '',
+            'It first copies the US-<number> section into specs/user_story_XXX/USXXX.md and',
+            'appends the "(the part below should be compiled by devs)" block taken from',
+            'docs/user_story_template.md. Then it runs the workflow, whose very first step',
+            'asks the agent to fill in that dev block (endpoints, data model, implementation',
+            'details). From there: decompose into features -> write gherkin -> implement code',
+            '-> implement step definitions -> run the scenario tests (debugging and retrying',
+            'on failure) -> generate the openapi schema -> mark the story completed.',
+            '',
+            'Use it when the work is already written as a user story. For something smaller,',
+            'use `task`.',
+            '',
+            'On the first start it prints the base prompt file(s) and the agent it will use',
+            'and asks "Proceed?". Answer yes to go on; anything else stops before any step',
+            'runs (re-run with `run --base-prompt ... --agent ...` to change them).',
+        ],
+        options: ['--user-stories-file <path>', '--user-story-to-run <number>', ...RUN_OPTION_KEYS, '--yes'],
+        examples: [
+            '# 1. The plainest form. No agent configured, so every creative step stops and',
+            '#    hands you the prompt file to run yourself. Good the first time, to see',
+            '#    what the workflow is going to ask for.',
+            'node caal.js start --user-stories-file docs/requirements/user_stories.md \\',
+            '                   --user-story-to-run 19',
+            '',
+            '# 2. The normal form: the agent does the creative steps and the run goes on',
+            '#    by itself. "19", "019" and "US-019" all select the same story.',
+            'node caal.js start --user-stories-file docs/requirements/user_stories.md \\',
+            '                   --user-story-to-run 019 \\',
+            `                   --agent '${AGENT_CMD_EXAMPLE}'`,
+            '',
+            '# 3. Same, but you want to read (and correct) what the agent is about to do',
+            '#    before each step, and approve the result after it.',
+            'node caal.js start --user-stories-file docs/requirements/user_stories.md \\',
+            '                   --user-story-to-run 19 \\',
+            `                   --agent '${AGENT_CMD_EXAMPLE}' \\`,
+            '                   --human-in-the-loop true',
+            '',
+            '# 4. Everything tuned: the dev server is slow (wait 25s before testing), be',
+            '#    more patient on failing scenarios (5 debug/retry cycles), kill the agent',
+            '#    if it goes silent for 10 minutes, and drive it with your own base prompt.',
+            'node caal.js start --user-stories-file docs/requirements/user_stories.md \\',
+            '                   --user-story-to-run 19 \\',
+            `                   --agent '${AGENT_CMD_EXAMPLE}' \\`,
+            '                   --base-prompt docs/prompts/my_base_prompt.md \\',
+            '                   --warmup 25 --max-retries 5 --agent-idle-timeout 600',
+            '',
+            '# 5. Agent set once for the whole shell, so you stop retyping it. The single',
+            '#    quotes matter: $WORKFLOW_PROMPT_FILE must survive until caal runs it.',
+            `export AGENT_CMD='${AGENT_CMD_EXAMPLE}'`,
+            'node caal.js start --user-stories-file docs/requirements/user_stories.md \\',
+            '                   --user-story-to-run 19',
+        ],
+    },
+    task: {
+        about: [
+            'Develop a single feature or refactor WITHOUT a user story — the everyday work',
+            'that is too small to be written up as one: one endpoint, one bug, one cleanup.',
+            '',
+            'It writes your description to specs/tasks/<slug>/TASK.md and then runs four',
+            'steps: task.plan (the agent studies the codebase and writes plan.md) ->',
+            'task.implement (the agent writes the code) -> task.regression',
+            `(npm run test:tag ${TASK_REGRESSION_TAG}, with debug/retry cycles when it fails) -> task.finish.`,
+            '',
+            'You need --description, or --task-file, or both. Everything else',
+            '(step/run/resume/status/done/set-step-agent) then works the same as for a story.',
+            'Like `start`, the first run shows the base prompt file(s) and the agent and asks',
+            'for confirmation before doing anything (skip it with --yes).',
+        ],
+        options: ['--description "<text>"', '--task-file <path>', '--type feature|refactor', ...RUN_OPTION_KEYS, '--yes'],
+        examples: [
+            '# 1. The shortest useful form. --type defaults to "feature" and the folder',
+            '#    name is derived from the text, e.g. specs/tasks/add-a-revoked-at-filter.../',
+            'node caal.js task --description "add a revoked_at filter to the consents list endpoint" \\',
+            `                  --agent '${AGENT_CMD_EXAMPLE}'`,
+            '',
+            '# 2. A refactor: same flow, but the agent is told behaviour must not change,',
+            '#    and the regression suite is what proves it did not.',
+            'node caal.js task --type refactor \\',
+            '                  --description "extract the pdf naming logic into a job" \\',
+            `                  --agent '${AGENT_CMD_EXAMPLE}'`,
+            '',
+            '# 3. The description does not fit in one line: put it in a markdown file with',
+            '#    acceptance criteria and payload examples. Its first heading is the title.',
+            'node caal.js task --task-file docs/tasks/consent_invalidation.md \\',
+            `                  --agent '${AGENT_CMD_EXAMPLE}'`,
+            '',
+            '# 4. File + one-line emphasis together, reviewing every step before it runs.',
+            'node caal.js task --task-file docs/tasks/consent_invalidation.md \\',
+            '                  --description "focus on the audit trail rows" \\',
+            `                  --agent '${AGENT_CMD_EXAMPLE}' \\`,
+            '                  --human-in-the-loop true',
+            '',
+            '# 5. No agent: caal scaffolds TASK.md and the plan step stops with a written',
+            '#    prompt. Do that part yourself, then `done task.plan` and `resume`.',
+            'node caal.js task --description "extract the pdf naming logic into a job"',
+        ],
+    },
+    step: {
+        about: [
+            'Run exactly ONE step, then stop. This is the "one bite at a time" command: you',
+            'look at what came out before anything else happens.',
+            '',
+            'With no argument it runs the next pending step. With a step key it runs that',
+            'specific step, even one already done — useful when the agent got something',
+            'wrong and you want it redone. On a completed workflow it asks for confirmation',
+            'first. Step keys come from `node caal.js status` (the real ones) and',
+            '`node caal.js tasks` (the templates, with <n>/<m> placeholders).',
+        ],
+        options: ["--agent '<cmd>'", '--human-in-the-loop [true|false]', '--warmup <sec>', '--max-retries <n>'],
+        examples: [
+            '# 1. Advance by one step, whatever is next.',
+            'node caal.js step',
+            '',
+            '# 2. Redo the decomposition because the features it found were wrong.',
+            'node caal.js step story.decompose',
+            '',
+            '# 3. Redo the implementation of one single scenario.',
+            'node caal.js step feature_2.scenario_1.impl_code',
+            '',
+            '# 4. Re-run just the regression of a `task` workflow after fixing code by hand.',
+            'node caal.js step task.regression',
+            '',
+            '# 5. Run the next step with a different (stronger) model, just this once.',
+            `node caal.js step --agent '${AGENT_CMD_EXAMPLE_OPUS}'`,
+        ],
+    },
+    run: {
+        about: [
+            'Let the workflow go on by itself until it finishes, or until something stops',
+            'it: a `stop` request, a step that blocks (no agent configured), or a failure',
+            'it cannot recover from.',
+            '',
+            'It is what `start` and `task` do after scaffolding, so you mostly use `run` to',
+            'pick an existing workflow back up. Flags passed here update the saved config,',
+            'which is how you change agent, warmup or retries halfway through.',
+        ],
+        options: [...RUN_OPTION_KEYS],
+        examples: [
+            '# 1. Carry on with the configuration already saved in .workflow/state.json.',
+            'node caal.js run',
+            '',
+            '# 2. Carry on, but from now on use this agent (e.g. you had none before).',
+            `node caal.js run --agent '${AGENT_CMD_EXAMPLE}'`,
+            '',
+            '# 3. Carry on, being more patient: slower server, more debug/retry cycles.',
+            'node caal.js run --warmup 20 --max-retries 5',
+            '',
+            '# 4. Carry on, but stop asking me — review every step from here on.',
+            'node caal.js run --human-in-the-loop true',
+        ],
+    },
+    resume: {
+        about: [
+            'The same as `run`, but it first cleans up: steps left half-done (after a crash,',
+            'a Ctrl-C or a `stop`) are reset to pending so they get retried instead of',
+            'blocking the workflow.',
+            '',
+            'When in doubt, use `resume` — it is the safe one. It is also what you type after',
+            'doing a blocked step by hand.',
+        ],
+        options: [...RUN_OPTION_KEYS],
+        examples: [
+            '# 1. After a Ctrl-C, a crash, or a `node caal.js stop`.',
+            'node caal.js resume',
+            '',
+            '# 2. After doing a blocked step yourself and marking it done.',
+            'node caal.js done story.openapi',
+            'node caal.js resume',
+            '',
+            '# 3. Resume giving it an agent, so it stops blocking on the creative steps.',
+            `node caal.js resume --agent '${AGENT_CMD_EXAMPLE}'`,
+        ],
+    },
+    status: {
+        about: [
+            'Show where the workflow is: the story or task, every step with its key and',
+            'state (pending / done / failed / blocked), the attempts made, and the last',
+            'error with the suggested fix.',
+            '',
+            'Read-only — it changes nothing, so it is safe to run from a second terminal',
+            'while a `run` is working. It is also where you read the exact step keys to',
+            'pass to `step`, `done` and `set-step-agent`.',
+        ],
+        options: [],
+        examples: [
+            '# 1. The whole picture.',
+            'node caal.js status',
+            '',
+            '# 2. Only what went wrong.',
+            'node caal.js status | grep -i -A5 failed',
+            '',
+            '# 3. From a second terminal, while the first one is running the workflow.',
+            'watch -n 10 "node caal.js status"',
+        ],
+    },
+    stop: {
+        about: [
+            'Ask a running workflow to halt. Nothing is killed on the spot: it writes a',
+            'flag that the runner checks at the next action boundary, so the step in flight',
+            'finishes cleanly and the state stays consistent.',
+            '',
+            'You normally type it in a second terminal while `run` is working. Pick it back',
+            'up afterwards with `resume`.',
+        ],
+        options: [],
+        examples: [
+            '# 1. From a second terminal, while `node caal.js run` is going.',
+            'node caal.js stop',
+            '',
+            '# 2. ...and later, when you are ready to go on.',
+            'node caal.js resume',
+        ],
+    },
+    done: {
+        about: [
+            'Mark a step as done WITHOUT executing it.',
+            '',
+            'For when you already did that part by hand, or it is not needed for this story,',
+            'and you do not want the workflow stopping there. Run `node caal.js status` to',
+            'see the exact keys.',
+        ],
+        options: [],
+        examples: [
+            '# 1. You updated server/openapi/schema.json yourself.',
+            'node caal.js done story.openapi',
+            '',
+            '# 2. The step definitions for this scenario already existed.',
+            'node caal.js done feature_1.scenario_2.impl_stepdefs',
+            '',
+            '# 3. Typical pair: unblock a step you handled manually, then carry on.',
+            'node caal.js done task.plan',
+            'node caal.js resume',
+        ],
+    },
+    'set-step-agent': {
+        about: [
+            'Use a different agent command for ONE step. The override beats --agent and',
+            'AGENT_CMD, but only for that step key.',
+            '',
+            'The point is cost and quality: send the one hard step to a stronger model and',
+            'leave everything else on the cheap one. You may set an override for a step that',
+            'does not exist yet (scenario steps only appear after the gherkin is written) —',
+            'you get a warning, and the override applies once the step is created. Retry',
+            'steps spliced in on failure (debug#N, run_test#N) do NOT inherit it.',
+        ],
+        options: [],
+        examples: [
+            '# 1. The decomposition is the step that decides everything: give it the big model.',
+            `node caal.js set-step-agent story.decompose '${AGENT_CMD_EXAMPLE_OPUS}'`,
+            '',
+            '# 2. Set it in advance, before the step exists (the warning is expected).',
+            `node caal.js set-step-agent feature_1.scenario_1.impl_code '${AGENT_CMD_EXAMPLE_OPUS}'`,
+            '',
+            '# 3. Check what you have set, then run that step.',
+            'node caal.js list-step-agents',
+            'node caal.js step story.decompose',
+        ],
+    },
+    'unset-step-agent': {
+        about: [
+            'Remove a per-step agent override, so that step goes back to using the global',
+            'agent (--agent / AGENT_CMD).',
+        ],
+        options: [],
+        examples: [
+            '# 1. Back to the normal agent for this step.',
+            'node caal.js unset-step-agent story.decompose',
+            '',
+            '# 2. Check it is really gone.',
+            'node caal.js list-step-agents',
+        ],
+    },
+    'list-step-agents': {
+        about: [
+            'Print the global agent command and every per-step override.',
+            '',
+            'Run it when one step behaves differently from the others and you want to know',
+            'which command it is actually using.',
+        ],
+        options: [],
+        examples: [
+            '# 1. Who runs what.',
+            'node caal.js list-step-agents',
+        ],
+    },
+    tasks: {
+        about: [
+            'List every kind of step the workflow can contain, and whether each is',
+            'deterministic (caal does it itself: scaffolding, bookkeeping, restarting the',
+            'server, running tests) or agentic (delegated to your --agent).',
+            '',
+            'Works with no workflow initialized — it is a catalogue, not a status. This is',
+            'where you read the step-key shapes (feature_<n>.scenario_<m>.impl_code and so',
+            'on) that `step`, `done` and `set-step-agent` expect.',
+            '',
+            '`steps` is the same command under another name.',
+        ],
+        options: [],
+        examples: [
+            '# 1. The catalogue of step types.',
+            'node caal.js tasks',
+            '',
+            '# 2. Exactly the same thing.',
+            'node caal.js steps',
+            '',
+            '# 3. Only the steps your agent will be asked to do.',
+            'node caal.js tasks | grep agentic',
+        ],
+    },
+    reset: {
+        about: [
+            'Throw away the current workflow: deletes .workflow/ (state, prompts, results,',
+            'trace log) so you can `start` or `task` something else.',
+            '',
+            'It does NOT touch your code, nor the files written under specs/ — the story and',
+            'task specs survive. Without --yes it only tells you what it would do.',
+        ],
+        options: ['--yes'],
+        examples: [
+            '# 1. Dry run: prints the warning, deletes nothing.',
+            'node caal.js reset',
+            '',
+            '# 2. Actually clear the state.',
+            'node caal.js reset --yes',
+            '',
+            '# 3. The usual reason: caal says "a workflow is already initialized here".',
+            'node caal.js reset --yes',
+            'node caal.js start --user-stories-file docs/requirements/user_stories.md \\',
+            '                   --user-story-to-run 20',
+        ],
+    },
+};
+
+//=====================
+// usage — the short help.
+// Signatures only. Every explanation lives behind --how-to-use, so this screen
+// stays scannable: you come here to remember the flag spelling, not to learn.
+//=====================
+function usage() {
+    const lines = ['usage:', '  node caal.js <command> [options]', '', 'commands:'];
+    for (const [name, optionLines, displayName] of COMMAND_SIGNATURES) {
+        const head = `  node caal.js ${displayName || name}`;
+        const pad = ' '.repeat(head.length + 1);
+        const first = optionLines[0];
+        lines.push(first ? `${head} ${first}` : head);
+        for (const extra of optionLines.slice(1)) lines.push(pad + extra);
+    }
+    lines.push(
+        '  node caal.js --help | -h',
+        '',
+        'explanations and examples:',
+        '  node caal.js <command> --how-to-use    what that command is for, with examples',
+        '                                         e.g. node caal.js start --how-to-use',
+        '  node caal.js <command> --help | -h     same as <command> --how-to-use',
+        '  node caal.js --how-to-use              the general guide: how the workflow works,',
+        '                                         env vars, a typical session, common mistakes',
+    );
+    console.log(lines.join('\n'));
+}
+
+//=====================
+// renderFlagHelp — print the "options:" section of a long help.
+// Takes the flag keys a command accepts and renders their FLAG_HELP entry,
+// indenting the description under the flag name. Unknown keys are skipped
+// rather than crashing the help of a command that is otherwise fine.
+//=====================
+function renderFlagHelp(keys) {
+    const out = [];
+    for (const key of keys) {
+        const body = FLAG_HELP[key];
+        if (!body) continue;
+        out.push('  ' + key);
+        for (const line of body) out.push('      ' + line);
+        out.push('');
+    }
+    return out;
+}
+
+//=====================
+// generalHowToUse — the guide printed by a bare `node caal.js --how-to-use`.
+// Covers what the tool is, the vocabulary (workflow, step, agent), the agent
+// contract, environment variables, a full session and the mistakes people
+// actually make. Per-command detail stays in COMMAND_HELP.
+//=====================
+function generalHowToUse() {
+    return [
+        'caal — how to use it',
+        '',
+        'What it is',
+        '  caal drives a user story (or a single task) from the written spec to tested code.',
+        '  It is a conductor, not the worker: the mechanical parts (scaffolding files, keeping',
+        '  user_stories.toml and progress.txt up to date, restarting the dev server, running the',
+        '  tagged tests) it does itself; the thinking parts (decompose, write gherkin, write the',
+        '  code and the step definitions, debug a failure, generate openapi) it delegates to an',
+        '  agent command that you choose.',
+        '',
+        'The three words you need',
+        '  workflow  There is ONE at a time, stored in .workflow/ of the current directory.',
+        '            `start` and `task` create it, `reset --yes` throws it away.',
+        '  step      A unit of work with a key, e.g. story.decompose or',
+        '            feature_1.scenario_2.impl_code. `node caal.js tasks` lists the kinds,',
+        '            `node caal.js status` lists the real ones in your workflow.',
+        '  agent     The command passed to --agent (or AGENT_CMD) that performs the creative',
+        '            steps. With no agent those steps do not fake anything: they stop and leave',
+        '            you the prompt to run by hand.',
+        '',
+        'The two ways in',
+        '  node caal.js start ...   the work is already written as a user story -> full chain,',
+        '                           features + gherkin + scenario tests + openapi.',
+        '  node caal.js task ...    something smaller -> plan, implement, regression, done.',
+        '  Then both are driven the same way: step / run / resume / status / stop / done.',
+        '',
+        'What your agent receives (if you plug in your own command)',
+        '  WORKFLOW_PROMPT_FILE           file with the meta-prompt for this step (what to do).',
+        '  WORKFLOW_TASK                  the step key, e.g. feature_1.scenario_2.impl_code.',
+        '  WORKFLOW_COMPOSED_PROMPT_FILE  file where the agent must write the prompt it composed',
+        '                                 before executing (kept for review in .workflow/prompts/).',
+        '  Exit code 0 = the step succeeded. Anything else = it failed.',
+        '',
+        'Environment variables (so you stop retyping flags)',
+        '  AGENT_CMD                        same as --agent. The flag wins over it. Single quotes,',
+        '                                   so $WORKFLOW_PROMPT_FILE is expanded by the agent, not by you:',
+        `                                   export AGENT_CMD='${AGENT_CMD_EXAMPLE}'`,
+        '  WORKFLOW_BASE_PROMPT_FILE        same as --base-prompt. The flag wins over it.',
+        '  WORKFLOW_AGENT_IDLE_TIMEOUT_SEC  same as --agent-idle-timeout. The flag wins over it.',
+        '  NO_COLOR / FORCE_COLOR=1         kill the red/yellow output / force it when piping to a file.',
+        '',
+        'A typical session',
+        '  node caal.js tasks                                  # 1. see which steps exist',
+        '  node caal.js start --user-stories-file docs/requirements/user_stories.md \\',
+        '                     --user-story-to-run 19 \\',
+        `                     --agent '${AGENT_CMD_EXAMPLE}'`,
+        '                                                      # 2. scaffold the story and let it run',
+        '  node caal.js status                                 # 3. (other terminal) watch it',
+        '  node caal.js stop                                   # 4. halt at a clean boundary',
+        '  node caal.js step feature_1.scenario_1.impl_code    # 5. redo one step',
+        '  node caal.js done story.openapi                     # 6. skip a step you did yourself',
+        '  node caal.js resume                                 # 7. let it go to the end',
+        '  node caal.js reset --yes                            # 8. clear it, ready for the next story',
+        '',
+        'Things that usually trip people up',
+        '  - "a workflow is already initialized here": one at a time. Finish it, or',
+        '    `node caal.js reset --yes` before `start` / `task`.',
+        '  - A step stops and prints a prompt file: that is normal with no --agent. Do that step',
+        '    yourself, then `node caal.js done <step-key>` and `node caal.js resume`.',
+        '  - Tests failing with "connection refused": the dev server was not ready yet -> --warmup.',
+        '  - "command not found" from the agent: the --agent string is run by the shell, so quote',
+        '    it whole and check the binary with `which <first-word>`.',
+        '  - After a Ctrl-C always prefer `resume` over `run`: it cleans up half-done steps.',
+        '',
+        'Per-command detail',
+        '  node caal.js <command> --how-to-use',
+        '  commands: ' + COMMAND_SIGNATURES.map(([n]) => n).join(', '),
+    ];
+}
+
+//=====================
+// cmdHowToUse — print the long help for one command (or the general guide).
+// Called from main() whenever --how-to-use is present, BEFORE any state is
+// touched, so asking for help never initializes or mutates a workflow.
+//=====================
+function cmdHowToUse(name) {
+    emitTrace('[running] cmdHowToUse', { inputs: { name } });
+    if (!name) {
+        console.log(generalHowToUse().join('\n'));
+        return;
+    }
+    //=====================
+    // `steps` is an alias of `tasks`; document it under the canonical entry so
+    // `node caal.js steps --how-to-use` is not a dead end.
+    //=====================
+    const key = name === 'steps' ? 'tasks' : name;
+    const help = COMMAND_HELP[key];
+    if (!help) {
+        console.log(`no detailed help for "${name}".`);
+        console.log('known commands: ' + COMMAND_SIGNATURES.map(([n]) => n).join(', '));
+        console.log('general guide:  node caal.js --how-to-use');
+        return;
+    }
+    const signature = COMMAND_SIGNATURES.find(([n]) => n === key);
+    const lines = [`node caal.js ${key} — how to use it`, ''];
+    if (signature) {
+        const head = `  node caal.js ${signature[2] || key}`;
+        const pad = ' '.repeat(head.length + 1);
+        lines.push('usage:');
+        lines.push(signature[1][0] ? `${head} ${signature[1][0]}` : head);
+        for (const extra of signature[1].slice(1)) lines.push(pad + extra);
+        lines.push('');
+    }
+    lines.push('what it does:');
+    for (const line of help.about) lines.push(line ? '  ' + line : '');
+    lines.push('');
+    const flagLines = renderFlagHelp([...help.options, '--how-to-use']);
+    if (flagLines.length) {
+        lines.push('options:');
+        lines.push(...flagLines);
+    }
+    lines.push('examples:');
+    for (const line of help.examples) lines.push(line ? '  ' + line : '');
+    console.log(lines.join('\n'));
 }
 
 /* --------------------------------- main ----------------------------------- */
@@ -3517,6 +4300,22 @@ async function main() {
     const cmd = argv[0];
     const { flags, rest } = parseFlags(argv.slice(1));
     emitTrace('[START]---|___|---[START]', { inputs: { cmd, flags, rest, pid: process.pid } });
+
+    //=====================
+    // --how-to-use gate — documentation path, taken before anything else.
+    // Must run ahead of the switch so asking "how does start work?" never
+    // scaffolds a spec file, never takes the lock and never writes state.
+    // Two spellings reach here: `node caal.js start --how-to-use` (flag, cmd is
+    // the command) and `node caal.js --how-to-use [cmd]` (cmd IS the switch, so
+    // the command name — if any — landed in rest[0]).
+    // `node caal.js <cmd> --help|-h` is routed here too, so per-command help
+    // (usage + options + examples) is reachable with the conventional flag.
+    //=====================
+    const howToUseAsCommand = cmd === '--how-to-use' || cmd === '--how_to_use';
+    if (flags.howToUse || flags.help || howToUseAsCommand) {
+        cmdHowToUse(howToUseAsCommand ? rest[0] : cmd);
+        return;
+    }
 
     switch (cmd) {
         case 'start': {
@@ -3529,9 +4328,9 @@ async function main() {
             // because the prior positional <story.md> form has been removed.
             //=====================
             if (loadState()) die('a workflow is already initialized here. Use `run`/`step`/`status`, or `reset --yes` first.');
-            if (!flags.userStoriesFile) die('start needs --user_stories_file <path> (e.g. docs/requirements/user_stories.md)');
+            if (!flags.userStoriesFile) die('start needs --user-stories-file <path> (e.g. docs/requirements/user_stories.md)');
             if (flags.userStoryToRun == null || flags.userStoryToRun === '') {
-                die('start needs --user_story_to_run <number> (e.g. 019)');
+                die('start needs --user-story-to-run <number> (e.g. 019)');
             }
             const padded = normalizeStoryNumber(flags.userStoryToRun);
             const storiesFileAbs = path.resolve(ROOT, flags.userStoriesFile);
@@ -3621,7 +4420,7 @@ async function main() {
             const stepCmd = rest[1];
             if (!key || !stepCmd) {
                 die('set-step-agent needs both a step key and a command:\n' +
-                    '  node caal.js set-step-agent <step-key> "<cmd>"\n' +
+                    "  node caal.js set-step-agent <step-key> '<cmd>'\n" +
                     'Run "status" or "list-step-agents" to see existing keys.');
             }
             cmdSetStepAgent(key, stepCmd);
